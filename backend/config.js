@@ -14,5 +14,10 @@ export default {
 
     firestoreNames: {
         articlesCollection: 'Articles',
+        citationsCollection: 'Citations',
+        memoryQuizCollection: 'MemoryQuiz',
+        usersCollection: 'users',
+        streaksCollection: 'streaks',
+        streaksCoreCollection: 'streaksCore',
     }
 };
