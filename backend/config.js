@@ -17,7 +17,9 @@ export default {
         citationsCollection: 'Citations',
         memoryQuizCollection: 'MemoryQuiz',
         usersCollection: 'users',
-        streaksCollection: 'streaks',
-        streaksCoreCollection: 'streaksCore',
+
+        streaks_SubCollection: 'streaks',
+        streaksCore_SubCollection: 'streaksCore',
+        familyMembers_SubCollection: 'family_members',
     }
 };

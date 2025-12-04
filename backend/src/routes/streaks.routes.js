@@ -11,44 +11,44 @@ const router = express.Router();
  */
 router.post('/activity',
     [
-        body('userId')
+        body('documentId')
             .trim()
             .notEmpty()
-            .withMessage('UserId is required')
+            .withMessage('documentId is required')
             .isString()
-            .withMessage('UserId must be a string'),
+            .withMessage('documentId must be a string'),
     ],
     updateStreakController.updateStreak
 );
 
 /**
- * GET /api/streaks/stats/:userId
+ * GET /api/streaks/stats/:documentId
  * Get streak statistics for a user
  */
-router.get('/stats/:userId',
+router.get('/stats/:documentId',
     [
-        param('userId')
+        param('documentId')
             .trim()
             .notEmpty()
-            .withMessage('UserId is required')
+            .withMessage('documentId is required')
             .isString()
-            .withMessage('UserId must be a string'),
+            .withMessage('documentId must be a string'),
     ],
     fetchStreakController.getStreakStats
 );
 
 /**
- * GET /api/streaks/month/:userId
+ * GET /api/streaks/month/:documentId
  * Get monthly streak data for a user
  */
-router.get('/month/:userId',
+router.get('/month/:documentId',
     [
-        param('userId')
+        param('documentId')
             .trim()
             .notEmpty()
-            .withMessage('UserId is required')
+            .withMessage('documentId is required')
             .isString()
-            .withMessage('UserId must be a string'),
+            .withMessage('documentId must be a string'),
         query('yearMonth')
             .trim()
             .notEmpty()
@@ -60,17 +60,17 @@ router.get('/month/:userId',
 );
 
 /**
- * GET /api/streaks/year/:userId
+ * GET /api/streaks/year/:documentId
  * Get yearly streak data for a user
  */
-router.get('/year/:userId',
+router.get('/year/:documentId',
     [
-        param('userId')
+        param('documentId')
             .trim()
             .notEmpty()
-            .withMessage('UserId is required')
+            .withMessage('documentId is required')
             .isString()
-            .withMessage('UserId must be a string'),
+            .withMessage('documentId must be a string'),
         query('year')
             .trim()
             .notEmpty()

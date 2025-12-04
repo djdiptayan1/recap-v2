@@ -8,13 +8,13 @@ import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
-const STREAKS_COLLECTION = config.firestoreNames.streaksCollection;
-const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCoreCollection;
+const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
+const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
 
 async function getStreakStats(req, res, next) {
     try {
-        const { userId } = req.params;
-        const coreRef = doc(firestore, USERS_COLLECTION, userId, STREAKS_CORE_COLLECTION, 'streakData');
+        const { documentId } = req.params;
+        const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
         const docSnap = await getDoc(coreRef);
 
         if (!docSnap.exists()) {
@@ -56,14 +56,14 @@ async function getStreakStats(req, res, next) {
 
 async function getMonthStreak(req, res, next) {
     try {
-        const { userId } = req.params;
+        const { documentId } = req.params;
         const { yearMonth } = req.query; // e.g., 2025-04
 
         if (!yearMonth) {
             return res.status(400).json({ success: false, error: 'yearMonth query param is required (YYYY-MM)' });
         }
 
-        const streakDocRef = doc(firestore, USERS_COLLECTION, userId, STREAKS_COLLECTION, yearMonth);
+        const streakDocRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_COLLECTION, yearMonth);
         const docSnap = await getDoc(streakDocRef);
 
         if (!docSnap.exists()) {
@@ -78,14 +78,14 @@ async function getMonthStreak(req, res, next) {
 
 async function getYearStreaks(req, res, next) {
     try {
-        const { userId } = req.params;
+        const { documentId } = req.params;
         const { year } = req.query; // e.g., 2025
 
         if (!year) {
             return res.status(400).json({ success: false, error: 'year query param is required (YYYY)' });
         }
 
-        const streaksRef = collection(firestore, USERS_COLLECTION, userId, STREAKS_COLLECTION);
+        const streaksRef = collection(firestore, USERS_COLLECTION, documentId, STREAKS_COLLECTION);
         const snap = await getDocs(streaksRef);
 
         const data = {};

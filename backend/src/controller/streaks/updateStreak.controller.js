@@ -9,8 +9,8 @@ import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
-const STREAKS_COLLECTION = config.firestoreNames.streaksCollection;
-const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCoreCollection;
+const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
+const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
 
 // Helper to get formatted date strings
 const getFormattedDate = (date = new Date()) => {
@@ -28,8 +28,8 @@ const getDaysInMonth = (yearMonth) => {
     return new Date(year, month, 0).getDate();
 };
 
-async function ensureCurrentMonthExists(userId, yearMonth) {
-    const streakDocRef = doc(firestore, USERS_COLLECTION, userId, STREAKS_COLLECTION, yearMonth);
+async function ensureCurrentMonthExists(documentId, yearMonth) {
+    const streakDocRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_COLLECTION, yearMonth);
     const docSnap = await getDoc(streakDocRef);
 
     if (!docSnap.exists()) {
@@ -43,8 +43,8 @@ async function ensureCurrentMonthExists(userId, yearMonth) {
     }
 }
 
-async function ensureStreaksCoreExists(userId) {
-    const coreRef = doc(firestore, USERS_COLLECTION, userId, STREAKS_CORE_COLLECTION, 'streakData');
+async function ensureStreaksCoreExists(documentId) {
+    const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
     const docSnap = await getDoc(coreRef);
 
     if (!docSnap.exists()) {
@@ -52,9 +52,9 @@ async function ensureStreaksCoreExists(userId) {
     }
 }
 
-async function calculateStreakStats(userId) {
-    await ensureStreaksCoreExists(userId);
-    const coreRef = doc(firestore, USERS_COLLECTION, userId, STREAKS_CORE_COLLECTION, 'streakData');
+async function calculateStreakStats(documentId) {
+    await ensureStreaksCoreExists(documentId);
+    const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
     const docSnap = await getDoc(coreRef);
 
     if (!docSnap.exists()) return;
@@ -119,24 +119,24 @@ async function calculateStreakStats(userId) {
 
 async function updateStreak(req, res, next) {
     try {
-        const { userId } = req.body;
-        if (!userId) {
-            return res.status(400).json({ success: false, error: 'UserId is required' });
+        const { documentId } = req.body;
+        if (!documentId) {
+            return res.status(400).json({ success: false, error: 'documentId is required' });
         }
 
         const { full: todayFull, yearMonth } = getFormattedDate();
 
         // 1. Ensure monthly doc exists
-        await ensureCurrentMonthExists(userId, yearMonth);
+        await ensureCurrentMonthExists(documentId, yearMonth);
 
         // 2. Update today's streak in monthly doc
-        const streakDocRef = doc(firestore, USERS_COLLECTION, userId, STREAKS_COLLECTION, yearMonth);
+        const streakDocRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_COLLECTION, yearMonth);
         await updateDoc(streakDocRef, {
             [todayFull]: true
         });
 
         // 3. Calculate and update core stats
-        const stats = await calculateStreakStats(userId);
+        const stats = await calculateStreakStats(documentId);
 
         return res.status(200).json({ success: true, data: stats });
     } catch (err) {
