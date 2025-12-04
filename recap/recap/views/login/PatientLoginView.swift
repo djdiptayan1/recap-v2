@@ -168,21 +168,51 @@ struct PatientLoginView: View {
         .standardBackground()
     }
 
-    // MARK: - Logic Functions (Kept exactly as you had them)
-
+    // MARK: - Logic Functions
+    
     private func loginWithEmail() {
-        appState.isLoggedIn = true
+        guard !email.isEmpty, !password.isEmpty else { return }
+        isLoading = true
+        
+        Task {
+            do {
+                let user = try await AuthService.shared.signIn(email: email, password: password)
+                await MainActor.run {
+                    appState.currentUser = user
+                    isLoading = false
+                }
+            } catch {
+                await MainActor.run {
+                    alertMessage = error.localizedDescription
+                    showAlert = true
+                    isLoading = false
+                }
+            }
+        }
     }
-
+    
     private func signInWithGoogle() {
+        Task {
+            do {
+                let user = try await AuthService.shared.signInWithGoogle()
+                await MainActor.run {
+                    appState.currentUser = user
+                }
+            } catch {
+                await MainActor.run {
+                    alertMessage = error.localizedDescription
+                    showAlert = true
+                }
+            }
+        }
     }
-
+    
     private func handleAppleSignInCompletion() {
     }
-
+    
     private func fetchOrCreateUserProfile(userId: String, email: String) {
     }
-
+    
     private func generateAndCreateProfile(userId: String, email: String) {
     }
 

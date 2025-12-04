@@ -51,6 +51,18 @@ struct AppConfig {
         static let bodyBold = Font.system(size: 18, weight: .semibold, design: .rounded)
         static let small = Font.system(size: 14, weight: .regular, design: .rounded)
     }
+
+    struct ApiEndpoints{
+        static let baseURL = "http://localhost:3000/api/"
+        static let articles = "articles"
+        static let citations = "citations"
+        static let memoryQuiz = "memoryquiz"
+        static let streaks = "streaks"
+    }
+
+    struct FirebaseCollections{
+        static let users = "users"
+    }
 }
 extension Color {
     init(hex: String) {

@@ -8,8 +8,8 @@
 import Foundation
 import SwiftUI
 
-struct articleModel: Identifiable {
-    let id = UUID()
+struct articleModel: Identifiable, Codable {
+    let id: String
     let title: String
     let author: String
     let content: String
@@ -24,4 +24,10 @@ struct articleModel: Identifiable {
         let mins = max(1, words / 150)
         return "\(mins) min read"
     }
+}
+
+struct ArticleResponse: Codable {
+    let success: Bool
+    let data: [articleModel]
+    let count: Int
 }

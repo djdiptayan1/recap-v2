@@ -11,7 +11,6 @@ struct LetsReadCard: View {
     var body: some View {
         NavigationLink(destination: ArticlesView()) {
             VStack(spacing: 0) {
-                
                 HStack {
                     HStack(spacing: 8) {
     //                    Image(systemName: "book.pages.fill")
@@ -19,7 +18,7 @@ struct LetsReadCard: View {
     //                        .font(.system(size: 16))
                         
                         Text("Let's Read")
-                            .font(AppConfig.Fonts.titleMedium)
+                            .font(AppConfig.Fonts.headline)
                             .foregroundColor(AppConfig.Colors.textPrimary)
                     }
                     
@@ -35,7 +34,7 @@ struct LetsReadCard: View {
                     .background(AppConfig.Colors.stroke)
                     .padding(.horizontal, AppConfig.UI.padding)
                 
-                HStack(alignment: .center, spacing: 20) {
+                HStack(alignment: .top, spacing: 20) {
                     
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Expand your mind")
@@ -45,7 +44,7 @@ struct LetsReadCard: View {
                         Text("Each word you read strengthens your journey. Keep exploring!")
                             .font(AppConfig.Fonts.small)
                             .foregroundColor(AppConfig.Colors.textSecondary)
-                            .lineLimit(3)
+                            .lineLimit(2)
                             .lineSpacing(4)
                         
     //                    HStack(spacing: 6) {
@@ -61,16 +60,16 @@ struct LetsReadCard: View {
     //                    .cornerRadius(20)
     //                    .padding(.top, 4)
                     }
-                    
+//                    Spacer()
                         Image("BigShoesTorso")
                             .resizable()
                             .scaledToFill()
                             .frame(width: 80, height: 80)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle()
-                                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-                            )
+//                            .clipShape(Circle())
+//                            .overlay(
+//                                Circle()
+//                                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+//                            )
                             .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 }
                 .padding(20)

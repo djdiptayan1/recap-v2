@@ -66,6 +66,7 @@ struct ArticleCard: View {
 
 #Preview {
     let mockArticle = articleModel(
+        id: "String",
         title: "Latest Research on Alzheimer's and Memory Retention",
         author: "Dr. L. Chen",
         content: "Caregiving can be highly rewarding, but requires strategic management of the patient's routine and the caregiver's own health to avoid burnout. Remember to prioritize sleep and short breaks.",

@@ -11,4 +11,9 @@ import Combine
 
 class AppState: ObservableObject {
     @Published var isLoggedIn: Bool = false
+    @Published var currentUser: patientModel? {
+        didSet {
+            isLoggedIn = currentUser != nil
+        }
+    }
 }

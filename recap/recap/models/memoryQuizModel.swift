@@ -8,9 +8,16 @@
 import Foundation
 import SwiftUI
 
-struct QuizQuestion: Identifiable {
-    let id = UUID()
-    let text: String
+struct QuizQuestion: Identifiable, Codable {
+    let id: String
+    let question: String
+    let order: Int
+    let correctAnswer: Bool
+}
+
+struct QuizResponse: Codable {
+    let success: Bool
+    let data: [QuizQuestion]
 }
 
 struct QuizResult {

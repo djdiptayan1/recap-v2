@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9D43B9262EE209090039C22F /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B9252EE209090039C22F /* FirebaseAuth */; };
+		9D43B9282EE209090039C22F /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B9272EE209090039C22F /* FirebaseCore */; };
+		9D43B92A2EE209090039C22F /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B9292EE209090039C22F /* FirebaseDatabase */; };
+		9D43B92C2EE209090039C22F /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B92B2EE209090039C22F /* FirebaseFirestore */; };
+		9D43B92F2EE209EB0039C22F /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B92E2EE209EB0039C22F /* GoogleSignIn */; };
+		9D43B9312EE209EB0039C22F /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B9302EE209EB0039C22F /* GoogleSignInSwift */; };
 		9DA698F12EE0A38400B5B333 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9DA698F02EE0A38400B5B333 /* SDWebImageSwiftUI */; };
 /* End PBXBuildFile section */
 
@@ -14,9 +20,22 @@
 		9DA696EA2EE05C4A00B5B333 /* recap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = recap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		9D43B9332EE20AF50039C22F /* Exceptions for "recap" folder in "recap" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 9DA696E92EE05C4A00B5B333 /* recap */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9DA696EC2EE05C4A00B5B333 /* recap */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				9D43B9332EE20AF50039C22F /* Exceptions for "recap" folder in "recap" target */,
+			);
 			path = recap;
 			sourceTree = "<group>";
 		};
@@ -28,6 +47,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				9DA698F12EE0A38400B5B333 /* SDWebImageSwiftUI in Frameworks */,
+				9D43B9282EE209090039C22F /* FirebaseCore in Frameworks */,
+				9D43B9312EE209EB0039C22F /* GoogleSignInSwift in Frameworks */,
+				9D43B92A2EE209090039C22F /* FirebaseDatabase in Frameworks */,
+				9D43B92C2EE209090039C22F /* FirebaseFirestore in Frameworks */,
+				9D43B9262EE209090039C22F /* FirebaseAuth in Frameworks */,
+				9D43B92F2EE209EB0039C22F /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +96,12 @@
 			name = recap;
 			packageProductDependencies = (
 				9DA698F02EE0A38400B5B333 /* SDWebImageSwiftUI */,
+				9D43B9252EE209090039C22F /* FirebaseAuth */,
+				9D43B9272EE209090039C22F /* FirebaseCore */,
+				9D43B9292EE209090039C22F /* FirebaseDatabase */,
+				9D43B92B2EE209090039C22F /* FirebaseFirestore */,
+				9D43B92E2EE209EB0039C22F /* GoogleSignIn */,
+				9D43B9302EE209EB0039C22F /* GoogleSignInSwift */,
 			);
 			productName = recap;
 			productReference = 9DA696EA2EE05C4A00B5B333 /* recap.app */;
@@ -102,6 +133,8 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				9DA698EF2EE0A38400B5B333 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */,
+				9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				9D43B92D2EE209EB0039C22F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 9DA696EB2EE05C4A00B5B333 /* Products */;
@@ -265,6 +298,7 @@
 				DEVELOPMENT_TEAM = G2TY2Q3KD8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = recap/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -297,6 +331,7 @@
 				DEVELOPMENT_TEAM = G2TY2Q3KD8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = recap/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -343,6 +378,22 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.6.0;
+			};
+		};
+		9D43B92D2EE209EB0039C22F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		9DA698EF2EE0A38400B5B333 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/SDWebImage/SDWebImageSwiftUI.git";
@@ -354,6 +405,36 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		9D43B9252EE209090039C22F /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		9D43B9272EE209090039C22F /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		9D43B9292EE209090039C22F /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		9D43B92B2EE209090039C22F /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		9D43B92E2EE209EB0039C22F /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B92D2EE209EB0039C22F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		9D43B9302EE209EB0039C22F /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B92D2EE209EB0039C22F /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
 		9DA698F02EE0A38400B5B333 /* SDWebImageSwiftUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 9DA698EF2EE0A38400B5B333 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;

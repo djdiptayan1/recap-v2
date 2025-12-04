@@ -21,4 +21,15 @@ struct FamilyMember: Codable, Identifiable, Equatable {
     let password: String
     let imageName: String
     let imageURL: String
+    
+    init(id: String, name: String, relationship: String, phone: String, email: String, password: String, imageName: String, imageURL: String) {
+        self.id = id
+        self.name = name
+        self.relationship = relationship
+        self.phone = phone
+        self.email = email
+        self.password = password
+        self.imageName = imageName
+        self.imageURL = imageURL
+    }
 }

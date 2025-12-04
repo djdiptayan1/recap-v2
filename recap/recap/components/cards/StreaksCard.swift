@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct StreaksCard: View {
-    @State private var maxStreak = 0
-    @State private var currentStreak = 0
-    @State private var activeDays = 0
+    @EnvironmentObject var appState: AppState
+    @StateObject private var viewModel = StreakViewModel(documentID: "")
 
     private let flameGradient = LinearGradient(
         colors: [Color.orange, Color.red],
@@ -19,11 +18,13 @@ struct StreaksCard: View {
     )
 
     var body: some View {
-        NavigationLink(destination: StreaksView(verifiedUserDocID: "DUMMYY")) {
+        let documentID = appState.currentUser?.id ?? ""
+        
+        NavigationLink(destination: StreaksView(documentID: documentID)) {
             VStack(spacing: 0) {
                 HStack {
                     Text("Daily Insight")
-                        .font(AppConfig.Fonts.titleMedium)
+                        .font(AppConfig.Fonts.headline)
                         .foregroundColor(AppConfig.Colors.textPrimary)
 
                     Spacer()
@@ -39,9 +40,8 @@ struct StreaksCard: View {
 
                 HStack(spacing: 0) {
                     SingleStatColumn(
-                        //                    icon: "trophy.fill",
                         color: Color.yellow,
-                        value: "\(maxStreak)",
+                        value: "\(viewModel.maxStreak)",
                         label: "Max Streak"
                     )
 
@@ -50,9 +50,8 @@ struct StreaksCard: View {
                         .frame(width: 1, height: 40)
 
                     SingleStatColumn(
-                        //                    icon: "flame.fill",
                         color: Color.orange,
-                        value: "\(currentStreak)",
+                        value: "\(viewModel.currentStreak)",
                         label: "Current"
                     )
 
@@ -61,15 +60,13 @@ struct StreaksCard: View {
                         .frame(width: 1, height: 40)
 
                     SingleStatColumn(
-                        //                    icon: "calendar.badge.clock",
                         color: AppConfig.Colors.accent,
-                        value: "\(activeDays)",
+                        value: "\(viewModel.activeDays)",
                         label: "Active Days"
                     )
                 }
                 .padding(.vertical, 20)
             }
-            //        .background(Color.white)
             .glassEffect(.clear, in: .rect)
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(
@@ -83,21 +80,21 @@ struct StreaksCard: View {
                     .stroke(AppConfig.Colors.stroke, lineWidth: 1)
             )
             .onAppear {
-                loadStreakData()
+                if !documentID.isEmpty {
+                    viewModel.updateDocumentID(documentID)
+                    Task {
+                        await viewModel.fetchStreakStats()
+                    }
+                }
             }
-        }
-    }
-
-    private func loadStreakData() {
-        let defaults = UserDefaults.standard
-        if defaults.object(forKey: "maxStreak") == nil {
-            maxStreak = 12
-            currentStreak = 5
-            activeDays = 45
-        } else {
-            maxStreak = defaults.integer(forKey: "maxStreak")
-            currentStreak = defaults.integer(forKey: "currentStreak")
-            activeDays = defaults.integer(forKey: "activeDays")
+            .onChange(of: documentID) { newID in
+                if !newID.isEmpty {
+                    viewModel.updateDocumentID(newID)
+                    Task {
+                        await viewModel.fetchStreakStats()
+                    }
+                }
+            }
         }
     }
 }

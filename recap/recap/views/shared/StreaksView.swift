@@ -9,13 +9,21 @@ import SwiftUI
 import Combine
 
 struct StreaksView: View {
-    let verifiedUserDocID: String
-    @StateObject private var viewModel: StreaksViewModel
+    let documentID: String
+    @StateObject private var viewModel: StreakViewModel
     @State private var showInfoCard = false
     
-    init(verifiedUserDocID: String) {
-        self.verifiedUserDocID = verifiedUserDocID
-        _viewModel = StateObject(wrappedValue: StreaksViewModel(verifiedUserDocID: verifiedUserDocID))
+    @State private var currentMonth: Int
+    @State private var currentYear: Int
+    
+    init(documentID: String) {
+        self.documentID = documentID
+        _viewModel = StateObject(wrappedValue: StreakViewModel(documentID: documentID))
+        
+        let calendar = Calendar.current
+        let now = Date()
+        _currentMonth = State(initialValue: calendar.component(.month, from: now))
+        _currentYear = State(initialValue: calendar.component(.year, from: now))
     }
     
     var body: some View {
@@ -33,10 +41,10 @@ struct StreaksView: View {
                     
                     VStack(spacing: 0) {
                         CalendarHeader(
-                            month: monthName(viewModel.currentMonth),
-                            year: "\(viewModel.currentYear)",
-                            onPrevious: { viewModel.previousMonth() },
-                            onNext: { viewModel.nextMonth() }
+                            month: monthName(currentMonth),
+                            year: "\(currentYear)",
+                            onPrevious: previousMonth,
+                            onNext: nextMonth
                         )
                         
                         Divider()
@@ -44,8 +52,8 @@ struct StreaksView: View {
                             .padding(.horizontal, 16)
                         
                         CalendarGrid(
-                            currentMonth: viewModel.currentMonth,
-                            currentYear: viewModel.currentYear,
+                            currentMonth: currentMonth,
+                            currentYear: currentYear,
                             streakDates: viewModel.streakDates
                         )
                         .padding(16)
@@ -66,24 +74,45 @@ struct StreaksView: View {
                     .padding(.bottom, 20)
                 }
             }
-            
-            // Info Overlay (Preserved logic, updated style)
-//            if showInfoCard {
-//                InfoCardOverlay(onDismiss: { showInfoCard = false })
-//            }
         }
         .standardBackground()
         .navigationTitle("Streaks")
-//        .toolbar {
-//            ToolbarItem(placement: .navigationBarTrailing) {
-//                Button(action: { showInfoCard = true }) {
-//                    Image(systemName: "questionmark.circle")
-//                        .foregroundColor(AppConfig.Colors.textPrimary)
-//                }
-//            }
-//        }
         .onAppear {
-            viewModel.loadStreakData()
+            loadData()
+        }
+        .onChange(of: currentMonth) { _ in
+            fetchMonthData()
+        }
+    }
+    
+    private func loadData() {
+        Task {
+            await viewModel.fetchStreakStats()
+            await viewModel.fetchStreakMonth(year: currentYear, month: currentMonth)
+        }
+    }
+    
+    private func fetchMonthData() {
+        Task {
+            await viewModel.fetchStreakMonth(year: currentYear, month: currentMonth)
+        }
+    }
+    
+    private func previousMonth() {
+        if currentMonth == 1 {
+            currentMonth = 12
+            currentYear -= 1
+        } else {
+            currentMonth -= 1
+        }
+    }
+    
+    private func nextMonth() {
+        if currentMonth == 12 {
+            currentMonth = 1
+            currentYear += 1
+        } else {
+            currentMonth += 1
         }
     }
     
@@ -106,7 +135,7 @@ struct UnifiedStatsCard: View {
                 value: "\(maxStreak)",
                 label: "Max Streak",
                 icon: "trophy.fill",
-                color: Color.yellow,
+                color: Color.yellow
             )
             
             Rectangle()
@@ -117,7 +146,7 @@ struct UnifiedStatsCard: View {
                 value: "\(currentStreak)",
                 label: "Current",
                 icon: "flame.fill",
-                color: Color.orange,
+                color: Color.orange
             )
             
             Rectangle()
@@ -128,7 +157,7 @@ struct UnifiedStatsCard: View {
                 value: "\(activeDays)",
                 label: "Active Days",
                 icon: "calendar.badge.clock",
-                color: AppConfig.Colors.accent,
+                color: AppConfig.Colors.accent
             )
         }
         .padding(.vertical, 24)
@@ -187,14 +216,14 @@ struct CalendarHeader: View {
             HStack(spacing: 16) {
                 Button(action: onPrevious) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(AppConfig.Colors.textSecondary)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(AppConfig.Colors.textSecondary)
                 }
                 
                 Button(action: onNext) {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(AppConfig.Colors.textSecondary)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(AppConfig.Colors.textSecondary)
                 }
             }
         }
@@ -282,85 +311,8 @@ struct CalendarDayCell: View {
     }
 }
 
-
 #Preview {
     NavigationStack {
-        StreaksView(verifiedUserDocID: "dummyy")
-    }
-}
-
-
-// TODO: REMOVE WHEN CONNECTING DB/BACKEND
-
-class StreaksViewModel: ObservableObject {
-    @Published var maxStreak: Int = 0
-    @Published var currentStreak: Int = 0
-    @Published var activeDays: Int = 0
-    @Published var streakDates: [String: Bool] = [:]
-    @Published var currentMonth: Int
-    @Published var currentYear: Int
-    
-    private let verifiedUserDocID: String
-    private let streakService: StreakService
-    
-    init(verifiedUserDocID: String) {
-        self.verifiedUserDocID = verifiedUserDocID
-        
-        let calendar = Calendar.current
-        let now = Date()
-        self.currentMonth = calendar.component(.month, from: now)
-        self.currentYear = calendar.component(.year, from: now)
-        
-        self.streakService = StreakService(verifiedUserDocID: verifiedUserDocID)
-        
-        // Setup callback
-        streakService.streakDataFetched = { [weak self] maxStreak, currentStreak, activeDays in
-            DispatchQueue.main.async {
-                self?.maxStreak = maxStreak
-                self?.currentStreak = currentStreak
-                self?.activeDays = activeDays
-            }
-        }
-    }
-    
-    func loadStreakData() {
-        // Guard against empty user ID
-        guard !verifiedUserDocID.isEmpty else {
-            print("❌ StreaksViewModel: Cannot load streak data - verifiedUserDocID is empty")
-            return
-        }
-        
-        streakService.fetchAndUpdateStreakStats()
-        fetchStreakDates()
-    }
-    
-    func previousMonth() {
-        if currentMonth == 1 {
-            currentMonth = 12
-            currentYear -= 1
-        } else {
-            currentMonth -= 1
-        }
-        fetchStreakDates()
-    }
-    
-    func nextMonth() {
-        if currentMonth == 12 {
-            currentMonth = 1
-            currentYear += 1
-        } else {
-            currentMonth += 1
-        }
-        fetchStreakDates()
-    }
-    
-    private func fetchStreakDates() {
-        let yearMonth = "\(currentYear)-\(String(format: "%02d", currentMonth))"
-        
-        streakService.getStreaksForUser(yearMonth: yearMonth) { [weak self] streak in
-            DispatchQueue.main.async {
-                self?.streakDates = streak?.streakDates ?? [:]
-            }
-        }
+        StreaksView(documentID: "dummyy")
     }
 }

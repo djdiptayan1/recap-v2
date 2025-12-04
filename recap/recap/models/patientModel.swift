@@ -16,8 +16,10 @@ struct patientModel: Codable {
     var bloodGroup: String
     var stage: String
     var profileImageURL: String?
-    var id: String
+    var id: String?
     var email: String
+    var type: String?
+    var familyMembers: [String]?
 
     init(firstName: String = "",
          lastName: String = "",
@@ -28,8 +30,9 @@ struct patientModel: Codable {
          stage: String = "",
          profileImageURL: String? = nil,
          email: String = "",
-         id: String) {
-        self.id = UUID().uuidString
+         id: String? = nil,
+         type: String? = nil,
+         familyMembers: [String]? = nil) {
         self.firstName = firstName
         self.lastName = lastName
         self.patientUID = patientUID
@@ -38,8 +41,10 @@ struct patientModel: Codable {
         self.bloodGroup = bloodGroup
         self.stage = stage
         self.profileImageURL = profileImageURL
-        self.id = id
+        self.id = id ?? UUID().uuidString
         self.email = email
+        self.type = type
+        self.familyMembers = familyMembers
     }
 
     static let userDefaultsKey = "patientProfile"
