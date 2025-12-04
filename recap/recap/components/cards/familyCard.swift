@@ -11,7 +11,7 @@ struct FamilyCard: View {
     
     // Color logic
     private var relationshipColor: Color {
-        switch member.relationship.lowercased() {
+        switch member.relation.lowercased() {
         case "son", "brother", "father", "husband": return Color.blue
         case "daughter", "sister", "mother", "wife": return Color.pink
         default: return AppConfig.Colors.accent
@@ -54,7 +54,7 @@ struct FamilyCard: View {
             HStack(alignment: .bottom, spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
                     // Relationship Badge (Horizontal Pill)
-                    Text(member.relationship.uppercased())
+                    Text(member.relation.uppercased())
                         .font(.system(size: 10, weight: .bold))
                         .tracking(1)
                         .foregroundColor(.white)
@@ -111,11 +111,9 @@ struct FamilyCard: View {
         let familyMember = FamilyMember(
             id: UUID().uuidString,
             name: "Jack Puth",
-            relationship: "Husband",
+            relation: "Husband",
             phone: "8208457322",
             email: "contact@example.com",
-            password: "password",
-            imageName: "familyImg",
             imageURL: "https://as1.ftcdn.net/v2/jpg/02/99/04/20/1000_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg"
         )
         

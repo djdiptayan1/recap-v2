@@ -58,6 +58,7 @@ struct AppConfig {
         static let citations = "citations"
         static let memoryQuiz = "memoryquiz"
         static let streaks = "streaks"
+        static let familyMembers = "familymembers"
     }
 
     struct FirebaseCollections{

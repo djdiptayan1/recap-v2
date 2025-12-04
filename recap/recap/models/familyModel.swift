@@ -13,23 +13,25 @@ enum RelationshipCategory: String, Codable, CaseIterable {
 }
 
 struct FamilyMember: Codable, Identifiable, Equatable {
-    var id: String
+    let id: String
     let name: String
-    let relationship: String
+    let relation: String
     let phone: String
     let email: String
-    let password: String
-    let imageName: String
     let imageURL: String
     
-    init(id: String, name: String, relationship: String, phone: String, email: String, password: String, imageName: String, imageURL: String) {
-        self.id = id
-        self.name = name
-        self.relationship = relationship
-        self.phone = phone
-        self.email = email
-        self.password = password
-        self.imageName = imageName
-        self.imageURL = imageURL
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case relation
+        case phone
+        case email
+        case imageURL
     }
+}
+
+struct FamilyMemberResponse: Codable {
+    let success: Bool
+    let data: [FamilyMember]
+    let count: Int
 }

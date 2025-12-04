@@ -26,16 +26,16 @@ struct StreakStatsData: Codable {
     let initialized: Bool
 }
 
-struct FirestoreTimestamp: Codable {
+struct FirestoreTimestamp: Codable, Equatable {
     let type: String
     let seconds: Int
     let nanoseconds: Int
     
-    enum CodingKeys: String, CodingKey {
-        case type
-        case seconds
-        case nanoseconds
-    }
+//    enum CodingKeys: String, CodingKey {
+//        case type
+//        case seconds
+//        case nanoseconds
+//    }
 }
 
 // MARK: - Year Response
