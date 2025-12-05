@@ -25,8 +25,9 @@ class AuthService {
     }
     
     // MARK: - Google Login
+    // MARK: - Google Login Helper
     @MainActor
-    func signInWithGoogle() async throws -> patientModel {
+    func performGoogleSignIn() async throws -> (user: User, email: String) {
         guard let clientID = FirebaseApp.app()?.options.clientID else {
             throw NSError(domain: "AuthService", code: 0, userInfo: [NSLocalizedDescriptionKey: "No Client ID found"])
         }
@@ -54,6 +55,13 @@ class AuthService {
              throw NSError(domain: "AuthService", code: 3, userInfo: [NSLocalizedDescriptionKey: "No email found in auth result"])
         }
         
+        return (authResult.user, email)
+    }
+
+    // MARK: - Google Login (Patient)
+    @MainActor
+    func signInWithGoogle() async throws -> patientModel {
+        let (_, email) = try await performGoogleSignIn()
         let userModel = try await fetchUser(email: email)
         return userModel
     }

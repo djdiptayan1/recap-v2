@@ -20,6 +20,9 @@ struct patientModel: Codable {
     var email: String
     var type: String?
     var familyMembers: [String]?
+    var relation: String?
+    var phone: String?
+    var linkedPatient: LinkedPatientModel?
 
     init(firstName: String = "",
          lastName: String = "",
@@ -32,7 +35,8 @@ struct patientModel: Codable {
          email: String = "",
          id: String? = nil,
          type: String? = nil,
-         familyMembers: [String]? = nil) {
+         familyMembers: [String]? = nil,
+         linkedPatient: LinkedPatientModel? = nil) {
         self.firstName = firstName
         self.lastName = lastName
         self.patientUID = patientUID
@@ -45,9 +49,27 @@ struct patientModel: Codable {
         self.email = email
         self.type = type
         self.familyMembers = familyMembers
+        self.linkedPatient = linkedPatient
     }
 
     static let userDefaultsKey = "patientProfile"
+}
+
+struct LinkedPatientModel: Codable {
+    var firstName: String
+    var lastName: String
+    let patientUID: String
+    var dateOfBirth: String
+    var sex: String
+    var bloodGroup: String
+    var stage: String
+    var profileImageURL: String?
+    var id: String?
+    var email: String
+    var type: String?
+    var familyMembers: [String]?
+    var relation: String?
+    var phone: String?
 }
 
 enum SexOptions: String, Codable, CaseIterable {

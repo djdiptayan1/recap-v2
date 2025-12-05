@@ -9,15 +9,7 @@ import SwiftUI
 
 struct PatientLoginView: View {
     @EnvironmentObject var appState: AppState
-//    @StateObject private var viewModel = PatientLoginViewModel()
-
-    @State private var email = ""
-    @State private var password = ""
-    @State private var showPassword = false
-
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    @State private var isLoading = false
+    @StateObject private var viewModel = PatientLoginViewModel()
 
     var body: some View {
         VStack {
@@ -48,7 +40,7 @@ struct PatientLoginView: View {
                         AestheticInput(
                             icon: "envelope.fill",
                             placeholder: "Email address",
-                            text: $email,
+                            text: $viewModel.email,
                             isPasswordVisible: .constant(false)
                         )
 
@@ -56,10 +48,10 @@ struct PatientLoginView: View {
                             AestheticInput(
                                 icon: "lock.fill",
                                 placeholder: "Password",
-                                text: $password,
+                                text: $viewModel.password,
                                 isSecure: true,
                                 showToggle: true,
-                                isPasswordVisible: $showPassword
+                                isPasswordVisible: $viewModel.showPassword
                             )
 
                             Button("Forgot Password?") {
@@ -71,7 +63,7 @@ struct PatientLoginView: View {
 
                         Button(action: loginWithEmail) {
                             HStack {
-                                if isLoading {
+                                if viewModel.isLoading {
                                     ProgressView()
                                         .tint(.white)
                                         .padding(.trailing, 5)
@@ -86,7 +78,7 @@ struct PatientLoginView: View {
                             .cornerRadius(AppConfig.UI.cornerRadius)
                             .shadow(color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
                         }
-                        .disabled(isLoading)
+                        .disabled(viewModel.isLoading)
                     }
                     .padding(.horizontal, AppConfig.UI.screenPadding)
 
@@ -121,14 +113,6 @@ struct PatientLoginView: View {
                             )
                             .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                         }
-
-                        // Apple
-//                            SignInWithAppleButton(.signIn) { request in
-//                                viewModel.handleAppleSignIn(request: request)
-//                            } onCompletion: { result in
-//                                handleAppleSignInCompletion(result)
-//                            }
-//                            .signInWithAppleButtonStyle(.black)
                         .frame(height: 56)
                         .cornerRadius(AppConfig.UI.cornerRadius)
                     }
@@ -153,10 +137,10 @@ struct PatientLoginView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .alert("Error", isPresented: $showAlert) {
+        .alert("Error", isPresented: $viewModel.showAlert) {
             Button("OK") {}
         } message: {
-            Text(alertMessage)
+            Text(viewModel.alertMessage)
         }
         .background(
             Color.clear
@@ -171,21 +155,10 @@ struct PatientLoginView: View {
     // MARK: - Logic Functions
     
     private func loginWithEmail() {
-        guard !email.isEmpty, !password.isEmpty else { return }
-        isLoading = true
-        
         Task {
-            do {
-                let user = try await AuthService.shared.signIn(email: email, password: password)
+            if let user = await viewModel.loginWithEmail() {
                 await MainActor.run {
                     appState.currentUser = user
-                    isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    alertMessage = error.localizedDescription
-                    showAlert = true
-                    isLoading = false
                 }
             }
         }
@@ -193,15 +166,9 @@ struct PatientLoginView: View {
     
     private func signInWithGoogle() {
         Task {
-            do {
-                let user = try await AuthService.shared.signInWithGoogle()
+            if let user = await viewModel.signInWithGoogle() {
                 await MainActor.run {
                     appState.currentUser = user
-                }
-            } catch {
-                await MainActor.run {
-                    alertMessage = error.localizedDescription
-                    showAlert = true
                 }
             }
         }

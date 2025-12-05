@@ -24,8 +24,13 @@ struct recapApp: App {
     var body: some Scene {
         WindowGroup {
             if appState.isLoggedIn {
-                patientTabbar()
-                    .environmentObject(appState)
+                if appState.currentUser?.type == "patient" {
+                    patientTabbar()
+                        .environmentObject(appState)
+                } else {
+                    familyTabbar()
+                        .environmentObject(appState)
+                }
             } else {
                 welcomeView()
                     .environmentObject(appState)

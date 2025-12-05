@@ -59,6 +59,12 @@ struct AppConfig {
         static let memoryQuiz = "memoryquiz"
         static let streaks = "streaks"
         static let familyMembers = "familymembers"
+        
+        //auth
+        static let verifyUID = "auth/verify-uid"
+        static let veryfyFamily = "auth/verify-familymember"
+        static let createFamilyUser = "auth/create-family-user"
+        static let verifyFamilyMember = "auth/verify-familymember"
     }
 
     struct FirebaseCollections{

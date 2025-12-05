@@ -8,13 +8,8 @@
 import SwiftUI
 import CryptoKit
 struct FamilyLoginView: View {
-    
-    @State private var patientUID = ""
-    @State private var isVerified = false
-    
-    @State private var showAlert = false
-    @State private var alertMessage = ""
-    @State private var isLoading = false
+    @EnvironmentObject var appState: AppState
+    @StateObject private var viewModel = FamilyLoginViewModel()
     
     var body: some View {
         NavigationStack {
@@ -46,15 +41,15 @@ struct FamilyLoginView: View {
                         
                         VStack(spacing: 30) {
                             
-                            if !isVerified {
+                            if !viewModel.isVerified {
                                 // 1. The New 6-Box Input
-                                OTPInputView(text: $patientUID)
+                                OTPInputView(text: $viewModel.patientUID)
                                     .padding(.bottom, 10)
 
                                 // 2. Verify Button
-                                Button(action: verifyPatientUID) {
+                                Button(action: viewModel.verifyPatientUID) {
                                     HStack {
-                                        if isLoading {
+                                        if viewModel.isLoading {
                                             ProgressView().tint(.white)
                                         }
                                         Text("Verify ID")
@@ -62,13 +57,13 @@ struct FamilyLoginView: View {
                                     }
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 56)
-                                    .background(patientUID.count == 6 ? AppConfig.Colors.accent : AppConfig.Colors.textSecondary.opacity(0.3))
+                                    .background(viewModel.patientUID.count == 6 ? AppConfig.Colors.accent : AppConfig.Colors.textSecondary.opacity(0.3))
                                     .foregroundColor(.white)
                                     .cornerRadius(AppConfig.UI.cornerRadius)
-                                    .shadow(color: patientUID.count == 6 ? AppConfig.Colors.accent.opacity(0.4) : .clear, radius: 10, x: 0, y: 5)
-                                    .animation(.easeInOut, value: patientUID)
+                                    .shadow(color: viewModel.patientUID.count == 6 ? AppConfig.Colors.accent.opacity(0.4) : .clear, radius: 10, x: 0, y: 5)
+                                    .animation(.easeInOut, value: viewModel.patientUID)
                                 }
-                                .disabled(patientUID.count < 6 || isLoading)
+                                .disabled(viewModel.patientUID.count < 6 || viewModel.isLoading)
                                 
                             } else {
                                 HStack(spacing: 16) {
@@ -93,8 +88,7 @@ struct FamilyLoginView: View {
                                     
                                     Button(action: {
                                         withAnimation {
-                                            isVerified = false
-                                            patientUID = ""
+                                            viewModel.resetVerification()
                                         }
                                     }) {
                                         Image(systemName: "xmark.circle.fill")
@@ -155,20 +149,20 @@ struct FamilyLoginView: View {
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
-                        .opacity(isVerified ? 1.0 : 0.4)
-                        .grayscale(isVerified ? 0.0 : 1.0)
-                        .disabled(!isVerified || isLoading)
-                        .animation(.easeInOut, value: isVerified)
+                        .opacity(viewModel.isVerified ? 1.0 : 0.4)
+                        .grayscale(viewModel.isVerified ? 0.0 : 1.0)
+                        .disabled(!viewModel.isVerified || viewModel.isLoading)
+                        .animation(.easeInOut, value: viewModel.isVerified)
                         
                         Spacer()
                     }
                 }
                 .scrollIndicators(.hidden)
             }
-            .alert("Notice", isPresented: $showAlert) {
+            .alert("Notice", isPresented: $viewModel.showAlert) {
                 Button("OK") {}
             } message: {
-                Text(alertMessage)
+                Text(viewModel.alertMessage)
             }
             .background(
                 Color.clear
@@ -182,10 +176,21 @@ struct FamilyLoginView: View {
     }
     
     
-    private func verifyPatientUID() {
+    private func signInWithGoogle() {
+        Task {
+            do {
+                let user = try await viewModel.signInWithGoogle()
+                await MainActor.run {
+                    appState.currentUser = user
+                }
+            } catch {
+                await MainActor.run {
+                    viewModel.alertMessage = error.localizedDescription
+                    viewModel.showAlert = true
+                }
+            }
+        }
     }
-    
-    private func signInWithGoogle() {}
     private func handleAppleSignInCompletion() {}
     
     private func hideKeyboard() {

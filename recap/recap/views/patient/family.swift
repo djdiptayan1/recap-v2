@@ -10,7 +10,7 @@ import SwiftUI
 struct familyView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var viewModel = FamilyViewModel(documentID: "")
-    
+
     // Increased spacing for a cleaner, less cramped look
     let columns = [
         GridItem(.flexible(), spacing: 20),
@@ -19,7 +19,7 @@ struct familyView: View {
 
     var body: some View {
         let documentID = appState.currentUser?.id ?? ""
-        
+
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
@@ -44,7 +44,7 @@ struct familyView: View {
                                 FamilyCard(member: member)
                             }
                         }
-                        
+
                         // Bottom padding for scrolling
                         Spacer().frame(height: 40)
                     }
@@ -74,5 +74,12 @@ struct familyView: View {
 }
 
 #Preview {
-    familyView()
+    let appState = AppState()
+    appState.currentUser = patientModel(
+        firstName: "Preview",
+        lastName: "User",
+        id: "NxCgHvgB2AXtvaxxfhw9OCqZIKy1"
+    )
+    return familyView()
+        .environmentObject(appState)
 }
