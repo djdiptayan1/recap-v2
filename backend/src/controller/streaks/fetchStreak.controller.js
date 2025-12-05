@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
+import { validationResult } from 'express-validator';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
@@ -13,6 +14,10 @@ const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
 
 async function getStreakStats(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { documentId } = req.params;
         const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
         const docSnap = await getDoc(coreRef);
@@ -56,6 +61,10 @@ async function getStreakStats(req, res, next) {
 
 async function getMonthStreak(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { documentId } = req.params;
         const { yearMonth } = req.query; // e.g., 2025-04
 
@@ -78,6 +87,10 @@ async function getMonthStreak(req, res, next) {
 
 async function getYearStreaks(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { documentId } = req.params;
         const { year } = req.query; // e.g., 2025
 

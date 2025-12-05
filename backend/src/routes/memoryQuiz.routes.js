@@ -1,4 +1,5 @@
 import express from 'express';
+import { body, param, query } from 'express-validator';
 import memoryQuizController from '../controller/memoryQuiz/getQuizQuestions.js';
 
 const router = express.Router();

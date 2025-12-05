@@ -14,12 +14,17 @@ import {
 import { firestore } from '../utils/db.js';
 import config from '../../config.js';
 import { ARTICLE_FIELDS } from '../models/articles.model.js';
+import { validationResult } from 'express-validator';
 
 const COLLECTION_NAME = config.firestoreNames.articlesCollection;
 const articlesRef = () => collection(firestore, COLLECTION_NAME);
 
 async function createArticle(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const payload = {};
         ARTICLE_FIELDS.forEach(k => {
             if (req.body[k] !== undefined) payload[k] = req.body[k];
@@ -40,6 +45,10 @@ async function createArticle(req, res, next) {
 
 async function getArticleByID(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const snap = await getDoc(doc(firestore, COLLECTION_NAME, req.params.id));
         if (!snap.exists()) {
             return res.status(404).json({ success: false, error: 'Article not found' });
@@ -52,6 +61,10 @@ async function getArticleByID(req, res, next) {
 
 async function getAllArticles(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { limit = 20, after } = req.query;
         let q = query(articlesRef(), limitFn(Math.min(100, Math.max(1, parseInt(limit, 10) || 20))));
 
@@ -73,6 +86,10 @@ async function getAllArticles(req, res, next) {
 
 async function updateArticle(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { id } = req.params;
         const updates = {};
         ARTICLE_FIELDS.forEach(k => {
@@ -95,6 +112,10 @@ async function updateArticle(req, res, next) {
 
 async function deleteArticle(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { id } = req.params;
         await deleteDoc(doc(firestore, COLLECTION_NAME, id));
         return res.status(204).send();

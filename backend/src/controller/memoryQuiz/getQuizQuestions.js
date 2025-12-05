@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
+import { validationResult } from 'express-validator';
 
 const COLLECTION_NAME = config.firestoreNames.memoryQuizCollection;
 const memoryQuizRef = () => collection(firestore, COLLECTION_NAME);

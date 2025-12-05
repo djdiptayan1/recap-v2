@@ -7,6 +7,7 @@ import {
 } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
+import { validationResult } from 'express-validator';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
@@ -119,6 +120,10 @@ async function calculateStreakStats(documentId) {
 
 async function updateStreak(req, res, next) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
         const { documentId } = req.body;
         if (!documentId) {
             return res.status(400).json({ success: false, error: 'documentId is required' });
