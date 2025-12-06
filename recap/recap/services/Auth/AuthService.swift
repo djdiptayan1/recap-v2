@@ -21,6 +21,15 @@ class AuthService {
     func signIn(email: String, password: String) async throws -> patientModel {
         let _ = try await Auth.auth().signIn(withEmail: email, password: password)
         let user = try await fetchUser(email: email)
+        
+        // Save to Keychain
+        if let id = user.id {
+            try? KeychainManager.shared.save(key: .documentID, value: id)
+        }
+        if !user.patientUID.isEmpty {
+            try? KeychainManager.shared.save(key: .patientUID, value: user.patientUID)
+        }
+        
         return user
     }
     
@@ -63,6 +72,15 @@ class AuthService {
     func signInWithGoogle() async throws -> patientModel {
         let (_, email) = try await performGoogleSignIn()
         let userModel = try await fetchUser(email: email)
+        
+        // Save to Keychain
+        if let id = userModel.id {
+            try? KeychainManager.shared.save(key: .documentID, value: id)
+        }
+        if !userModel.patientUID.isEmpty {
+             try? KeychainManager.shared.save(key: .patientUID, value: userModel.patientUID)
+        }
+        
         return userModel
     }
     
@@ -84,5 +102,9 @@ class AuthService {
     
     func signOut() throws {
         try Auth.auth().signOut()
+        try? KeychainManager.shared.delete(key: .documentID)
+        try? KeychainManager.shared.delete(key: .patientUID)
+        try? KeychainManager.shared.delete(key: .familyDocumentID)
+        try? KeychainManager.shared.delete(key: .userType)
     }
 }

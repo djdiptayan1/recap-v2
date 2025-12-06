@@ -67,6 +67,29 @@ class FamilyLoginViewModel: ObservableObject {
             let response = try await authService.verifyFamilyMember(email: email, documentId: patientDocumentId)
             
             if response.success {
+                // Save to Keychain
+                do {
+                    // Save the Family Member's ID as the main documentID (User ID)
+                    if let familyId = response.familymember_documentId {
+                        try KeychainManager.shared.save(key: .documentID, value: familyId)
+                    }
+                    
+                    // Save the patientUID linking code
+                    try KeychainManager.shared.save(key: .patientUID, value: patientUID)
+                    
+                    // Optionally save Linked Patient ID if needed (e.g. for fetching their specific data directly)
+                    if let linkedPatientId = response.patientdata?.id {
+                         // We might want to store this as a separate key if we need to distinguish between "My ID" and "Patient ID"
+                         // But for now, patientUID might be enough for looking up the patient.
+                         // Let's store it safely if we have a key for it, otherwise skipping.
+                    }
+                    
+                    try KeychainManager.shared.save(key: .userType, value: "family")
+                    
+                } catch {
+                    print("Error saving to Keychain: \(error)")
+                }
+                
                 // Create patientModel from response
                 // Note: We might need to fetch the full patient details or just use what we have.
                 // The response gives us family member details.

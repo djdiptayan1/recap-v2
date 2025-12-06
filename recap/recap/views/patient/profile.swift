@@ -207,7 +207,7 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showMemoryCheck) {
                 if let patient = appState.currentUser, let id = patient.id {
-                    MemoryQuizView(documentID: id)
+                    MemoryQuizView()
                         .presentationDetents([.large])
                         .presentationDragIndicator(.visible)
                 }

@@ -22,11 +22,9 @@ class MemoryQuizViewModel: ObservableObject {
     @Published var isProcessingAnswer = false
     var apiResult: QuizSubmissionData?
     
-    private let documentID: String
+    // Remove stored documentID property since we fetch it from Keychain
     
-    init(documentID: String) {
-        self.documentID = documentID
-    }
+    // Remove init with documentID
     
     var progress: CGFloat {
         guard !questions.isEmpty else { return 0 }
@@ -87,6 +85,14 @@ class MemoryQuizViewModel: ObservableObject {
     
     func submitQuiz() async {
         await MainActor.run { isSubmitting = true }
+        
+        guard let documentID = KeychainManager.shared.getString(key: .documentID) else {
+            await MainActor.run {
+                self.errorMessage = "User not authenticated (ID not found)"
+                self.isSubmitting = false
+            }
+            return
+        }
         
         print("Submitting quiz result for documentID: \(documentID) with score: \(trueAnswersCount)")
         let request = QuizSubmissionRequest(documentId: documentID, score: Int(trueAnswersCount))

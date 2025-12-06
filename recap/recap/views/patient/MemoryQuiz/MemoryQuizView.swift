@@ -8,12 +8,8 @@
 import SwiftUI
 
 struct MemoryQuizView: View {
-    @StateObject private var viewModel: MemoryQuizViewModel
+    @StateObject private var viewModel = MemoryQuizViewModel()
     @Environment(\.dismiss) var dismiss
-
-    init(documentID: String) {
-        _viewModel = StateObject(wrappedValue: MemoryQuizViewModel(documentID: documentID))
-    }
 
     var body: some View {
         NavigationStack {
@@ -158,5 +154,5 @@ struct AnswerButtonLabel: View {
 }
 
 #Preview {
-    MemoryQuizView(documentID: "test-id")
+    MemoryQuizView()
 }
