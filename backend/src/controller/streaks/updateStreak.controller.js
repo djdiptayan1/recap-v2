@@ -129,6 +129,17 @@ async function updateStreak(req, res, next) {
             return res.status(400).json({ success: false, error: 'documentId is required' });
         }
 
+        // Check if user exists
+        const userRef = doc(firestore, USERS_COLLECTION, documentId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
         const { full: todayFull, yearMonth } = getFormattedDate();
 
         // 1. Ensure monthly doc exists

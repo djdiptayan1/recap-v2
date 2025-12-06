@@ -19,6 +19,18 @@ async function getStreakStats(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
         const { documentId } = req.params;
+
+        // Check if user exists
+        const userRef = doc(firestore, USERS_COLLECTION, documentId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
         const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
         const docSnap = await getDoc(coreRef);
 
@@ -66,6 +78,18 @@ async function getMonthStreak(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
         const { documentId } = req.params;
+
+        // Check if user exists
+        const userRef = doc(firestore, USERS_COLLECTION, documentId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
         const { yearMonth } = req.query; // e.g., 2025-04
 
         if (!yearMonth) {
@@ -92,6 +116,18 @@ async function getYearStreaks(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
         const { documentId } = req.params;
+
+        // Check if user exists
+        const userRef = doc(firestore, USERS_COLLECTION, documentId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
+        }
+
         const { year } = req.query; // e.g., 2025
 
         if (!year) {

@@ -28,7 +28,7 @@ struct QuizResultView: View {
                             .foregroundColor(result.color)
                     }
                     
-                    Text("Your Score: \(result.score) / 15")
+                    Text("Your Score: \(result.score) / \(result.totalQuestions)")
                         .font(AppConfig.Fonts.titleMedium)
                         .foregroundColor(AppConfig.Colors.textPrimary)
                 }

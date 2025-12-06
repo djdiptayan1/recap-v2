@@ -206,9 +206,11 @@ struct ProfileView: View {
                 Text("Are you sure you want to log out?")
             }
             .sheet(isPresented: $showMemoryCheck) {
-                MemoryCheckView()
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
+                if let patient = appState.currentUser, let id = patient.id {
+                    MemoryQuizView(documentID: id)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                }
             }
         }
     }

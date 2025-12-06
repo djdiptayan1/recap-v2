@@ -7,9 +7,13 @@
 
 import SwiftUI
 
-struct MemoryCheckView: View {
-    @StateObject private var viewModel = MemoryQuizViewModel()
+struct MemoryQuizView: View {
+    @StateObject private var viewModel: MemoryQuizViewModel
     @Environment(\.dismiss) var dismiss
+
+    init(documentID: String) {
+        _viewModel = StateObject(wrappedValue: MemoryQuizViewModel(documentID: documentID))
+    }
 
     var body: some View {
         NavigationStack {
@@ -32,7 +36,9 @@ struct MemoryCheckView: View {
                         .buttonStyle(.borderedProminent)
                     }
                 } else if !viewModel.questions.isEmpty {
-                    if !viewModel.isCompleted {
+                    if viewModel.isSubmitting {
+                        ProgressView("Submitting results...")
+                    } else if !viewModel.isCompleted {
                         VStack(spacing: 8) {
                             HStack {
                                 Text("Question \(viewModel.currentIndex + 1)")
@@ -152,5 +158,5 @@ struct AnswerButtonLabel: View {
 }
 
 #Preview {
-    MemoryCheckView()
+    MemoryQuizView(documentID: "test-id")
 }

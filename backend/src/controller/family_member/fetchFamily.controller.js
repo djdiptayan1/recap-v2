@@ -1,6 +1,8 @@
 import {
     collection,
     getDocs,
+    doc,
+    getDoc,
 } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
@@ -19,6 +21,17 @@ async function getFamilyMembers(req, res, next) {
 
         if (!documentId) {
             return res.status(400).json({ success: false, error: 'documentId is required' });
+        }
+
+        // Check if user exists
+        const userRef = doc(firestore, USERS_COLLECTION, documentId);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+            });
         }
 
         const familyRef = collection(firestore, USERS_COLLECTION, documentId, FAMILY_MEMBERS_COLLECTION);

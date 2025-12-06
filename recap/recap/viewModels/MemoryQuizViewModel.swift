@@ -18,6 +18,16 @@ class MemoryQuizViewModel: ObservableObject {
     @Published var trueAnswersCount = 0
     @Published var isCompleted = false
     
+    @Published var isSubmitting = false
+    @Published var isProcessingAnswer = false
+    var apiResult: QuizSubmissionData?
+    
+    private let documentID: String
+    
+    init(documentID: String) {
+        self.documentID = documentID
+    }
+    
     var progress: CGFloat {
         guard !questions.isEmpty else { return 0 }
         return CGFloat(currentIndex) / CGFloat(questions.count)
@@ -30,76 +40,118 @@ class MemoryQuizViewModel: ObservableObject {
         do {
             let response: QuizResponse = try await NetworkManager.shared.request(endpoint: MemoryQuizAPI.getQuestions)
             if response.success {
-                self.questions = response.data.sorted { $0.order < $1.order }
+                await MainActor.run {
+                    self.questions = response.data.sorted { $0.order < $1.order }
+                }
             } else {
-                self.errorMessage = "Failed to fetch questions"
+                await MainActor.run {
+                    self.errorMessage = "Failed to fetch questions"
+                }
             }
         } catch {
-            self.errorMessage = error.localizedDescription
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+            }
             print("Error fetching questions: \(error)")
         }
         
-        isLoading = false
+        await MainActor.run {
+            isLoading = false
+        }
     }
     
     func submitAnswer(isTrue: Bool) {
-        if isTrue {
+        guard !isProcessingAnswer else { return }
+        isProcessingAnswer = true
+        
+        guard currentIndex < questions.count else { return }
+        let currentQuestion = questions[currentIndex]
+        
+        if isTrue != currentQuestion.correctAnswer {
             trueAnswersCount += 1
         }
         
         if currentIndex < questions.count - 1 {
             withAnimation {
                 currentIndex += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    self?.isProcessingAnswer = false
+                }
             }
         } else {
-            withAnimation {
-                isCompleted = true
+            Task {
+                await submitQuiz()
+            }
+        }
+    }
+    
+    func submitQuiz() async {
+        await MainActor.run { isSubmitting = true }
+        
+        print("Submitting quiz result for documentID: \(documentID) with score: \(trueAnswersCount)")
+        let request = QuizSubmissionRequest(documentId: documentID, score: Int(trueAnswersCount))
+        
+        do {
+            let response: QuizSubmissionResponse = try await NetworkManager.shared.request(
+                endpoint: MemoryQuizAPI.submitResult(request: request)
+            )
+            
+            await MainActor.run {
+                if response.success {
+                    self.apiResult = response.data
+                    self.isCompleted = true
+                } else {
+                    self.errorMessage = response.message
+                }
+                self.isSubmitting = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isSubmitting = false
             }
         }
     }
     
     func getResult() -> QuizResult {
-        switch trueAnswersCount {
-        case 0...8:
+        if let data = apiResult {
             return QuizResult(
-                score: trueAnswersCount,
-                title: "Functioning Okay",
-                description: "Your brain is functioning okay. By learning to relax and maintain a healthy diet, your brain can function at even higher levels.",
-                color: Color.green,
-                icon: "brain.head.profile"
-            )
-        case 9...11:
-            return QuizResult(
-                score: trueAnswersCount,
-                title: "Brain in Danger",
-                description: "Your brain is in danger. Check your diet today. You can reduce brain drain and memory loss with vitamins, brain foods, herbs, yoga and meditation techniques, and appropriate medications.",
-                color: Color.orange,
-                icon: "exclamationmark.triangle.fill"
-            )
-        default: // 12-15
-            return QuizResult(
-                score: trueAnswersCount,
-                title: "Running on Empty",
-                description: "Your brain is running on empty. You should see your doctor. You can refuel your brain and prevent further memory loss with food, vitamins, herbs, exercises, and medications.",
-                color: Color.red,
-                icon: "battery.0.percent"
+                score: data.totalScore,
+                totalQuestions: data.totalQuestions,
+                title: data.result.status,
+                description: data.result.description,
+                color: data.swiftColor,
+                icon: data.result.icon
             )
         }
+        
+        // Fallback for initial state or error (should not be shown if isCompleted is managed correctly)
+        return QuizResult(
+            score: trueAnswersCount,
+            totalQuestions: questions.count,
+            title: "Processing...",
+            description: "Please wait while we analyze your results.",
+            color: .gray,
+            icon: "hourglass"
+        )
     }
     
     func restart() {
         currentIndex = 0
         trueAnswersCount = 0
         isCompleted = false
+        isSubmitting = false
+        apiResult = nil
     }
 }
 
 private enum MemoryQuizAPI: Endpoint {
     case getQuestions
+    case submitResult(request: QuizSubmissionRequest)
     
     var path: String {
         switch self {
-        case .getQuestions:
+        case .getQuestions, .submitResult:
             return AppConfig.ApiEndpoints.memoryQuiz
         }
     }
@@ -108,6 +160,17 @@ private enum MemoryQuizAPI: Endpoint {
         switch self {
         case .getQuestions:
             return .get
+        case .submitResult:
+            return .post
+        }
+    }
+    
+    var body: Encodable? {
+        switch self {
+        case .getQuestions:
+            return nil
+        case .submitResult(let request):
+            return request
         }
     }
 }
