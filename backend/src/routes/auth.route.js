@@ -2,6 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import { verifyUID } from '../auth/verifyUID.controller.js';
 import { verifyFamilyMember } from '../auth/verifyFamilyMember.controller.js';
+import { patientSignup } from '../auth/patientSignup.controller.js';
 
 const router = express.Router();
 
@@ -19,6 +20,13 @@ router.post(
     body('email').isEmail().withMessage('Invalid email format'),
     body('documentId').isString().notEmpty().withMessage('documentId is required'),
     verifyFamilyMember
+);
+
+router.post(
+    '/patientsignup',
+    body('uid').isString().notEmpty(),
+    body('email').isEmail(),
+    patientSignup
 );
 
 export default router;
