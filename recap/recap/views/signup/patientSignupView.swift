@@ -11,29 +11,28 @@ struct patientSignupView: View {
     @StateObject private var viewModel = PatientSignupViewModel()
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var appState: AppState
-    
+
     // Visibility Toggles
     @State private var isPasswordVisible = false
     @State private var isConfirmVisible = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
-                        
                         VStack(spacing: 16) {
                             Image("recapLogo")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 80, height: 80)
                                 .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10)
-                            
+
                             VStack(spacing: 6) {
                                 Text(viewModel.currentStep == .credentials ? "Create Account" : "Tell us about you")
                                     .font(AppConfig.Fonts.titleLarge)
                                     .foregroundColor(AppConfig.Colors.textPrimary)
-                                
+
                                 Text(viewModel.currentStep == .credentials ? "Begin your memory journey today" : "Help us personalize your experience")
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
@@ -41,32 +40,35 @@ struct patientSignupView: View {
                         }
                         .padding(.top, 40)
                         .padding(.bottom, 40)
-                        
+
                         VStack(spacing: 20) {
-                            
-                            if viewModel.currentStep == .credentials {
-                                // STEP 1: CREDENTIALS
-                                credentialsForm
-                                    .transition(.asymmetric(
-                                        insertion: .move(edge: .trailing),
-                                        removal: .move(edge: .leading)
-                                    ))
-                            } else if viewModel.currentStep == .details {
-                                // STEP 2: DETAILS
-                                detailsForm
-                                    .transition(.asymmetric(
-                                        insertion: .move(edge: .trailing),
-                                        removal: .move(edge: .leading)
-                                    ))
-                            } else {
-                                // STEP 3: IMAGE UPLOAD
-                                imageUploadForm
-                                    .transition(.asymmetric(
-                                        insertion: .move(edge: .trailing),
-                                        removal: .move(edge: .leading)
-                                    ))
+                            ZStack(alignment: .top) {
+                                if viewModel.currentStep == .credentials {
+                                    credentialsForm
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .trailing),
+                                            removal: .move(edge: .leading)
+                                        ))
+                                }
+
+                                if viewModel.currentStep == .details {
+                                    detailsForm
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .trailing),
+                                            removal: .move(edge: .leading)
+                                        ))
+                                }
+
+                                if viewModel.currentStep == .imageUpload {
+                                    imageUploadForm
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .trailing),
+                                            removal: .move(edge: .leading)
+                                        ))
+                                }
                             }
-                            
+                            .animation(.easeInOut(duration: 0.4), value: viewModel.currentStep)
+
                             if let error = viewModel.errorMessage {
                                 HStack {
                                     Image(systemName: "exclamationmark.triangle.fill")
@@ -77,15 +79,23 @@ struct patientSignupView: View {
                                 .padding(.horizontal)
                                 .transition(.opacity)
                             }
-                            
+
                             Button(action: viewModel.handlePrimaryAction) {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
                                             .tint(.white)
                                     } else {
-                                        Text(viewModel.currentStep == .credentials ? "Create Account" : "Complete Setup")
-                                            .font(AppConfig.Fonts.headline)
+                                        if viewModel.currentStep == .credentials {
+                                            Text("Create Account")
+                                                .font(AppConfig.Fonts.headline)
+                                        } else if viewModel.currentStep == .details {
+                                            Text("Next Step")
+                                                .font(AppConfig.Fonts.headline)
+                                        } else {
+                                            Text("Complete Setup")
+                                                .font(AppConfig.Fonts.headline)
+                                        }
                                     }
                                 }
                                 .frame(maxWidth: .infinity)
@@ -100,15 +110,15 @@ struct patientSignupView: View {
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
                         .animation(.spring(), value: viewModel.currentStep)
-                        
+
                         Spacer().frame(height: 40)
-                        
+
                         if viewModel.currentStep == .credentials {
                             HStack {
                                 Text("Already have an account?")
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
-                                
+
                                 Button("Log In") {
                                     dismiss()
                                 }
@@ -138,9 +148,9 @@ struct patientSignupView: View {
             }
         }
     }
-    
+
     // MARK: - Subviews
-    
+
     var credentialsForm: some View {
         VStack(spacing: 20) {
             // Email
@@ -150,7 +160,7 @@ struct patientSignupView: View {
                 text: $viewModel.email,
                 isPasswordVisible: .constant(false)
             )
-            
+
             // Password
             AestheticInput(
                 icon: "lock.fill",
@@ -160,7 +170,7 @@ struct patientSignupView: View {
                 showToggle: true,
                 isPasswordVisible: $isPasswordVisible
             )
-            
+
             // Confirm Password
             AestheticInput(
                 icon: "lock.shield.fill",
@@ -172,7 +182,7 @@ struct patientSignupView: View {
             )
         }
     }
-    
+
     var detailsForm: some View {
         VStack(spacing: 20) {
             // Name
@@ -183,7 +193,7 @@ struct patientSignupView: View {
                     text: $viewModel.firstName,
                     isPasswordVisible: .constant(false)
                 )
-                
+
                 AestheticInput(
                     icon: "", // No icon for second field to save space or visual balance
                     placeholder: "Last Name",
@@ -191,24 +201,28 @@ struct patientSignupView: View {
                     isPasswordVisible: .constant(false)
                 )
             }
-            
+
             // Date of Birth
             VStack(alignment: .leading, spacing: 8) {
                 Text("Date of Birth")
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textSecondary)
                     .padding(.leading, 4)
-                
+
                 DatePicker("", selection: $viewModel.dateOfBirth, displayedComponents: .date)
-                    .datePickerStyle(.compact)
+                    .datePickerStyle(.automatic)
                     .labelsHidden()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                    .background(AppConfig.Colors.textSecondary)
+                    .background(Color.white)
                     .cornerRadius(AppConfig.UI.cornerRadius)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                            .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                    )
             }
 
-            
             // Pickers Row
             HStack(spacing: 12) {
                 // Sex
@@ -228,10 +242,15 @@ struct patientSignupView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(AppConfig.Colors.textSecondary)
+                    .background(Color.white)
                     .cornerRadius(AppConfig.UI.cornerRadius)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                            .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                    )
                 }
-                
+
                 // Blood Group
                 Menu {
                     ForEach(viewModel.bloodGroups, id: \.self) { group in
@@ -249,18 +268,23 @@ struct patientSignupView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(AppConfig.Colors.textSecondary)
+                    .background(Color.white)
                     .cornerRadius(AppConfig.UI.cornerRadius)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                            .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                    )
                 }
             }
-            
+
             // Stage
             VStack(alignment: .leading, spacing: 8) {
                 Text("Stage")
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textSecondary)
                     .padding(.leading, 4)
-                
+
                 Picker("Stage", selection: $viewModel.stage) {
                     ForEach(viewModel.stages, id: \.self) { stage in
                         Text(stage).tag(stage)
@@ -270,15 +294,17 @@ struct patientSignupView: View {
             }
         }
     }
+
     // MARK: - Image Upload Form
+
     var imageUploadForm: some View {
         VStack(spacing: 24) {
             Text("Add a Profile Photo")
                 .font(AppConfig.Fonts.headline)
                 .foregroundColor(AppConfig.Colors.textPrimary)
-            
+
             ImagePicker(selectedImage: $viewModel.profileImage)
-            
+
             Text("Tap to select a photo from your library")
                 .font(AppConfig.Fonts.small)
                 .foregroundColor(AppConfig.Colors.textSecondary)
