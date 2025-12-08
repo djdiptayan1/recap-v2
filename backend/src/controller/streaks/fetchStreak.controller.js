@@ -11,7 +11,7 @@ import { validationResult } from 'express-validator';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
-const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
+// const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
 
 async function getStreakStats(req, res, next) {
     try {

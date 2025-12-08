@@ -3,15 +3,17 @@ import {
     getDoc,
     setDoc,
     updateDoc,
-    serverTimestamp,
+    collection,
+    getDocs
 } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
+import { calculateStreakMetrics } from '../../utils/streakCalculator.js';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
-const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
+// const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
 
 // Helper to get formatted date strings
 const getFormattedDate = (date = new Date()) => {
@@ -42,80 +44,6 @@ async function ensureCurrentMonthExists(documentId, yearMonth) {
         }
         await setDoc(streakDocRef, streakData);
     }
-}
-
-async function ensureStreaksCoreExists(documentId) {
-    const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
-    const docSnap = await getDoc(coreRef);
-
-    if (!docSnap.exists()) {
-        await setDoc(coreRef, { initialized: true }, { merge: true });
-    }
-}
-
-async function calculateStreakStats(documentId) {
-    await ensureStreaksCoreExists(documentId);
-    const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
-    const docSnap = await getDoc(coreRef);
-
-    if (!docSnap.exists()) return;
-
-    const data = docSnap.data();
-    const maxStreak = data.maxStreak || 0;
-    const currentStreak = data.currentStreak || 0;
-    const activeDays = data.activeDays || 0;
-    const lastAnsweredDate = data.lastAnsweredDate ? data.lastAnsweredDate.toDate() : new Date(0);
-    const totalQuestionsAnswered = data.totalQuestionsAnswered || 0;
-    const correctAnswers = data.correctAnswers || 0;
-    let longestBreak = data.longestBreak || 0;
-
-    const today = new Date();
-    const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const lastDate = new Date(lastAnsweredDate.getFullYear(), lastAnsweredDate.getMonth(), lastAnsweredDate.getDate());
-
-    const diffTime = Math.abs(todayDate - lastDate);
-    const daysSinceLastAnswer = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    let newCurrentStreak = currentStreak;
-    let newMaxStreak = maxStreak;
-    let newActiveDays = activeDays;
-    let newAnsweredToday = false;
-    let newLongestBreak = longestBreak;
-    const newTotalQuestionsAnswered = totalQuestionsAnswered + 1;
-
-    if (daysSinceLastAnswer === 0) {
-        newAnsweredToday = true;
-    } else if (daysSinceLastAnswer === 1) {
-        newCurrentStreak += 1;
-        newActiveDays += 1;
-        newAnsweredToday = true;
-    } else {
-        newCurrentStreak = 1; // Reset to 1 if break > 1 day
-        newAnsweredToday = true;
-        newActiveDays += 1;
-        if (totalQuestionsAnswered > 0) {
-            newLongestBreak = Math.max(newLongestBreak, daysSinceLastAnswer);
-        }
-    }
-
-    newMaxStreak = Math.max(newMaxStreak, newCurrentStreak);
-
-    await setDoc(coreRef, {
-        maxStreak: newMaxStreak,
-        answeredToday: newAnsweredToday,
-        currentStreak: newCurrentStreak,
-        activeDays: newActiveDays,
-        totalQuestionsAnswered: newTotalQuestionsAnswered,
-        correctAnswers: correctAnswers,
-        longestBreak: newLongestBreak,
-        lastAnsweredDate: serverTimestamp(),
-    }, { merge: true });
-
-    return {
-        maxStreak: newMaxStreak,
-        currentStreak: newCurrentStreak,
-        activeDays: newActiveDays,
-    };
 }
 
 async function updateStreak(req, res, next) {
@@ -151,10 +79,30 @@ async function updateStreak(req, res, next) {
             [todayFull]: true
         });
 
-        // 3. Calculate and update core stats
-        const stats = await calculateStreakStats(documentId);
+        // 3. Dynamic Calculation: Fetch ALL streak documents to return updated stats
+        const streaksRef = collection(firestore, USERS_COLLECTION, documentId, STREAKS_COLLECTION);
+        const snapshot = await getDocs(streaksRef);
 
-        return res.status(200).json({ success: true, data: stats });
+        let allStreakData = {};
+        snapshot.forEach(doc => {
+            const monthData = doc.data();
+            Object.assign(allStreakData, monthData);
+        });
+
+        // Ensure the current update is reflected (in case of eventual consistency lag, though usually safe within same client context, but good safety)
+        allStreakData[todayFull] = true;
+
+        const { currentStreak, maxStreak, activeDays, lastAnsweredDate } = calculateStreakMetrics(allStreakData);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                currentStreak,
+                maxStreak,
+                activeDays,
+                lastAnsweredDate: lastAnsweredDate ? new Date(lastAnsweredDate) : null
+            }
+        });
     } catch (err) {
         next(err);
     }
