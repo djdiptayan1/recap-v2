@@ -17,8 +17,12 @@ struct StreaksView: View {
     @State private var currentYear: Int
     
     init(documentID: String) {
-        self.documentID = documentID
-        _viewModel = StateObject(wrappedValue: StreakViewModel(documentID: documentID))
+        // Prefer patientDocumentID from Keychain, fallback to passed ID
+        let keychainID = KeychainManager.shared.getString(key: .patientDocumentID) ?? ""
+        let finalID = !keychainID.isEmpty ? keychainID : documentID
+        
+        self.documentID = finalID
+        _viewModel = StateObject(wrappedValue: StreakViewModel(documentID: finalID))
         
         let calendar = Calendar.current
         let now = Date()

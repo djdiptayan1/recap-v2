@@ -18,7 +18,8 @@ struct StreaksCard: View {
     )
 
     var body: some View {
-        let documentID = appState.currentUser?.id ?? ""
+        // Use patientDocumentID for Streaks data
+        let documentID = KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id ?? ""
         
         NavigationLink(destination: StreaksView(documentID: documentID)) {
             VStack(spacing: 0) {

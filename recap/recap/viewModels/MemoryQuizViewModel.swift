@@ -65,7 +65,7 @@ class MemoryQuizViewModel: ObservableObject {
         guard currentIndex < questions.count else { return }
         let currentQuestion = questions[currentIndex]
         
-        if isTrue != currentQuestion.correctAnswer {
+        if isTrue == currentQuestion.correctAnswer {
             trueAnswersCount += 1
         }
         

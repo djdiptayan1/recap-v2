@@ -25,6 +25,8 @@ class AuthService {
         // Save to Keychain
         if let id = user.id {
             try? KeychainManager.shared.save(key: .documentID, value: id)
+            // For regular patient login, user ID IS the patient document ID
+            try? KeychainManager.shared.save(key: .patientDocumentID, value: id)
         }
         if !user.patientUID.isEmpty {
             try? KeychainManager.shared.save(key: .patientUID, value: user.patientUID)
@@ -33,7 +35,6 @@ class AuthService {
         return user
     }
     
-    // MARK: - Google Login
     // MARK: - Google Login Helper
     @MainActor
     func performGoogleSignIn() async throws -> (user: User, email: String) {
@@ -76,6 +77,8 @@ class AuthService {
         // Save to Keychain
         if let id = userModel.id {
             try? KeychainManager.shared.save(key: .documentID, value: id)
+            // For regular patient login, user ID IS the patient document ID
+            try? KeychainManager.shared.save(key: .patientDocumentID, value: id)
         }
         if !userModel.patientUID.isEmpty {
              try? KeychainManager.shared.save(key: .patientUID, value: userModel.patientUID)
@@ -106,5 +109,6 @@ class AuthService {
         try? KeychainManager.shared.delete(key: .patientUID)
         try? KeychainManager.shared.delete(key: .familyDocumentID)
         try? KeychainManager.shared.delete(key: .userType)
+        try? KeychainManager.shared.delete(key: .patientDocumentID)
     }
 }

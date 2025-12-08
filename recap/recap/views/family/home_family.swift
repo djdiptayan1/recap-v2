@@ -13,7 +13,7 @@ struct home_family: View {
             ScrollView {
                 VStack(spacing: 24) {
                     QuestionsCard()
-//                    StreaksCard()
+                    StreaksCard()
 //                    LetsReadCard()
                 }
                 .padding(AppConfig.UI.screenPadding - 10)

@@ -72,10 +72,16 @@ class FamilyLoginViewModel: ObservableObject {
                     // Save the Family Member's ID as the main documentID (User ID)
                     if let familyId = response.familymember_documentId {
                         try KeychainManager.shared.save(key: .documentID, value: familyId)
+                        try KeychainManager.shared.save(key: .familyDocumentID, value: familyId)
                     }
                     
                     // Save the patientUID linking code
                     try KeychainManager.shared.save(key: .patientUID, value: patientUID)
+                    
+                    // Save the patientDocumentID for Streaks and other patient-specific modules
+                    if !patientDocumentId.isEmpty {
+                        try KeychainManager.shared.save(key: .patientDocumentID, value: patientDocumentId)
+                    }
                     
                     // Optionally save Linked Patient ID if needed (e.g. for fetching their specific data directly)
                     if let linkedPatientId = response.patientdata?.id {
