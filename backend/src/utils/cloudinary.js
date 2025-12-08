@@ -88,7 +88,8 @@ const getOptimizedUrl = (publicId, options = {}) => {
         return cloudinary.url(publicId, {
             fetch_format: 'auto',   // Auto format (WebP/AVIF etc)
             quality: 'auto',        // Auto quality balance
-            // dpr: 'auto',            // Auto Device Pixel Ratio
+            gravity: 'auto',        // Auto gravity ()
+            // dpr: 'auto',         // Auto Device Pixel Ratio
             // flags: ['progressive', 'strip_profile'], // Progressive loading + Remove metadata
             ...options
         });
