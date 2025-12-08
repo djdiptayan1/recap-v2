@@ -15,7 +15,7 @@ cloudinary.config({
  * @param {string} [filename] - Original filename (without extension preferred)
  * @returns {Promise<import('cloudinary').UploadApiResponse|null>}
  */
-const uploadOnCloudinary = async (fileBuffer, folder = "recap", filename) => {
+const uploadOnCloudinary = async (fileBuffer, folder = "recap", filename, transformation = []) => {
     try {
         if (!fileBuffer) return null;
 
@@ -86,9 +86,10 @@ const getOptimizedUrl = (publicId, options = {}) => {
         if (!publicId) return null;
 
         return cloudinary.url(publicId, {
-            fetch_format: 'auto',
-            quality: 'auto',
-            gravity: 'auto',
+            fetch_format: 'auto',   // Auto format (WebP/AVIF etc)
+            quality: 'auto',        // Auto quality balance
+            // dpr: 'auto',            // Auto Device Pixel Ratio
+            // flags: ['progressive', 'strip_profile'], // Progressive loading + Remove metadata
             ...options
         });
     } catch (error) {
