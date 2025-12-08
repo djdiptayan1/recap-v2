@@ -19,7 +19,7 @@ export default {
         usersCollection: 'users',
 
         streaks_SubCollection: 'streaks',
-        streaksCore_SubCollection: 'streaksCore',
+        // streaksCore_SubCollection: 'streaksCore',
         familyMembers_SubCollection: 'family_members',
         memoryCheckReports_SubCollection: 'memoryCheckReports',
     }
