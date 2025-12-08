@@ -66,6 +66,7 @@ struct AppConfig {
         static let veryfyFamily = "auth/verify-familymember"
         static let createFamilyUser = "auth/create-family-user"
         static let verifyFamilyMember = "auth/verify-familymember"
+        static let patientSignupCompletion = "auth/patientsignup"
     }
 
     struct FirebaseCollections{

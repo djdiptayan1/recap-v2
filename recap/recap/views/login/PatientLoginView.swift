@@ -126,8 +126,7 @@ struct PatientLoginView: View {
                             .foregroundColor(AppConfig.Colors.textSecondary)
 
                         Button("Sign Up") {
-                 // Bypass Auth for now
-        appState.isLoggedIn = true
+                            viewModel.showSignupSheet = true
                         }
                         .font(AppConfig.Fonts.bodyBold)
                         .foregroundColor(AppConfig.Colors.accent)
@@ -136,6 +135,9 @@ struct PatientLoginView: View {
                 }
             }
             .scrollIndicators(.hidden)
+            .sheet(isPresented: $viewModel.showSignupSheet) {
+                patientSignupView()
+            }
         }
         .alert("Error", isPresented: $viewModel.showAlert) {
             Button("OK") {}

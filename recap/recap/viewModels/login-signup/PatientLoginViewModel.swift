@@ -18,6 +18,7 @@ class PatientLoginViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showAlert = false
     @Published var alertMessage = ""
+    @Published var showSignupSheet = false
     
     private let authService = PatientAuthService.shared
     

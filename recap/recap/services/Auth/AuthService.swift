@@ -35,6 +35,14 @@ class AuthService {
         return user
     }
     
+    // MARK: - Email/Password Signup
+    func signup(email: String, password: String) async throws -> User {
+        let result = try await Auth.auth().createUser(withEmail: email, password: password)
+        return result.user
+    }
+    
+
+    
     // MARK: - Google Login Helper
     @MainActor
     func performGoogleSignIn() async throws -> (user: User, email: String) {

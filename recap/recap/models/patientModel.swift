@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct patientModel: Codable {
+struct patientModel: Codable, Equatable {
     var firstName: String
     var lastName: String
     let patientUID: String
@@ -55,7 +55,7 @@ struct patientModel: Codable {
     static let userDefaultsKey = "patientProfile"
 }
 
-struct LinkedPatientModel: Codable {
+struct LinkedPatientModel: Codable, Equatable {
     var firstName: String
     var lastName: String
     let patientUID: String
@@ -94,3 +94,5 @@ enum StageOptions: String, Codable, CaseIterable {
     case Middle
     case Advanced
 }
+
+
