@@ -15,15 +15,15 @@ struct StreakStatsResponse: Codable {
 
 struct StreakStatsData: Codable {
     let lastAnswered: FirestoreTimestamp?
-    let longestBreak: Int
+    let longestBreak: Int?
     let activeDays: Int
-    let correctAnswers: Int
-    let totalQuestionsAnswered: Int
+    let correctAnswers: Int?
+    let totalQuestionsAnswered: Int?
     let answeredToday: Bool
     let currentStreak: Int
-    let lastAnsweredDate: FirestoreTimestamp?
+    let lastAnsweredDate: String?
     let maxStreak: Int
-    let initialized: Bool
+    let initialized: Bool?
 }
 
 struct FirestoreTimestamp: Codable, Equatable {
