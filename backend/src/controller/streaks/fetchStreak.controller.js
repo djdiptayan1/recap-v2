@@ -5,6 +5,7 @@ import {
     getDocs,
 } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
+import { calculateStreakMetrics } from '../../utils/streakCalculator.js';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
 
@@ -31,39 +32,33 @@ async function getStreakStats(req, res, next) {
             });
         }
 
-        const coreRef = doc(firestore, USERS_COLLECTION, documentId, STREAKS_CORE_COLLECTION, 'streakData');
-        const docSnap = await getDoc(coreRef);
+        // Fetch ALL streak documents
+        const streaksRef = collection(firestore, USERS_COLLECTION, documentId, STREAKS_COLLECTION);
+        const snapshot = await getDocs(streaksRef);
 
-        if (!docSnap.exists()) {
-            return res.status(200).json({ success: true, data: { initialized: false } });
-        }
+        let allStreakData = {};
+        snapshot.forEach(doc => {
+            const monthData = doc.data();
+            // Merge this month's data into the master object
+            // keys are 'YYYY-MM-DD'
+            Object.assign(allStreakData, monthData);
+        });
 
-        const data = docSnap.data();
+        const { currentStreak, maxStreak, activeDays, lastAnsweredDate } = calculateStreakMetrics(allStreakData);
 
-        // Calculate effective streak for display
-        const lastAnsweredDate = data.lastAnsweredDate ? data.lastAnsweredDate.toDate() : new Date(0);
-        const today = new Date();
-        const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-        const lastDate = new Date(lastAnsweredDate.getFullYear(), lastAnsweredDate.getMonth(), lastAnsweredDate.getDate());
-
-        const diffTime = Math.abs(todayDate - lastDate);
-        const daysSinceLastAnswer = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        let effectiveCurrentStreak = data.currentStreak || 0;
-        let effectiveAnsweredToday = false;
-
-        if (daysSinceLastAnswer === 0) {
-            effectiveAnsweredToday = true;
-        } else if (daysSinceLastAnswer > 1) {
-            effectiveCurrentStreak = 0;
-        }
+        // Determine if answered today
+        const todayStr = new Date().toISOString().split('T')[0];
+        const answeredToday = !!allStreakData[todayStr];
 
         return res.status(200).json({
             success: true,
             data: {
-                ...data,
-                currentStreak: effectiveCurrentStreak,
-                answeredToday: effectiveAnsweredToday
+                currentStreak,
+                maxStreak,
+                activeDays,
+                answeredToday,
+                lastAnsweredDate: lastAnsweredDate ? new Date(lastAnsweredDate) : null,
+                totalQuestionsAnswered: activeDays // Approximate, or if stored separately kept elsewhere. Assuming 1 Q per day for now based on 'activeDays' logic request.
             }
         });
     } catch (err) {
