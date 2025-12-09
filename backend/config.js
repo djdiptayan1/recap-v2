@@ -17,10 +17,25 @@ export default {
         citationsCollection: 'Citations',
         memoryQuizCollection: 'MemoryQuiz',
         usersCollection: 'users',
+        questionsCollection: 'Questions',
 
         streaks_SubCollection: 'streaks',
         // streaksCore_SubCollection: 'streaksCore',
         familyMembers_SubCollection: 'family_members',
         memoryCheckReports_SubCollection: 'memoryCheckReports',
+    },
+
+    questions: {
+        maxQuestions_perDay: 7,
+        number_of_immediate_questions: 4,
+        number_of_distant_questions: 2,
+        number_of_remote_questions: 1,
+
+    },
+
+    question_category: {
+        immediate: 'immediateMemory',
+        recent: 'recentMemory',
+        remote: 'remoteMemory'
     }
 };

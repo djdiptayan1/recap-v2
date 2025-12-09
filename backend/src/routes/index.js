@@ -6,6 +6,7 @@ import streaksRouter from './streaks.routes.js';
 import familyMemberRouter from './familyMember.routes.js';
 import authRouter from './auth.route.js';
 import patientRouter from './patient.routes.js';
+import questionsRouter from './questions.routes.js';
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use('/streaks', streaksRouter);
 router.use('/patient', patientRouter);
 router.use('/familymembers', familyMemberRouter);
 router.use('/auth', authRouter);
+router.use('/questions', questionsRouter);
 
 export default router;
