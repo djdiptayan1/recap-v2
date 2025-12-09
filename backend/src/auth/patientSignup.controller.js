@@ -4,7 +4,7 @@ import config from '../../config.js';
 import generateUniquePatientID from '../utils/generateUniquePatientID.js';
 import { uploadOnCloudinary, getOptimizedUrl, deleteFromCloudinary } from '../utils/cloudinary.js';
 
-export const patientSignup = async (req, res) => {
+export const patientSignup = async (req, res, next) => {
     try {
         const { uid,
             email,
@@ -72,10 +72,6 @@ export const patientSignup = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error in patientSignup:', error);
-        return res.status(500).json({
-            error: error,
-            message: 'Internal Server Error'
-        });
+        next(error);
     }
 };
