@@ -30,7 +30,8 @@ class FamilyViewModel: ObservableObject {
         var path: String {
             switch self {
             case .fetch(let documentID):
-                return "familymembers/\(documentID)"
+                return AppConfig.ApiEndpoints.familyMembers + "/\(documentID)"
+//                return "familymembers/\(documentID)"
             }
         }
         

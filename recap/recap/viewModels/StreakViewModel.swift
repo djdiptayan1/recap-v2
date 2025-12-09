@@ -36,11 +36,12 @@ class StreakViewModel: ObservableObject {
         var path: String {
             switch self {
             case .stats(let documentID):
-                return "streaks/stats/\(documentID)"
+                return AppConfig.ApiEndpoints.streakStats + "/\(documentID)"
+//                return "streaks/stats/\(documentID)"
             case .year(let documentID, _):
-                return "streaks/year/\(documentID)"
+                return AppConfig.ApiEndpoints.streakYear + "/\(documentID)"
             case .month(let documentID, _):
-                return "streaks/month/\(documentID)"
+                return AppConfig.ApiEndpoints.streakMonth + "/\(documentID)"
             }
         }
         

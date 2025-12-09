@@ -9,7 +9,7 @@ import SwiftUI
 
 struct QuestionsCard: View {
     var body: some View {
-        NavigationLink(destination: ArticlesView()) {
+        NavigationLink(destination: DailyQuestionsView()) {
             VStack(spacing: 0) {
                 HStack {
                     HStack(spacing: 8) {

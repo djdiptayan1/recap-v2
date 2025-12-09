@@ -13,7 +13,7 @@ final class NetworkManager {
     
     private init() {}
     
-    func request<T: Decodable>(endpoint: Endpoint, responseType: T.Type = T.self) async throws -> T {
+    func request<T: Decodable>(endpoint: Endpoint, responseType: T.Type = T.self, keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy = .convertFromSnakeCase) async throws -> T {
         
         var urlComponents = URLComponents(string: endpoint.baseURL + endpoint.path)
         urlComponents?.queryItems = endpoint.queryItems
@@ -48,7 +48,7 @@ final class NetworkManager {
         
         do {
             let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            decoder.keyDecodingStrategy = keyDecodingStrategy
             return try decoder.decode(T.self, from: data)
         } catch {
             throw NetworkError.decodingError(error)

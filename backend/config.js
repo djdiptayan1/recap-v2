@@ -28,7 +28,7 @@ export default {
     questions: {
         maxQuestions_perDay: 7,
         number_of_immediate_questions: 4,
-        number_of_distant_questions: 2,
+        number_of_recent_questions: 2,
         number_of_remote_questions: 1,
 
     },
