@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import { verifyUID } from '../auth/verifyUID.controller.js';
 import { verifyFamilyMember } from '../auth/verifyFamilyMember.controller.js';
 import { patientSignup } from '../auth/patientSignup.controller.js';
+import { familySignup } from '../auth/familySignup.controller.js';
 
 const router = express.Router();
 
@@ -26,7 +27,25 @@ router.post(
     '/patientsignup',
     body('uid').isString().notEmpty(),
     body('email').isEmail(),
+    body('firstName').isString().notEmpty(),
+    body('lastName').isString().notEmpty(),
+    body('dateOfBirth').isString().notEmpty(),
+    body('bloodGroup').isString().notEmpty(),
+    body('sex').isString().notEmpty(),
+    body('stage').isString().notEmpty(),
+    body('profileImageBase64').isString().notEmpty(),
     patientSignup
+);
+
+router.post(
+    '/familysignup',
+    body('patient_documentId').isString().notEmpty().withMessage('patient_documentId is required'),
+    body('email').isEmail().withMessage('Valid email is required'),
+    body('name').isString().notEmpty().withMessage('Name is required'),
+    body('imageURL').isString().notEmpty().withMessage('Image URL is required'),
+    body('phone').isString().notEmpty().withMessage('Phone number is required'),
+    body('relation').isString().notEmpty().withMessage('Relation is required'),
+    familySignup
 );
 
 export default router;
