@@ -14,7 +14,7 @@ struct home_family: View {
                 VStack(spacing: 24) {
                     QuestionsCard()
                     StreaksCard()
-//                    LetsReadCard()
+                    MemoryAnalyticsCard()
                 }
                 .padding(AppConfig.UI.screenPadding - 10)
             }

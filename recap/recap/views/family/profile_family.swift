@@ -82,6 +82,52 @@ struct ProfileFamilyView: View {
                             SectionHeader(title: "Settings")
                             
                             VStack(spacing: 0) {
+                                // Privacy Policy Link
+                                NavigationLink(destination: privaryPolicy()) {
+                                    HStack(spacing: 16) {
+                                        Image(systemName: "hand.raised.fill")
+                                            .font(.system(size: 18))
+                                            .frame(width: 24)
+                                            .foregroundColor(AppConfig.Colors.textSecondary)
+                                            
+                                        Text("Privacy Policy")
+                                            .font(AppConfig.Fonts.body)
+                                            .foregroundColor(AppConfig.Colors.textPrimary)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(AppConfig.Colors.stroke)
+                                    }
+                                    .padding(AppConfig.UI.screenPadding - 10)
+                                }
+                                
+                                Divider().padding(.leading, 50)
+                                
+                                // Support Link
+                                NavigationLink(destination: support()) {
+                                    HStack(spacing: 16) {
+                                        Image(systemName: "questionmark.circle.fill")
+                                            .font(.system(size: 18))
+                                            .frame(width: 24)
+                                            .foregroundColor(AppConfig.Colors.textSecondary)
+                                            
+                                        Text("Support")
+                                            .font(AppConfig.Fonts.body)
+                                            .foregroundColor(AppConfig.Colors.textPrimary)
+                                        
+                                        Spacer()
+                                        
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(AppConfig.Colors.stroke)
+                                    }
+                                    .padding(AppConfig.UI.screenPadding - 10)
+                                }
+                                
+                                Divider().padding(.leading, 50)
+
                                 Button(action: {}) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
