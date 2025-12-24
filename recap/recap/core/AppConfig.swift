@@ -30,6 +30,9 @@ struct AppConfig {
         static let alert = Color("Alert")
         static let success = Color("Success")
         static let stroke = Color("Stroke")
+        
+        static let bg_teal = Color("bg_teal")
+        static let bg_pink = Color("bg_pink")
     }
     
 //    | Name           | Light (Hex) | Dark (Hex) |

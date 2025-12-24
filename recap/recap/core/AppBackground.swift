@@ -8,11 +8,11 @@
 import SwiftUI
 
 struct AppBackground: View {
-    private let colorTeal = Color(red: 0.69, green: 0.88, blue: 0.88)
-    private let colorPink = Color(red: 0.94, green: 0.74, blue: 0.80)
+//    private let colorTeal = Color(red: 0.69, green: 0.88, blue: 0.88)
+//    private let colorPink = Color(red: 0.94, green: 0.74, blue: 0.80)
     
-//    private let colorTeal = AppConfig.Colors.accent
-//    private let colorPink = AppConfig.Colors.alert
+    private let colorTeal = AppConfig.Colors.bg_teal
+    private let colorPink = AppConfig.Colors.bg_pink
     
     var body: some View {
         ZStack {
@@ -45,7 +45,8 @@ struct AppBackground: View {
             .ignoresSafeArea()
             
             // 3. Glass Texture Overlay
-            Color.white.opacity(0.3)
+//            Color.white.opacity(0.3)
+            AppConfig.Colors.background.opacity(0.3)
                 .ignoresSafeArea()
         }
     }

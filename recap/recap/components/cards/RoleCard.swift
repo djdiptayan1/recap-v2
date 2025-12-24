@@ -44,7 +44,8 @@ struct RoleCard<Destination: View>: View {
                     .foregroundColor(AppConfig.Colors.stroke)
             }
             .padding(AppConfig.UI.padding)
-            .background(AppConfig.Colors.card)
+//            .background(AppConfig.Colors.card)
+            .glassEffect(.clear, in: .rect)
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(color: Color.black.opacity(0.05),
                     radius: AppConfig.UI.cardShadowRadius * 2,
