@@ -30,7 +30,7 @@ export async function verifyFamilyMember(req, res, next) {
         const snap = await getDocs(q);
 
         if (snap.empty) {
-            return res.status(200).json({
+            return res.status(404).json({
                 success: false,
                 message: 'User is not a family member'
             });

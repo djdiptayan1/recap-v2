@@ -76,10 +76,10 @@ struct StreaksCard: View {
                 x: 0,
                 y: AppConfig.UI.cardShadowOffsetY
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-            )
+//            .overlay(
+//                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+//                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+//            )
             .onAppear {
                 if !documentID.isEmpty {
                     viewModel.updateDocumentID(documentID)

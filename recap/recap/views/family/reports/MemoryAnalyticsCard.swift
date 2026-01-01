@@ -133,11 +133,11 @@ struct MemoryAnalyticsCard: View {
 #Preview {
     NavigationStack {
         ZStack {
-            Color(hex: "F2F2F7").ignoresSafeArea()
             ScrollView {
                 MemoryAnalyticsCard()
                     .padding()
             }
         }
+        .standardBackground()
     }
 }

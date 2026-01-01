@@ -1,0 +1,262 @@
+//
+//  familySignupView.swift
+//  recap
+//
+//  Created by Diptayan Jash on 01/01/26.
+//
+
+import SwiftUI
+
+struct familySignupView: View {
+    @StateObject private var viewModel: FamilySignupViewModel
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var appState: AppState
+    
+    // Initializer to pass data into ViewModel
+    init(googleUser: GoogleUserData?, patientDocumentId: String, patientUID: String) {
+        _viewModel = StateObject(wrappedValue: FamilySignupViewModel(
+            googleUser: googleUser,
+            patientDocumentId: patientDocumentId,
+            patientUID: patientUID
+        ))
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        VStack(spacing: 16) {
+                            if let profileImage = viewModel.profileImage {
+                                Image(uiImage: profileImage)
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: 100, height: 100)
+                                    .clipShape(Circle())
+                                    .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
+                            } else if let urlString = viewModel.googleUser?.profileImageURL, let url = URL(string: urlString) {
+                                AsyncImage(url: url) { image in
+                                    image.resizable()
+                                } placeholder: {
+                                    Image(systemName: "person.circle.fill")
+                                        .resizable()
+                                        .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.3))
+                                }
+                                .scaledToFill()
+                                .frame(width: 100, height: 100)
+                                .clipShape(Circle())
+                                .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
+                            } else {
+                                Image("recapLogo") // Fallback
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 80, height: 80)
+                            }
+
+                            VStack(spacing: 6) {
+                                Text(headerTitle)
+                                    .font(AppConfig.Fonts.titleLarge)
+                                    .foregroundColor(AppConfig.Colors.textPrimary)
+
+                                Text(headerSubtitle)
+                                    .font(AppConfig.Fonts.body)
+                                    .foregroundColor(AppConfig.Colors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                            }
+                        }
+                        .padding(.top, 40)
+                        .padding(.bottom, 40)
+
+                        VStack(spacing: 20) {
+                            ZStack(alignment: .top) {
+                                if viewModel.currentStep == .details {
+                                    detailsForm
+                                        .transition(.move(edge: .leading))
+                                }
+
+                                if viewModel.currentStep == .imageUpload {
+                                    imageUploadForm
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .trailing),
+                                            removal: .move(edge: .leading)
+                                        ))
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.4), value: viewModel.currentStep)
+
+                            if let error = viewModel.errorMessage {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                    Text(error)
+                                }
+                                .font(.caption)
+                                .foregroundColor(.red)
+                                .padding(.horizontal)
+                                .transition(.opacity)
+                            }
+
+                            Button(action: viewModel.handlePrimaryAction) {
+                                ZStack {
+                                    if viewModel.isLoading {
+                                        ProgressView()
+                                            .tint(.white)
+                                    } else {
+                                        Text(buttonTitle)
+                                            .font(AppConfig.Fonts.headline)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(AppConfig.Colors.accent)
+                                .foregroundColor(.white)
+                                .cornerRadius(AppConfig.UI.cornerRadius)
+                                .shadow(color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
+                            }
+                            .disabled(viewModel.isLoading)
+                            .padding(.top, 10)
+                            
+                            // Skip button for image upload
+//                            if viewModel.currentStep == .imageUpload {
+//                                Button("Use Google Photo / Skip") {
+//                                    viewModel.skipImageUpload()
+//                                }
+//                                .font(AppConfig.Fonts.body)
+//                                .foregroundColor(AppConfig.Colors.textSecondary)
+//                                .padding(.top, 8)
+//                            }
+                        }
+                        .padding(.horizontal, AppConfig.UI.screenPadding)
+                        .animation(.spring(), value: viewModel.currentStep)
+
+                        Spacer().frame(height: 40)
+                    }
+                }
+                .scrollDismissesKeyboard(.interactively)
+            }
+            .alert("Error", isPresented: $viewModel.showAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(viewModel.errorMessage ?? "Unknown error")
+            }
+            .onChange(of: viewModel.signedInUser) { user in
+                if let user = user {
+                    // Update global app state using MainActor
+                    Task { @MainActor in
+                        appState.currentUser = user
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Dynamic Text Helpers
+    
+    var headerTitle: String {
+        switch viewModel.currentStep {
+        case .details: return "Final Details"
+        case .imageUpload: return "Profile Photo"
+        }
+    }
+    
+    var headerSubtitle: String {
+        switch viewModel.currentStep {
+        case .details: return "Almost there! Just a few more things."
+        case .imageUpload: return "Update your photo if you like."
+        }
+    }
+    
+    var buttonTitle: String {
+        switch viewModel.currentStep {
+        case .details: return "Next"
+        case .imageUpload: return "Complete Setup"
+        }
+    }
+
+    // MARK: - Subviews
+
+    var detailsForm: some View {
+        VStack(spacing: 20) {
+             // Display Email (Disabled)
+             AestheticInput(
+                icon: "envelope.fill",
+                placeholder: "Email",
+                text: $viewModel.email,
+                isPasswordVisible: .constant(false)
+            )
+            .disabled(true)
+            .opacity(0.7)
+
+            // Name (Pre-filled but editable)
+            AestheticInput(
+                icon: "person.fill",
+                placeholder: "Full Name",
+                text: $viewModel.name,
+                isPasswordVisible: .constant(false)
+            )
+
+            // Phone
+            AestheticInput(
+                icon: "phone.fill",
+                placeholder: "Phone Number",
+                text: $viewModel.phone,
+                isPasswordVisible: .constant(false)
+            )
+            .keyboardType(.phonePad)
+            
+            // Relation
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Relationship to Patient")
+                    .font(AppConfig.Fonts.body)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+                    .padding(.leading, 4)
+
+                Menu {
+                    ForEach(viewModel.relations, id: \.self) { relation in
+                        Button(relation) { viewModel.relation = relation }
+                    }
+                } label: {
+                    HStack {
+                        Text(viewModel.relation.isEmpty ? "Select Relationship" : viewModel.relation)
+                            .foregroundColor(viewModel.relation.isEmpty ? .gray : AppConfig.Colors.textPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(Color.white)
+                    .cornerRadius(AppConfig.UI.cornerRadius)
+                    .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                            .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                    )
+                }
+            }
+        }
+    }
+
+    // MARK: - Image Upload Form
+
+    var imageUploadForm: some View {
+        VStack(spacing: 24) {
+            Text("Update Profile Photo")
+                .font(AppConfig.Fonts.headline)
+                .foregroundColor(AppConfig.Colors.textPrimary)
+
+            ImagePicker(selectedImage: $viewModel.profileImage)
+
+            Text("Tap to select a new photo")
+                .font(AppConfig.Fonts.small)
+                .foregroundColor(AppConfig.Colors.textSecondary)
+        }
+        .padding(.vertical, 20)
+    }
+}
+
+#Preview {
+    familySignupView(googleUser: GoogleUserData(email: "test@gmail.com", name: "Test User", profileImageURL: nil), patientDocumentId: "123", patientUID: "123456")
+        .environmentObject(AppState())
+}

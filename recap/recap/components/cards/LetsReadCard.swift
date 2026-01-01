@@ -83,10 +83,10 @@ struct LetsReadCard: View {
                 x: 0,
                 y: AppConfig.UI.cardShadowOffsetY
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-            )
+//            .overlay(
+//                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+//                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+//            )
         }
         .buttonStyle(PlainButtonStyle())
     }

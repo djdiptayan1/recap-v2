@@ -57,10 +57,10 @@ struct ArticleCard: View {
         .background(Color.white)
         .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-        )
+//        .overlay(
+//            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+//                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+//        )
     }
 }
 

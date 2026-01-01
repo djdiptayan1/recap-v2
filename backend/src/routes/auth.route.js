@@ -42,7 +42,7 @@ router.post(
     body('patient_documentId').isString().notEmpty().withMessage('patient_documentId is required'),
     body('email').isEmail().withMessage('Valid email is required'),
     body('name').isString().notEmpty().withMessage('Name is required'),
-    body('imageURL').isString().notEmpty().withMessage('Image URL is required'),
+    body('profileImageBase64').isString().notEmpty().withMessage('Image is required'),
     body('phone').isString().notEmpty().withMessage('Phone number is required'),
     body('relation').isString().notEmpty().withMessage('Relation is required'),
     familySignup

@@ -83,9 +83,9 @@ struct GamesCard: View {
         .glassEffect(.clear, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-        )
+//        .overlay(
+//            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+//                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+//        )
     }
 }

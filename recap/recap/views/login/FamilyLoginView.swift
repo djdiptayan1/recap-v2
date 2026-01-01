@@ -173,15 +173,24 @@ struct FamilyLoginView: View {
             )
             .standardBackground()
         }
+        .sheet(isPresented: $viewModel.showSignupSheet) {
+            familySignupView(
+                googleUser: viewModel.pendingGoogleUser,
+                patientDocumentId: viewModel.patientDocumentId,
+                patientUID: viewModel.patientUID
+            )
+            .environmentObject(appState)
+        }
     }
     
     
     private func signInWithGoogle() {
         Task {
             do {
-                let user = try await viewModel.signInWithGoogle()
-                await MainActor.run {
-                    appState.currentUser = user
+                if let user = try await viewModel.signInWithGoogle() {
+                    await MainActor.run {
+                        appState.currentUser = user
+                    }
                 }
             } catch {
                 await MainActor.run {

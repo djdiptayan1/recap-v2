@@ -12,6 +12,12 @@ import FirebaseAuth
 import GoogleSignIn
 import FirebaseCore
 
+struct GoogleUserData {
+    let email: String
+    let name: String
+    let profileImageURL: String?
+}
+
 @MainActor
 class FamilyLoginViewModel: ObservableObject {
     @Published var patientUID = ""
@@ -21,6 +27,10 @@ class FamilyLoginViewModel: ObservableObject {
     @Published var alertMessage = ""
     
     @Published var patientDocumentId = ""
+    @Published var showSignupSheet = false
+    
+    // Data to pass to Signup
+    var pendingGoogleUser: GoogleUserData?
 
     private let authService = FamilyAuthService.shared
     
@@ -55,78 +65,78 @@ class FamilyLoginViewModel: ObservableObject {
         patientDocumentId = ""
     }
     
-    func signInWithGoogle() async throws -> patientModel {
+    func signInWithGoogle() async throws -> patientModel? {
         isLoading = true
         defer { isLoading = false }
         
-        // 1. Perform Google Sign-In using the shared helper
+        // 1. Perform Google Sign-In
         let (user, email) = try await AuthService.shared.performGoogleSignIn()
         
-        // 2. Verify Family Member
+        // 2. Verify Family Member Link
         do {
             let response = try await authService.verifyFamilyMember(email: email, documentId: patientDocumentId)
             
             if response.success {
-                // Save to Keychain
-                do {
-                    // Save the Family Member's ID as the main documentID (User ID)
-                    if let familyId = response.familymember_documentId {
-                        try KeychainManager.shared.save(key: .documentID, value: familyId)
-                        try KeychainManager.shared.save(key: .familyDocumentID, value: familyId)
-                    }
-                    
-                    // Save the patientUID linking code
-                    try KeychainManager.shared.save(key: .patientUID, value: patientUID)
-                    
-                    // Save the patientDocumentID for Streaks and other patient-specific modules
-                    if !patientDocumentId.isEmpty {
-                        try KeychainManager.shared.save(key: .patientDocumentID, value: patientDocumentId)
-                    }
-                    
-                    // Optionally save Linked Patient ID if needed (e.g. for fetching their specific data directly)
-                    if let linkedPatientId = response.patientdata?.id {
-                         // We might want to store this as a separate key if we need to distinguish between "My ID" and "Patient ID"
-                         // But for now, patientUID might be enough for looking up the patient.
-                         // Let's store it safely if we have a key for it, otherwise skipping.
-                    }
-                    
-                    try KeychainManager.shared.save(key: .userType, value: "family")
-                    
-                } catch {
-                    print("Error saving to Keychain: \(error)")
-                }
-                
-                // Create patientModel from response
-                // Note: We might need to fetch the full patient details or just use what we have.
-                // The response gives us family member details.
-                // We need to construct a user object that the app understands.
-                // Since the app expects a `patientModel` (which is actually a User model), we map it.
-                
-                var familyUser = patientModel(
-                    firstName: response.name ?? "Family Member",
-                    lastName: "", // Name is usually full name in response
-                    patientUID: patientUID,
-                    dateOfBirth: "",
-                    sex: "",
-                    bloodGroup: "",
-                    stage: "",
-                    profileImageURL: response.imageURL,
-                    email: email,
-                    id: response.familymember_documentId,
-                    type: "family",
-                    familyMembers: []
-                )
-                familyUser.relation = response.relation
-                familyUser.phone = response.phone
-                familyUser.linkedPatient = response.patientdata
-                
-                return familyUser
+                // LINK EXISTS -> LOGIN SUCCESS
+                return try await finalizeLogin(response: response, email: email)
             } else {
-                throw NSError(domain: "FamilyLogin", code: 401, userInfo: [NSLocalizedDescriptionKey: response.message])
+                // LINK NOT FOUND -> PROMPT SIGNUP
+                // Store data for the signup form
+                pendingGoogleUser = GoogleUserData(
+                    email: email,
+                    name: user.displayName ?? "",
+                    profileImageURL: user.photoURL?.absoluteString
+                )
+                showSignupSheet = true
+                return nil
             }
             
         } catch {
-            throw error
+             // If verify fails strictly (network error etc), throw.
+             // But if it fails because "not found" (404/409 logic in service?), we might need to handle it.
+             // Assuming verifyFamilyMember returns success=false if not found but no error thrown if 200 OK with success=false.
+             // If the service throws on 404, we catch it here.
+             
+             // Quick fix: Check if error is "not found" type or just proceed to signup?
+             // Safest is to rely on success bool if service suppresses error, or catch specific error.
+             // Assuming service returns VerifyFamilyMemberResponse with success=false for non-existence.
+             throw error
         }
+    }
+    
+    private func finalizeLogin(response: VerifyFamilyMemberResponse, email: String) async throws -> patientModel {
+        // Save to Keychain
+         if let familyId = response.familymember_documentId {
+             try KeychainManager.shared.save(key: .documentID, value: familyId)
+             try KeychainManager.shared.save(key: .familyDocumentID, value: familyId)
+         }
+         
+         try KeychainManager.shared.save(key: .patientUID, value: patientUID)
+         
+         if !patientDocumentId.isEmpty {
+             try KeychainManager.shared.save(key: .patientDocumentID, value: patientDocumentId)
+         }
+        
+         try KeychainManager.shared.save(key: .userType, value: "family")
+        
+        var familyUser = patientModel(
+            firstName: response.name ?? "Family Member",
+            lastName: "",
+            patientUID: patientUID,
+            dateOfBirth: "",
+            sex: "",
+            bloodGroup: "",
+            stage: "",
+            profileImageURL: response.imageURL,
+            email: email,
+            id: response.familymember_documentId,
+            type: "family",
+            familyMembers: []
+        )
+        familyUser.relation = response.relation
+        familyUser.phone = response.phone
+        familyUser.linkedPatient = response.patientdata
+        
+        return familyUser
     }
 }
