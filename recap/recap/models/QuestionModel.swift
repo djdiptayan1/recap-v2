@@ -34,6 +34,7 @@ struct QuestionModel: Codable, Identifiable {
     let priority: Int?
     let isActive: Bool?
     let isAnswered: Bool?
+    let correctAnswers: [String]?
     
     // Use coding keys to map JSON keys safely if needed,
     // but your JSON keys match these property names well.

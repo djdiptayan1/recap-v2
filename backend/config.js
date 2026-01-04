@@ -23,6 +23,9 @@ export default {
         // streaksCore_SubCollection: 'streaksCore',
         familyMembers_SubCollection: 'family_members',
         memoryCheckReports_SubCollection: 'memoryCheckReports',
+
+        // QUESTIONS
+        personalQuestions_SubCollection: 'questions',
     },
 
     questions: {
