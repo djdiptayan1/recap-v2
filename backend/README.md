@@ -90,7 +90,7 @@ Recap Backend is a RESTful API service that powers a memory care application for
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/djdiptayan1/recap-v2.git
    cd recap/backend
    ```
 2. **Install dependencies**
@@ -106,6 +106,12 @@ Recap Backend is a RESTful API service that powers a memory care application for
    ```
 4. **Verify Firebase connection**
    The application automatically checks Firebase connectivity on startup.
+
+5. **Start the dev server**
+
+   ```bash
+   npm run dev
+   ```
 
 ## Environment Variables
 
