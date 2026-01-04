@@ -8,12 +8,14 @@
 import SwiftUI
 
 struct home: View {
+    @EnvironmentObject var appState: AppState
+    @StateObject private var familyViewModel = FamilyViewModel(documentID: "")
     @State private var showProfile = false
     var body: some View {
         NavigationStack{
             ScrollView {
                 VStack(spacing: 24) {
-                    QuestionsCard()
+                    QuestionsCard(hasFamilyMembers: !familyViewModel.familyMembers.isEmpty)
                     StreaksCard()
                     LetsReadCard()
                 }
@@ -38,6 +40,14 @@ struct home: View {
                 }
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+            }
+            .onAppear {
+                if let uid = appState.currentUser?.id {
+                     familyViewModel.updateDocumentID(uid)
+                     Task {
+                        await familyViewModel.fetchFamilyMembers()
+                     }
+                }
             }
         }
     }

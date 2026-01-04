@@ -56,8 +56,8 @@ struct AppConfig {
     }
 
     struct ApiEndpoints{
-        static let baseURL = "http://localhost:3000/api/" //-> USE WHEN USING SIMULATOR
-//        static let baseURL = "http://192.168.0.10:3000/api/"  -> USE WHEN USING REAL PHONE
+//        static let baseURL = "http://localhost:3000/api/" //-> USE WHEN USING SIMULATOR
+        static let baseURL = "http://192.168.1.2:3000/api/"  //-> USE WHEN USING REAL PHONE
         static let articles = "articles"
         static let citations = "citations"
         static let memoryQuiz = "memoryquiz"
