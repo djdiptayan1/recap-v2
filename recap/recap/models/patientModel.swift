@@ -24,6 +24,13 @@ struct patientModel: Codable, Equatable {
     var phone: String?
     var linkedPatient: LinkedPatientModel?
 
+    // enum CodingKeys: String, CodingKey {
+    //     case firstName, lastName, patientUID, dateOfBirth, sex, bloodGroup, stage
+    //     case profileImageURL, email, type, familyMembers, relation, phone
+    //     case id = "familymember_documentId"
+    //     case linkedPatient = "patientdata"
+    // }
+
     init(firstName: String = "",
          lastName: String = "",
          patientUID: String = "",

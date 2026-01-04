@@ -82,6 +82,7 @@ struct AppConfig {
         //questions
         static let getAllQuestions = "questions"
         static let getDailyQuestions = "questions/dailyquestions"
+        static let familyQuestions = "questions/family"
     }
 
     struct FirebaseCollections{

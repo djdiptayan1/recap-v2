@@ -1,8 +1,7 @@
 import {
     doc,
     getDoc,
-    updateDoc,
-    serverTimestamp
+    deleteDoc
 } from 'firebase/firestore';
 import { firestore } from '../../../utils/db.js';
 import config from '../../../../config.js';
@@ -11,7 +10,7 @@ import { validationResult } from 'express-validator';
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const QUESTIONS_SUBCOLLECTION = config.firestoreNames.personalQuestions_SubCollection;
 
-export const editQuestion = async (req, res, next) => {
+export const deleteQuestion = async (req, res, next) => {
     try {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -19,7 +18,6 @@ export const editQuestion = async (req, res, next) => {
         }
 
         const { patient_documentId, questionId } = req.params;
-        const updateData = req.body;
 
         if (!patient_documentId) {
             return res.status(400).json({ success: false, error: 'Patient document ID is required' });
@@ -44,28 +42,16 @@ export const editQuestion = async (req, res, next) => {
             return res.status(404).json({ success: false, error: 'Question not found' });
         }
 
-        // Add updatedAt timestamp
-        const finalUpdateData = {
-            ...updateData,
-            updatedAt: serverTimestamp()
-        };
-
-        // Remove fields that shouldn't be updated loosely if necessary, but for now allow all
-        // Prevent updating ID or immutable fields if they exist in body (optional but good practice)
-        delete finalUpdateData.id;
-        delete finalUpdateData.createdAt;
-        delete finalUpdateData.addedAt; // Maybe preserve original addedAt
-
-        await updateDoc(questionRef, finalUpdateData);
+        await deleteDoc(questionRef);
 
         return res.status(200).json({
             success: true,
-            message: 'Question updated successfully',
-            data: { id: questionId, ...finalUpdateData }
+            message: 'Question deleted successfully',
+            data: { id: questionId }
         });
 
     } catch (error) {
-        console.error('Error editing question:', error);
+        console.error('Error deleting question:', error);
         next(error);
     }
 };

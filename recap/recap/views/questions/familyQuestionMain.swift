@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct familyQuestionMain: View {
+    @EnvironmentObject var appState: AppState
     @State private var showAnswerSheet = false
     
     var body: some View {
@@ -51,22 +52,46 @@ struct familyQuestionMain: View {
                                 )
                             }
 
-                            NavigationLink(destination: Text("Add Questions View Placeholder")) {
+                            let keychainPatientID = KeychainManager.shared.getString(key: .patientDocumentID)
+                            let patientID = keychainPatientID ?? appState.currentUser?.linkedPatient?.id
+
+                            if let patientID = patientID, !patientID.isEmpty {
+                                NavigationLink(destination: addQuestionsView(patientID: patientID)) {
+                                    QuestionOptionCard(
+                                        title: "Add New Question",
+                                        subtitle: "Create personalized memory prompts.",
+                                        icon: "plus.circle.fill",
+                                        color: AppConfig.Colors.success
+                                    )
+                                }
+                            } else {
+                                // Fallback or disabled state if no linked patient
                                 QuestionOptionCard(
                                     title: "Add New Question",
-                                    subtitle: "Create personalized memory prompts.",
+                                    subtitle: "No patient linked.",
                                     icon: "plus.circle.fill",
-                                    color: AppConfig.Colors.success
+                                    color: Color.gray
                                 )
+                                .opacity(0.6)
                             }
                             
-                            NavigationLink(destination: Text("Edit Questions View Placeholder")) {
+                            if let patientID = patientID, !patientID.isEmpty {
+                                NavigationLink(destination: editQuestionsView(patientID: patientID)) {
+                                    QuestionOptionCard(
+                                        title: "Edit Question Bank",
+                                        subtitle: "Manage existing questions and answers.",
+                                        icon: "slider.horizontal.3",
+                                        color: Color.orange
+                                    )
+                                }
+                            } else {
                                 QuestionOptionCard(
                                     title: "Edit Question Bank",
-                                    subtitle: "Manage existing questions and answers.",
+                                    subtitle: "No patient linked.",
                                     icon: "slider.horizontal.3",
-                                    color: Color.orange
+                                    color: Color.gray
                                 )
+                                .opacity(0.6)
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
@@ -118,6 +143,7 @@ struct QuestionOptionCard: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(AppConfig.Colors.stroke)
+            
         }
         .padding(16)
         .glassEffect(.clear, in: .rect)
@@ -133,4 +159,5 @@ struct QuestionOptionCard: View {
 
 #Preview {
     familyQuestionMain()
+        .environmentObject(AppState())
 }
