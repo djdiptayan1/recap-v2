@@ -129,7 +129,8 @@ struct QuestionInputSection: View {
             TextField("e.g., What did you have for breakfast?", text: $text, axis: .vertical)
                 .font(AppConfig.Fonts.body)
                 .padding(16)
-                .background(Color.white)
+//                .background(Color.white)
+                .glassEffect(.clear, in: .rect)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                 .overlay(
@@ -147,7 +148,8 @@ struct QuestionInputSection: View {
             TextField("e.g., Think about eggs...", text: $hint)
                 .font(AppConfig.Fonts.body)
                 .padding(16)
-                .background(Color.white)
+//                .background(Color.white)
+                .glassEffect(.clear, in: .rect)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                 .overlay(
@@ -185,7 +187,8 @@ struct CategorySelectionSection: View {
                         Image(systemName: "chevron.down")
                     }
                     .padding()
-                    .background(Color.white)
+//                    .background(Color.white)
+                    .glassEffect(.clear, in: .rect)
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppConfig.Colors.stroke))
                 }
@@ -202,7 +205,8 @@ struct CategorySelectionSection: View {
                         Image(systemName: "chevron.down")
                     }
                     .padding()
-                    .background(Color.white)
+//                    .background(Color.white)
+                    .glassEffect(.clear, in: .rect)
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppConfig.Colors.stroke))
                 }
@@ -270,7 +274,8 @@ struct OptionsInputSection: View {
                     }
                 }
                 .padding()
-                .background(Color.white)
+//                .background(Color.white)
+                .glassEffect(.clear, in: .rect)
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -318,7 +323,8 @@ struct TimingSettingsSection: View {
                 }
                 .padding()
             }
-            .background(Color.white)
+//            .background(Color.white)
+            .glassEffect(.clear, in: .rect)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -329,5 +335,5 @@ struct TimingSettingsSection: View {
 }
 
 #Preview {
-    addQuestionsView(patientID: "123")
+    addQuestionsView(patientID: "KCLKSE")
 }
