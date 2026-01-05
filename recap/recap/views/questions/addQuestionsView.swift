@@ -9,38 +9,37 @@ import SwiftUI
 struct addQuestionsView: View {
     @StateObject private var viewModel = AddQuestionsViewModel()
     @Environment(\.dismiss) var dismiss
-    
+
     var patientID: String
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 // 2. Content
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
-                        
-                        
+
                         // Form Components
                         VStack(spacing: 24) {
                             QuestionInputSection(
                                 text: $viewModel.questionText,
                                 hint: $viewModel.hint
                             )
-                            
+
                             CategorySelectionSection(
                                 category: $viewModel.category,
                                 subCategory: $viewModel.subCategory,
                                 categories: viewModel.categories,
                                 subCategories: viewModel.subCategories
                             )
-                            
+
                             OptionsInputSection(
                                 options: $viewModel.answerOptions,
                                 correctAnswers: $viewModel.correctAnswers,
                                 onAdd: viewModel.addOption,
                                 onRemove: viewModel.removeOption
                             )
-                            
+
                             TimingSettingsSection(
                                 start: $viewModel.startTime,
                                 end: $viewModel.endTime,
@@ -48,9 +47,10 @@ struct addQuestionsView: View {
                             )
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
-                        
+
                         // Submit Button
                         Button(action: {
+                            HapticManager.shared.trigger(.selection)
                             Task { await viewModel.submitQuestion(patientID: patientID) }
                         }) {
                             HStack {
@@ -67,7 +67,8 @@ struct addQuestionsView: View {
                             .background(AppConfig.Colors.accent)
                             .foregroundColor(.white)
                             .cornerRadius(AppConfig.UI.cornerRadius)
-                            .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
+                            .shadow(
+                                color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .disabled(viewModel.isLoading)
                         .padding(.horizontal, AppConfig.UI.screenPadding)
@@ -78,15 +79,21 @@ struct addQuestionsView: View {
             .navigationTitle("Add New Question")
             // Alerts
             .alert("Success", isPresented: $viewModel.isSuccess) {
-                Button("Done") { dismiss() }
+                Button("Done") {
+                    HapticManager.shared.trigger(.success)
+                    dismiss()
+                }
             } message: {
                 Text("The question has been added to the daily rotation.")
             }
-            .alert("Error", isPresented: Binding<Bool>(
-                get: { viewModel.errorMessage != nil },
-                set: { _ in viewModel.errorMessage = nil }
-            )) {
-                Button("OK", role: .cancel) { }
+            .alert(
+                "Error",
+                isPresented: Binding<Bool>(
+                    get: { viewModel.errorMessage != nil },
+                    set: { _ in viewModel.errorMessage = nil }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
@@ -99,13 +106,13 @@ struct addQuestionsView: View {
 //struct HeaderView: View {
 //    let title: String
 //    let subtitle: String
-//    
+//
 //    var body: some View {
 //        VStack(spacing: 8) {
 //            Text(title)
 //                .font(AppConfig.Fonts.titleMedium)
 //                .foregroundColor(AppConfig.Colors.textPrimary)
-//            
+//
 //            Text(subtitle)
 //                .font(AppConfig.Fonts.body)
 //                .foregroundColor(AppConfig.Colors.textSecondary)
@@ -117,7 +124,7 @@ struct addQuestionsView: View {
 struct QuestionInputSection: View {
     @Binding var text: String
     @Binding var hint: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("The Question", systemImage: "questionmark.bubble.fill")
@@ -125,29 +132,31 @@ struct QuestionInputSection: View {
                 .fontWeight(.bold)
                 .foregroundColor(AppConfig.Colors.textSecondary)
                 .textCase(.uppercase)
-            
+
             TextField("e.g., What did you have for breakfast?", text: $text, axis: .vertical)
                 .font(AppConfig.Fonts.body)
                 .padding(16)
-                .background(Color.white)
+                //                .background(Color.white)
+                .glassEffect(.clear, in: .rect)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                 )
-            
+
             Label("Hint (Optional)", systemImage: "lightbulb.fill")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(AppConfig.Colors.textSecondary)
                 .textCase(.uppercase)
                 .padding(.top, 4)
-            
+
             TextField("e.g., Think about eggs...", text: $hint)
                 .font(AppConfig.Fonts.body)
                 .padding(16)
-                .background(Color.white)
+                //                .background(Color.white)
+                .glassEffect(.clear, in: .rect)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                 .overlay(
@@ -163,7 +172,7 @@ struct CategorySelectionSection: View {
     @Binding var subCategory: String
     let categories: [String]
     let subCategories: [String]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Classification", systemImage: "tag.fill")
@@ -171,7 +180,7 @@ struct CategorySelectionSection: View {
                 .fontWeight(.bold)
                 .foregroundColor(AppConfig.Colors.textSecondary)
                 .textCase(.uppercase)
-            
+
             HStack(spacing: 12) {
                 // Category Picker
                 Menu {
@@ -185,11 +194,12 @@ struct CategorySelectionSection: View {
                         Image(systemName: "chevron.down")
                     }
                     .padding()
-                    .background(Color.white)
+                    //                    .background(Color.white)
+                    .glassEffect(.clear, in: .rect)
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppConfig.Colors.stroke))
                 }
-                
+
                 // SubCategory Picker
                 Menu {
                     ForEach(subCategories, id: \.self) { sub in
@@ -202,7 +212,8 @@ struct CategorySelectionSection: View {
                         Image(systemName: "chevron.down")
                     }
                     .padding()
-                    .background(Color.white)
+                    //                    .background(Color.white)
+                    .glassEffect(.clear, in: .rect)
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppConfig.Colors.stroke))
                 }
@@ -217,7 +228,7 @@ struct OptionsInputSection: View {
     @Binding var correctAnswers: [String]
     let onAdd: () -> Void
     let onRemove: (Int) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -226,19 +237,23 @@ struct OptionsInputSection: View {
                     .fontWeight(.bold)
                     .foregroundColor(AppConfig.Colors.textSecondary)
                     .textCase(.uppercase)
-                
+
                 Spacer()
-                
-                Button(action: onAdd) {
+
+                Button(action: {
+                    HapticManager.shared.trigger(.selection)
+                    onAdd()
+                }) {
                     Label("Add", systemImage: "plus")
                         .font(.caption.bold())
                         .foregroundColor(AppConfig.Colors.accent)
                 }
             }
-            
+
             ForEach(0..<options.count, id: \.self) { index in
                 HStack {
                     Button(action: {
+                        HapticManager.shared.trigger(.selection)
                         let option = options[index]
                         if correctAnswers.contains(option) {
                             correctAnswers.removeAll { $0 == option }
@@ -246,31 +261,43 @@ struct OptionsInputSection: View {
                             correctAnswers.append(option)
                         }
                     }) {
-                        Image(systemName: correctAnswers.contains(options[index]) ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(correctAnswers.contains(options[index]) ? AppConfig.Colors.success : AppConfig.Colors.textSecondary)
-                            .font(.system(size: 22))
+                        Image(
+                            systemName: correctAnswers.contains(options[index])
+                                ? "checkmark.circle.fill" : "circle"
+                        )
+                        .foregroundColor(
+                            correctAnswers.contains(options[index])
+                                ? AppConfig.Colors.success : AppConfig.Colors.textSecondary
+                        )
+                        .font(.system(size: 22))
                     }
                     .buttonStyle(PlainButtonStyle())
-                    
-                    TextField("Option \(index + 1)", text: Binding(
-                        get: { options[index] },
-                        set: { newValue in
-                            if let i = correctAnswers.firstIndex(of: options[index]) {
-                                correctAnswers[i] = newValue
+
+                    TextField(
+                        "Option \(index + 1)",
+                        text: Binding(
+                            get: { options[index] },
+                            set: { newValue in
+                                if let i = correctAnswers.firstIndex(of: options[index]) {
+                                    correctAnswers[i] = newValue
+                                }
+                                options[index] = newValue
                             }
-                            options[index] = newValue
-                        }
-                    ))
-                    
+                        ))
+
                     if options.count > 1 {
-                        Button(action: { onRemove(index) }) {
+                        Button(action: {
+                            HapticManager.shared.trigger(.warning)
+                            onRemove(index)
+                        }) {
                             Image(systemName: "trash")
                                 .foregroundColor(AppConfig.Colors.alert)
                         }
                     }
                 }
                 .padding()
-                .background(Color.white)
+                //                .background(Color.white)
+                .glassEffect(.clear, in: .rect)
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -285,7 +312,7 @@ struct TimingSettingsSection: View {
     @Binding var start: Date
     @Binding var end: Date
     @Binding var frequency: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Label("Schedule", systemImage: "clock.fill")
@@ -293,20 +320,20 @@ struct TimingSettingsSection: View {
                 .fontWeight(.bold)
                 .foregroundColor(AppConfig.Colors.textSecondary)
                 .textCase(.uppercase)
-            
+
             VStack(spacing: 0) {
                 // From Time
                 DatePicker("Ask from", selection: $start, displayedComponents: .hourAndMinute)
                     .padding()
-                
+
                 Divider()
-                
+
                 // To Time
                 DatePicker("Ask until", selection: $end, displayedComponents: .hourAndMinute)
                     .padding()
-                
+
                 Divider()
-                
+
                 // Frequency
                 HStack {
                     Text("Frequency (Days)")
@@ -318,7 +345,8 @@ struct TimingSettingsSection: View {
                 }
                 .padding()
             }
-            .background(Color.white)
+            //            .background(Color.white)
+            .glassEffect(.clear, in: .rect)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -329,5 +357,5 @@ struct TimingSettingsSection: View {
 }
 
 #Preview {
-    addQuestionsView(patientID: "123")
+    addQuestionsView(patientID: "KCLKSE")
 }

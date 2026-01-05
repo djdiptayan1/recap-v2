@@ -45,16 +45,18 @@ struct MemoryQuizView: View {
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
                             }
-                            
+
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     Capsule()
                                         .fill(AppConfig.Colors.stroke)
                                         .frame(height: 8)
-                                    
+
                                     Capsule()
                                         .fill(AppConfig.Colors.accent)
-                                        .frame(width: geo.size.width * viewModel.progress, height: 8)
+                                        .frame(
+                                            width: geo.size.width * viewModel.progress, height: 8
+                                        )
                                         .animation(.smooth, value: viewModel.progress)
                                 }
                             }
@@ -62,9 +64,9 @@ struct MemoryQuizView: View {
                         }
                         .padding(AppConfig.UI.screenPadding)
                         .padding(.top, 30)
-                        
+
                         Spacer()
-                        
+
                         TabView(selection: $viewModel.currentIndex) {
                             ForEach(viewModel.questions.indices, id: \.self) { index in
                                 QuestionCard(question: viewModel.questions[index])
@@ -74,32 +76,48 @@ struct MemoryQuizView: View {
                         }
                         .tabViewStyle(.page(indexDisplayMode: .never))
                         .frame(height: 300)
-                        
+
                         Spacer()
-                        
+
                         VStack(spacing: 16) {
-                            Button(action: { viewModel.submitAnswer(isTrue: true) }) {
+                            Button(action: {
+                                HapticManager.shared.trigger(.selection)
+                                viewModel.submitAnswer(isTrue: true)
+                            }) {
                                 AnswerButtonLabel(text: "True", color: AppConfig.Colors.accent)
                             }
-                            
-                            Button(action: { viewModel.submitAnswer(isTrue: false) }) {
-                                AnswerButtonLabel(text: "False", color: AppConfig.Colors.textSecondary)
+
+                            Button(action: {
+                                HapticManager.shared.trigger(.selection)
+                                viewModel.submitAnswer(isTrue: false)
+                            }) {
+                                AnswerButtonLabel(
+                                    text: "False", color: AppConfig.Colors.textSecondary)
                             }
                         }
                         .padding(AppConfig.UI.screenPadding)
                         .padding(.bottom, 20)
-                        
+
                     } else {
                         QuizResultView(
                             result: viewModel.getResult(),
-                            onRestart: viewModel.restart,
-                            onExit: { dismiss() }
+                            onRestart: {
+                                HapticManager.shared.trigger(.selection)
+                                viewModel.restart()
+                            },
+                            onExit: {
+                                HapticManager.shared.trigger(.selection)
+                                dismiss()
+                            }
                         )
                         .transition(.scale.combined(with: .opacity))
+                        .onAppear {
+                            HapticManager.shared.trigger(.success)
+                        }
                     }
                 }
             }
-//            .standardBackground()
+            //            .standardBackground()
         }
         .navigationTitle("Memory Check")
         .animation(.easeInOut, value: viewModel.isCompleted)

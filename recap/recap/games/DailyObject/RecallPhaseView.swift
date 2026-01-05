@@ -12,17 +12,17 @@ struct RecallPhaseView: View {
     let selectedIDs: Set<UUID>
     let onToggle: (DailyObject) -> Void
     let onSubmit: () -> Void
-    
+
     let columns = [GridItem(.adaptive(minimum: 100), spacing: 20)]
-    
+
     var body: some View {
         VStack(spacing: 20) {
-            
+
             Text("Which items did you see?")
                 .font(AppConfig.Fonts.titleMedium)
                 .foregroundColor(AppConfig.Colors.textPrimary)
                 .padding(.top, 20)
-            
+
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(allObjects) { object in
@@ -31,6 +31,7 @@ struct RecallPhaseView: View {
                             isSelected: selectedIDs.contains(object.id)
                         )
                         .onTapGesture {
+                            HapticManager.shared.trigger(.selection)
                             onToggle(object)
                         }
                         // Scale animation on tap
@@ -40,8 +41,11 @@ struct RecallPhaseView: View {
                 }
                 .padding()
             }
-            
-            Button(action: onSubmit) {
+
+            Button(action: {
+                HapticManager.shared.trigger(.selection)
+                onSubmit()
+            }) {
                 Text("Submit Answers")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)

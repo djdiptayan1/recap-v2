@@ -26,16 +26,25 @@ struct patientSignupView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 80, height: 80)
-                                .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10)
+                                .shadow(
+                                    color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0,
+                                    y: 10)
 
                             VStack(spacing: 6) {
-                                Text(viewModel.currentStep == .credentials ? "Create Account" : "Tell us about you")
-                                    .font(AppConfig.Fonts.titleLarge)
-                                    .foregroundColor(AppConfig.Colors.textPrimary)
+                                Text(
+                                    viewModel.currentStep == .credentials
+                                        ? "Create Account" : "Tell us about you"
+                                )
+                                .font(AppConfig.Fonts.titleLarge)
+                                .foregroundColor(AppConfig.Colors.textPrimary)
 
-                                Text(viewModel.currentStep == .credentials ? "Begin your memory journey today" : "Help us personalize your experience")
-                                    .font(AppConfig.Fonts.body)
-                                    .foregroundColor(AppConfig.Colors.textSecondary)
+                                Text(
+                                    viewModel.currentStep == .credentials
+                                        ? "Begin your memory journey today"
+                                        : "Help us personalize your experience"
+                                )
+                                .font(AppConfig.Fonts.body)
+                                .foregroundColor(AppConfig.Colors.textSecondary)
                             }
                         }
                         .padding(.top, 40)
@@ -45,26 +54,29 @@ struct patientSignupView: View {
                             ZStack(alignment: .top) {
                                 if viewModel.currentStep == .credentials {
                                     credentialsForm
-                                        .transition(.asymmetric(
-                                            insertion: .move(edge: .trailing),
-                                            removal: .move(edge: .leading)
-                                        ))
+                                        .transition(
+                                            .asymmetric(
+                                                insertion: .move(edge: .trailing),
+                                                removal: .move(edge: .leading)
+                                            ))
                                 }
 
                                 if viewModel.currentStep == .details {
                                     detailsForm
-                                        .transition(.asymmetric(
-                                            insertion: .move(edge: .trailing),
-                                            removal: .move(edge: .leading)
-                                        ))
+                                        .transition(
+                                            .asymmetric(
+                                                insertion: .move(edge: .trailing),
+                                                removal: .move(edge: .leading)
+                                            ))
                                 }
 
                                 if viewModel.currentStep == .imageUpload {
                                     imageUploadForm
-                                        .transition(.asymmetric(
-                                            insertion: .move(edge: .trailing),
-                                            removal: .move(edge: .leading)
-                                        ))
+                                        .transition(
+                                            .asymmetric(
+                                                insertion: .move(edge: .trailing),
+                                                removal: .move(edge: .leading)
+                                            ))
                                 }
                             }
                             .animation(.easeInOut(duration: 0.4), value: viewModel.currentStep)
@@ -80,7 +92,10 @@ struct patientSignupView: View {
                                 .transition(.opacity)
                             }
 
-                            Button(action: viewModel.handlePrimaryAction) {
+                            Button(action: {
+                                HapticManager.shared.trigger(.selection)
+                                viewModel.handlePrimaryAction()
+                            }) {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
@@ -103,7 +118,9 @@ struct patientSignupView: View {
                                 .background(AppConfig.Colors.accent)
                                 .foregroundColor(.white)
                                 .cornerRadius(AppConfig.UI.cornerRadius)
-                                .shadow(color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
+                                .shadow(
+                                    color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0,
+                                    y: 5)
                             }
                             .disabled(viewModel.isLoading)
                             .padding(.top, 10)
@@ -132,14 +149,20 @@ struct patientSignupView: View {
                 .scrollDismissesKeyboard(.interactively)
             }
             .alert("Error", isPresented: $viewModel.showAlert) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
+            }
+            .onChange(of: viewModel.showAlert) { newValue in
+                if newValue {
+                    HapticManager.shared.trigger(.error)
+                }
             }
             .onChange(of: viewModel.signedInUser) { user in
                 if let user = user {
                     // Update global app state using MainActor
                     Task { @MainActor in
+                        HapticManager.shared.trigger(.success)
                         appState.currentUser = user
                         // The Root view will automatically switch to patientTabbar due to appState change
                         // We don't need manual navigation here.
@@ -195,7 +218,7 @@ struct patientSignupView: View {
                 )
 
                 AestheticInput(
-                    icon: "", // No icon for second field to save space or visual balance
+                    icon: "",  // No icon for second field to save space or visual balance
                     placeholder: "Last Name",
                     text: $viewModel.lastName,
                     isPasswordVisible: .constant(false)
@@ -233,7 +256,8 @@ struct patientSignupView: View {
                 } label: {
                     HStack {
                         Text(viewModel.sex.isEmpty ? "Sex" : viewModel.sex)
-                            .foregroundColor(viewModel.sex.isEmpty ? .gray : AppConfig.Colors.textPrimary)
+                            .foregroundColor(
+                                viewModel.sex.isEmpty ? .gray : AppConfig.Colors.textPrimary)
                         Spacer()
                         Image(systemName: "chevron.down")
                             .font(.caption)
@@ -259,7 +283,8 @@ struct patientSignupView: View {
                 } label: {
                     HStack {
                         Text(viewModel.bloodGroup.isEmpty ? "Blood" : viewModel.bloodGroup)
-                            .foregroundColor(viewModel.bloodGroup.isEmpty ? .gray : AppConfig.Colors.textPrimary)
+                            .foregroundColor(
+                                viewModel.bloodGroup.isEmpty ? .gray : AppConfig.Colors.textPrimary)
                         Spacer()
                         Image(systemName: "chevron.down")
                             .font(.caption)

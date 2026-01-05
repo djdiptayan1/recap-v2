@@ -25,8 +25,10 @@ struct ProfileFamilyView: View {
                                     .fill(Color.white)
                                     .frame(width: 110, height: 110)
                                     .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                                
-                                if let profileImageURL = familyMember.profileImageURL, let url = URL(string: profileImageURL) {
+
+                                if let profileImageURL = familyMember.profileImageURL,
+                                    let url = URL(string: profileImageURL)
+                                {
                                     WebImage(url: url)
                                         .resizable()
                                         .indicator(.activity)
@@ -43,44 +45,57 @@ struct ProfileFamilyView: View {
                                         .foregroundColor(Color.gray.opacity(0.3))
                                 }
                             }
-                            
+
                             VStack(spacing: 4) {
                                 Text("\(familyMember.firstName) \(familyMember.lastName)")
                                     .font(AppConfig.Fonts.titleMedium)
                                     .foregroundColor(AppConfig.Colors.textPrimary)
-                                
+
                                 Text(familyMember.email)
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
                             }
                         }
                         .padding(.top, 20)
-                        
+
                         VStack(alignment: .leading, spacing: 16) {
                             SectionHeader(title: "Family Details")
-                            
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                InfoTile(icon: "person.2.fill", title: "Relation", value: familyMember.relation ?? "N/A")
-                                InfoTile(icon: "phone.fill", title: "Phone", value: familyMember.phone ?? "N/A", iconColor: .green)
+
+                            LazyVGrid(
+                                columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16
+                            ) {
+                                InfoTile(
+                                    icon: "person.2.fill", title: "Relation",
+                                    value: familyMember.relation ?? "N/A")
+                                InfoTile(
+                                    icon: "phone.fill", title: "Phone",
+                                    value: familyMember.phone ?? "N/A", iconColor: .green)
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding - 10)
-                        
+
                         if let patient = familyMember.linkedPatient {
                             VStack(alignment: .leading, spacing: 16) {
                                 SectionHeader(title: "Patient Details")
-                                
-                                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                    InfoTile(icon: "person.fill", title: "Name", value: "\(patient.firstName) \(patient.lastName)")
-                                    InfoTile(icon: "number", title: "Patient UID", value: patient.patientUID, iconColor: .blue)
+
+                                LazyVGrid(
+                                    columns: [GridItem(.flexible()), GridItem(.flexible())],
+                                    spacing: 16
+                                ) {
+                                    InfoTile(
+                                        icon: "person.fill", title: "Name",
+                                        value: "\(patient.firstName) \(patient.lastName)")
+                                    InfoTile(
+                                        icon: "number", title: "Patient UID",
+                                        value: patient.patientUID, iconColor: .blue)
                                 }
                             }
                             .padding(.horizontal, AppConfig.UI.screenPadding - 10)
                         }
-                        
+
                         VStack(alignment: .leading, spacing: 16) {
                             SectionHeader(title: "Settings")
-                            
+
                             VStack(spacing: 0) {
                                 // Privacy Policy Link
                                 NavigationLink(destination: privaryPolicy()) {
@@ -89,22 +104,22 @@ struct ProfileFamilyView: View {
                                             .font(.system(size: 18))
                                             .frame(width: 24)
                                             .foregroundColor(AppConfig.Colors.textSecondary)
-                                            
+
                                         Text("Privacy Policy")
                                             .font(AppConfig.Fonts.body)
                                             .foregroundColor(AppConfig.Colors.textPrimary)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(AppConfig.Colors.stroke)
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
-                                
+
                                 Divider().padding(.leading, 50)
-                                
+
                                 // Support Link
                                 NavigationLink(destination: support()) {
                                     HStack(spacing: 16) {
@@ -112,32 +127,34 @@ struct ProfileFamilyView: View {
                                             .font(.system(size: 18))
                                             .frame(width: 24)
                                             .foregroundColor(AppConfig.Colors.textSecondary)
-                                            
+
                                         Text("Support")
                                             .font(AppConfig.Fonts.body)
                                             .foregroundColor(AppConfig.Colors.textPrimary)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(AppConfig.Colors.stroke)
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
-                                
+
                                 Divider().padding(.leading, 50)
 
-                                Button(action: {}) {
+                                Button(action: {
+                                    HapticManager.shared.trigger(.warning)
+                                }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
                                             .frame(width: 24)
                                             .foregroundColor(.red.opacity(0.8))
-                                        
+
                                         Text("Delete Account")
                                             .font(AppConfig.Fonts.body)
                                             .foregroundColor(.red)
-                                        
+
                                         Spacer()
                                     }
                                     .padding(16)
@@ -148,8 +165,11 @@ struct ProfileFamilyView: View {
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding - 10)
-                        
-                        Button(action: { showLogoutAlert = true }) {
+
+                        Button(action: {
+                            HapticManager.shared.trigger(.selection)
+                            showLogoutAlert = true
+                        }) {
                             Text("Log Out")
                                 .font(AppConfig.Fonts.headline)
                                 .foregroundColor(AppConfig.Colors.alert)
@@ -172,7 +192,7 @@ struct ProfileFamilyView: View {
             .standardBackground()
             .scrollIndicators(.hidden)
             .alert("Log Out", isPresented: $showLogoutAlert) {
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
                     appState.isLoggedIn = false
                 }

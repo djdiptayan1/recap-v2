@@ -9,7 +9,7 @@ import SwiftUI
 
 struct InstructionView: View {
     let onStart: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "brain.head.profile")
@@ -17,17 +17,22 @@ struct InstructionView: View {
                 .foregroundColor(AppConfig.Colors.accent)
                 .padding(30)
                 .background(Circle().fill(AppConfig.Colors.accent.opacity(0.1)))
-            
+
             Text("Memory Training")
                 .font(AppConfig.Fonts.titleLarge)
-            
-            Text("We will show you a set of everyday objects.\n\nTry to remember them, then select them from a list.")
-                .font(AppConfig.Fonts.body)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .foregroundColor(AppConfig.Colors.textSecondary)
-            
-            Button(action: onStart) {
+
+            Text(
+                "We will show you a set of everyday objects.\n\nTry to remember them, then select them from a list."
+            )
+            .font(AppConfig.Fonts.body)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 32)
+            .foregroundColor(AppConfig.Colors.textSecondary)
+
+            Button(action: {
+                HapticManager.shared.trigger(.selection)
+                onStart()
+            }) {
                 Text("Start Game")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
