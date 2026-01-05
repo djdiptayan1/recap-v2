@@ -9,7 +9,7 @@ import SwiftUI
 struct home_family: View {
     @State private var showProfile = false
     var body: some View {
-        NavigationStack{
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     QuestionsCard()
@@ -23,6 +23,7 @@ struct home_family: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
+                        HapticManager.shared.trigger(.selection)
                         showProfile.toggle()
                     }) {
                         Image(systemName: "person.fill")

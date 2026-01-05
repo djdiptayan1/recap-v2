@@ -21,7 +21,9 @@ struct PatientLoginView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 80, height: 80)
-                            .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10)
+                            .shadow(
+                                color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10
+                            )
 
                         VStack(spacing: 6) {
                             Text("Welcome Back")
@@ -55,13 +57,17 @@ struct PatientLoginView: View {
                             )
 
                             Button("Forgot Password?") {
+                                HapticManager.shared.trigger(.selection)
                                 // Action
                             }
                             .font(AppConfig.Fonts.small)
                             .foregroundColor(AppConfig.Colors.textSecondary)
                         }
 
-                        Button(action: loginWithEmail) {
+                        Button(action: {
+                            HapticManager.shared.trigger(.selection)
+                            loginWithEmail()
+                        }) {
                             HStack {
                                 if viewModel.isLoading {
                                     ProgressView()
@@ -76,7 +82,8 @@ struct PatientLoginView: View {
                             .background(AppConfig.Colors.accent)
                             .foregroundColor(.white)
                             .cornerRadius(AppConfig.UI.cornerRadius)
-                            .shadow(color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
+                            .shadow(
+                                color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
                         }
                         .disabled(viewModel.isLoading)
                     }
@@ -94,7 +101,10 @@ struct PatientLoginView: View {
 
                     VStack(spacing: 16) {
                         // Google
-                        Button(action: signInWithGoogle) {
+                        Button(action: {
+                            HapticManager.shared.trigger(.selection)
+                            signInWithGoogle()
+                        }) {
                             HStack {
                                 Image("google")
                                     .resizable()
@@ -126,6 +136,7 @@ struct PatientLoginView: View {
                             .foregroundColor(AppConfig.Colors.textSecondary)
 
                         Button("Sign Up") {
+                            HapticManager.shared.trigger(.selection)
                             viewModel.showSignupSheet = true
                         }
                         .font(AppConfig.Fonts.bodyBold)
@@ -144,6 +155,11 @@ struct PatientLoginView: View {
         } message: {
             Text(viewModel.alertMessage)
         }
+        .onChange(of: viewModel.showAlert) { newValue in
+            if newValue {
+                HapticManager.shared.trigger(.error)
+            }
+        }
         .background(
             Color.clear
                 .contentShape(Rectangle())
@@ -155,42 +171,45 @@ struct PatientLoginView: View {
     }
 
     // MARK: - Logic Functions
-    
+
     private func loginWithEmail() {
         Task {
             if let user = await viewModel.loginWithEmail() {
                 await MainActor.run {
+                    HapticManager.shared.trigger(.success)
                     appState.currentUser = user
                 }
             }
         }
     }
-    
+
     private func signInWithGoogle() {
         Task {
             if let user = await viewModel.signInWithGoogle() {
                 await MainActor.run {
+                    HapticManager.shared.trigger(.success)
                     appState.currentUser = user
                 }
             }
         }
     }
-    
+
     private func handleAppleSignInCompletion() {
     }
-    
+
     private func fetchOrCreateUserProfile(userId: String, email: String) {
     }
-    
+
     private func generateAndCreateProfile(userId: String, email: String) {
     }
 
     private func hideKeyboard() {
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 }
 
 #Preview {
     PatientLoginView()
-//        .environmentObject(AppState())
+    //        .environmentObject(AppState())
 }

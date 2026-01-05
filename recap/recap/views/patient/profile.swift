@@ -27,8 +27,10 @@ struct ProfileView: View {
                                     .fill(Color.white)
                                     .frame(width: 110, height: 110)
                                     .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
-                                
-                                if let profileImageURL = patient.profileImageURL, let url = URL(string: profileImageURL) {
+
+                                if let profileImageURL = patient.profileImageURL,
+                                    let url = URL(string: profileImageURL)
+                                {
                                     WebImage(url: url)
                                         .resizable()
                                         .indicator(.activity)
@@ -45,34 +47,35 @@ struct ProfileView: View {
                                         .foregroundColor(Color.gray.opacity(0.3))
                                 }
                             }
-                            
+
                             VStack(spacing: 4) {
                                 Text("\(patient.firstName) \(patient.lastName)")
                                     .font(AppConfig.Fonts.titleMedium)
                                     .foregroundColor(AppConfig.Colors.textPrimary)
-                                
+
                                 Text(patient.email)
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
                             }
                         }
                         .padding(.top, 20)
-                        
+
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("PATIENT ID")
                                     .font(.system(size: 11, weight: .bold))
                                     .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.7))
                                     .tracking(1)
-                                
+
                                 Text(patient.patientUID)
                                     .font(.system(size: 28, weight: .bold, design: .monospaced))
                                     .foregroundColor(AppConfig.Colors.accent)
                             }
-                            
+
                             Spacer()
-                            
+
                             Button(action: {
+                                HapticManager.shared.trigger(.selection)
                                 UIPasteboard.general.string = patient.patientUID
                                 showCopyAlert = true
                             }) {
@@ -92,31 +95,46 @@ struct ProfileView: View {
                         //                    .background(Color.white)
                         .glassEffect(.clear, in: .rect)
                         .cornerRadius(AppConfig.UI.cornerRadius)
-                        .shadow(color: AppConfig.Colors.accent.opacity(0.15), radius: 15, x: 0, y: 8)
+                        .shadow(
+                            color: AppConfig.Colors.accent.opacity(0.15), radius: 15, x: 0, y: 8
+                        )
                         .padding(.horizontal, AppConfig.UI.screenPadding - 10)
-                        
+
                         VStack(alignment: .leading, spacing: 16) {
                             SectionHeader(title: "Medical Details")
-                            
-                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                                InfoTile(icon: "calendar", title: "Birth Date", value: patient.dateOfBirth)
-                                InfoTile(icon: "drop.fill", title: "Blood Type", value: patient.bloodGroup, iconColor: .red)
-                                InfoTile(icon: "person.text.rectangle", title: "Sex", value: patient.sex)
-                                InfoTile(icon: "chart.bar.fill", title: "Stage", value: patient.stage, iconColor: .orange)
+
+                            LazyVGrid(
+                                columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16
+                            ) {
+                                InfoTile(
+                                    icon: "calendar", title: "Birth Date",
+                                    value: patient.dateOfBirth)
+                                InfoTile(
+                                    icon: "drop.fill", title: "Blood Type",
+                                    value: patient.bloodGroup, iconColor: .red)
+                                InfoTile(
+                                    icon: "person.text.rectangle", title: "Sex", value: patient.sex)
+                                InfoTile(
+                                    icon: "chart.bar.fill", title: "Stage", value: patient.stage,
+                                    iconColor: .orange)
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding - 10)
-                        
+
                         VStack(alignment: .leading, spacing: 16) {
                             SectionHeader(title: "Health & Settings")
-                            
+
                             VStack(spacing: 0) {
-                                SettingsRow(icon: "brain.head.profile", title: "Memory Check", subtitle: "Last check: 2 days ago") {
+                                SettingsRow(
+                                    icon: "brain.head.profile", title: "Memory Check",
+                                    subtitle: "Last check: 2 days ago"
+                                ) {
+                                    HapticManager.shared.trigger(.selection)
                                     showMemoryCheck = true
                                 }
-                                
+
                                 Divider().padding(.leading, 50)
-                                
+
                                 // Citations Link
                                 NavigationLink(destination: CitationsView()) {
                                     HStack(spacing: 16) {
@@ -124,28 +142,28 @@ struct ProfileView: View {
                                             .font(.system(size: 18))
                                             .frame(width: 24)
                                             .foregroundColor(AppConfig.Colors.textSecondary)
-                                            
+
                                         VStack(alignment: .leading, spacing: 2) {
                                             Text("Medical Citations")
                                                 .font(AppConfig.Fonts.body)
                                                 .foregroundColor(AppConfig.Colors.textPrimary)
-                                            
+
                                             Text("View sources")
                                                 .font(AppConfig.Fonts.small)
                                                 .foregroundColor(AppConfig.Colors.textSecondary)
                                         }
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(AppConfig.Colors.stroke)
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
-                                
+
                                 Divider().padding(.leading, 50)
-                                
+
                                 // Privacy Policy Link
                                 NavigationLink(destination: privaryPolicy()) {
                                     HStack(spacing: 16) {
@@ -153,22 +171,22 @@ struct ProfileView: View {
                                             .font(.system(size: 18))
                                             .frame(width: 24)
                                             .foregroundColor(AppConfig.Colors.textSecondary)
-                                            
+
                                         Text("Privacy Policy")
                                             .font(AppConfig.Fonts.body)
                                             .foregroundColor(AppConfig.Colors.textPrimary)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(AppConfig.Colors.stroke)
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
-                                
+
                                 Divider().padding(.leading, 50)
-                                
+
                                 // Support Link
                                 NavigationLink(destination: support()) {
                                     HStack(spacing: 16) {
@@ -176,32 +194,34 @@ struct ProfileView: View {
                                             .font(.system(size: 18))
                                             .frame(width: 24)
                                             .foregroundColor(AppConfig.Colors.textSecondary)
-                                            
+
                                         Text("Support")
                                             .font(AppConfig.Fonts.body)
                                             .foregroundColor(AppConfig.Colors.textPrimary)
-                                        
+
                                         Spacer()
-                                        
+
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(AppConfig.Colors.stroke)
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
-                                
+
                                 Divider().padding(.leading, 50)
-                                
-                                Button(action: {}) {
+
+                                Button(action: {
+                                    HapticManager.shared.trigger(.warning)
+                                }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
                                             .frame(width: 24)
                                             .foregroundColor(.red.opacity(0.8))
-                                        
+
                                         Text("Delete Account")
                                             .font(AppConfig.Fonts.body)
                                             .foregroundColor(.red)
-                                        
+
                                         Spacer()
                                     }
                                     .padding(16)
@@ -213,8 +233,11 @@ struct ProfileView: View {
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding - 10)
-                        
-                        Button(action: { showLogoutAlert = true }) {
+
+                        Button(action: {
+                            HapticManager.shared.trigger(.selection)
+                            showLogoutAlert = true
+                        }) {
                             Text("Log Out")
                                 .font(AppConfig.Fonts.headline)
                                 .foregroundColor(AppConfig.Colors.alert)
@@ -239,12 +262,12 @@ struct ProfileView: View {
             .scrollIndicators(.hidden)
             //            .navigationTitle("Profile")
             .alert("Copied", isPresented: $showCopyAlert) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {}
             } message: {
                 Text("Patient ID has been copied to clipboard.")
             }
             .alert("Log Out", isPresented: $showLogoutAlert) {
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
                     appState.isLoggedIn = false
                 }
@@ -301,7 +324,7 @@ struct InfoTile: View {
             }
         }
         .padding(AppConfig.UI.screenPadding - 10)
-//        .background(Color.white)
+        //        .background(Color.white)
         .glassEffect(.clear, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
