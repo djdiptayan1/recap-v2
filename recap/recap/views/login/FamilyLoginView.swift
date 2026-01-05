@@ -141,11 +141,11 @@ struct FamilyLoginView: View {
                                 }
                                 
                                 // Apple Button placeholder (Ensure you have the import for this)
-                                Rectangle()
-                                    .fill(Color.black)
-                                    .frame(height: 56)
-                                    .cornerRadius(AppConfig.UI.cornerRadius)
-                                    .overlay(Text("Sign in with Apple").foregroundColor(.white).bold())
+//                                Rectangle()
+//                                    .fill(Color.black)
+//                                    .frame(height: 56)
+//                                    .cornerRadius(AppConfig.UI.cornerRadius)
+//                                    .overlay(Text("Sign in with Apple").foregroundColor(.white).bold())
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
