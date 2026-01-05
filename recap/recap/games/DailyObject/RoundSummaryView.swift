@@ -10,23 +10,23 @@ import SwiftUI
 struct RoundSummaryView: View {
     let score: Int
     let onNext: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "star.circle.fill")
                 .font(.system(size: 80))
                 .foregroundColor(AppConfig.Colors.accent)
                 .padding(.bottom, 10)
-            
+
             Text("Round Complete!")
                 .font(AppConfig.Fonts.titleLarge)
                 .foregroundColor(AppConfig.Colors.textPrimary)
-            
+
             VStack(spacing: 8) {
                 Text("Current Score")
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textSecondary)
-                
+
                 Text("\(score)")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
                     .foregroundColor(AppConfig.Colors.textPrimary)
@@ -37,8 +37,11 @@ struct RoundSummaryView: View {
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
             .padding(.horizontal, 40)
-            
-            Button(action: onNext) {
+
+            Button(action: {
+                HapticManager.shared.trigger(.selection)
+                onNext()
+            }) {
                 Text("Next Round")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)

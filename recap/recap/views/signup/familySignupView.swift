@@ -11,14 +11,15 @@ struct familySignupView: View {
     @StateObject private var viewModel: FamilySignupViewModel
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var appState: AppState
-    
+
     // Initializer to pass data into ViewModel
     init(googleUser: GoogleUserData?, patientDocumentId: String, patientUID: String) {
-        _viewModel = StateObject(wrappedValue: FamilySignupViewModel(
-            googleUser: googleUser,
-            patientDocumentId: patientDocumentId,
-            patientUID: patientUID
-        ))
+        _viewModel = StateObject(
+            wrappedValue: FamilySignupViewModel(
+                googleUser: googleUser,
+                patientDocumentId: patientDocumentId,
+                patientUID: patientUID
+            ))
     }
 
     var body: some View {
@@ -33,21 +34,28 @@ struct familySignupView: View {
                                     .scaledToFill()
                                     .frame(width: 100, height: 100)
                                     .clipShape(Circle())
-                                    .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
-                            } else if let urlString = viewModel.googleUser?.profileImageURL, let url = URL(string: urlString) {
+                                    .shadow(
+                                        color: AppConfig.Colors.accent.opacity(0.3), radius: 10,
+                                        x: 0, y: 5)
+                            } else if let urlString = viewModel.googleUser?.profileImageURL,
+                                let url = URL(string: urlString)
+                            {
                                 AsyncImage(url: url) { image in
                                     image.resizable()
                                 } placeholder: {
                                     Image(systemName: "person.circle.fill")
                                         .resizable()
-                                        .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.3))
+                                        .foregroundColor(
+                                            AppConfig.Colors.textSecondary.opacity(0.3))
                                 }
                                 .scaledToFill()
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle())
-                                .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
+                                .shadow(
+                                    color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0,
+                                    y: 5)
                             } else {
-                                Image("recapLogo") // Fallback
+                                Image("recapLogo")  // Fallback
                                     .resizable()
                                     .scaledToFit()
                                     .frame(width: 80, height: 80)
@@ -76,10 +84,11 @@ struct familySignupView: View {
 
                                 if viewModel.currentStep == .imageUpload {
                                     imageUploadForm
-                                        .transition(.asymmetric(
-                                            insertion: .move(edge: .trailing),
-                                            removal: .move(edge: .leading)
-                                        ))
+                                        .transition(
+                                            .asymmetric(
+                                                insertion: .move(edge: .trailing),
+                                                removal: .move(edge: .leading)
+                                            ))
                                 }
                             }
                             .animation(.easeInOut(duration: 0.4), value: viewModel.currentStep)
@@ -95,7 +104,10 @@ struct familySignupView: View {
                                 .transition(.opacity)
                             }
 
-                            Button(action: viewModel.handlePrimaryAction) {
+                            Button(action: {
+                                HapticManager.shared.trigger(.selection)
+                                viewModel.handlePrimaryAction()
+                            }) {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
@@ -110,20 +122,22 @@ struct familySignupView: View {
                                 .background(AppConfig.Colors.accent)
                                 .foregroundColor(.white)
                                 .cornerRadius(AppConfig.UI.cornerRadius)
-                                .shadow(color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
+                                .shadow(
+                                    color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0,
+                                    y: 5)
                             }
                             .disabled(viewModel.isLoading)
                             .padding(.top, 10)
-                            
+
                             // Skip button for image upload
-//                            if viewModel.currentStep == .imageUpload {
-//                                Button("Use Google Photo / Skip") {
-//                                    viewModel.skipImageUpload()
-//                                }
-//                                .font(AppConfig.Fonts.body)
-//                                .foregroundColor(AppConfig.Colors.textSecondary)
-//                                .padding(.top, 8)
-//                            }
+                            //                            if viewModel.currentStep == .imageUpload {
+                            //                                Button("Use Google Photo / Skip") {
+                            //                                    viewModel.skipImageUpload()
+                            //                                }
+                            //                                .font(AppConfig.Fonts.body)
+                            //                                .foregroundColor(AppConfig.Colors.textSecondary)
+                            //                                .padding(.top, 8)
+                            //                            }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
                         .animation(.spring(), value: viewModel.currentStep)
@@ -134,37 +148,43 @@ struct familySignupView: View {
                 .scrollDismissesKeyboard(.interactively)
             }
             .alert("Error", isPresented: $viewModel.showAlert) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.errorMessage ?? "Unknown error")
+            }
+            .onChange(of: viewModel.showAlert) { newValue in
+                if newValue {
+                    HapticManager.shared.trigger(.error)
+                }
             }
             .onChange(of: viewModel.signedInUser) { user in
                 if let user = user {
                     // Update global app state using MainActor
                     Task { @MainActor in
+                        HapticManager.shared.trigger(.success)
                         appState.currentUser = user
                     }
                 }
             }
         }
     }
-    
+
     // MARK: - Dynamic Text Helpers
-    
+
     var headerTitle: String {
         switch viewModel.currentStep {
         case .details: return "Final Details"
         case .imageUpload: return "Profile Photo"
         }
     }
-    
+
     var headerSubtitle: String {
         switch viewModel.currentStep {
         case .details: return "Almost there! Just a few more things."
         case .imageUpload: return "Update your photo if you like."
         }
     }
-    
+
     var buttonTitle: String {
         switch viewModel.currentStep {
         case .details: return "Next"
@@ -176,8 +196,8 @@ struct familySignupView: View {
 
     var detailsForm: some View {
         VStack(spacing: 20) {
-             // Display Email (Disabled)
-             AestheticInput(
+            // Display Email (Disabled)
+            AestheticInput(
                 icon: "envelope.fill",
                 placeholder: "Email",
                 text: $viewModel.email,
@@ -187,12 +207,21 @@ struct familySignupView: View {
             .opacity(0.7)
 
             // Name (Pre-filled but editable)
-            AestheticInput(
-                icon: "person.fill",
-                placeholder: "Full Name",
-                text: $viewModel.name,
-                isPasswordVisible: .constant(false)
-            )
+            HStack(spacing: 12) {
+                AestheticInput(
+                    icon: "person.fill",
+                    placeholder: "First Name",
+                    text: $viewModel.firstName,
+                    isPasswordVisible: .constant(false)
+                )
+
+                AestheticInput(
+                    icon: "",
+                    placeholder: "Last Name",
+                    text: $viewModel.lastName,
+                    isPasswordVisible: .constant(false)
+                )
+            }
 
             // Phone
             AestheticInput(
@@ -202,7 +231,7 @@ struct familySignupView: View {
                 isPasswordVisible: .constant(false)
             )
             .keyboardType(.phonePad)
-            
+
             // Relation
             VStack(alignment: .leading, spacing: 8) {
                 Text("Relationship to Patient")
@@ -216,8 +245,11 @@ struct familySignupView: View {
                     }
                 } label: {
                     HStack {
-                        Text(viewModel.relation.isEmpty ? "Select Relationship" : viewModel.relation)
-                            .foregroundColor(viewModel.relation.isEmpty ? .gray : AppConfig.Colors.textPrimary)
+                        Text(
+                            viewModel.relation.isEmpty ? "Select Relationship" : viewModel.relation
+                        )
+                        .foregroundColor(
+                            viewModel.relation.isEmpty ? .gray : AppConfig.Colors.textPrimary)
                         Spacer()
                         Image(systemName: "chevron.down")
                             .font(.caption)
@@ -257,6 +289,10 @@ struct familySignupView: View {
 }
 
 #Preview {
-    familySignupView(googleUser: GoogleUserData(email: "test@gmail.com", name: "Test User", profileImageURL: nil), patientDocumentId: "123", patientUID: "123456")
-        .environmentObject(AppState())
+    familySignupView(
+        googleUser: GoogleUserData(
+            email: "test@gmail.com", name: "Test User", profileImageURL: nil),
+        patientDocumentId: "123", patientUID: "123456"
+    )
+    .environmentObject(AppState())
 }
