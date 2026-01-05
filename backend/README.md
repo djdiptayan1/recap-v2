@@ -138,6 +138,61 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
+
+## Running the Application
+
+### Development Mode
+
+```bash
+npm run dev
+```
+
+Uses nodemon for automatic server restart on file changes.
+
+### Production Mode
+
+```bash
+npm start
+```
+
+The server will start on the configured PORT (default: 3000).
+
+### Verify Installation
+
+```bash
+curl http://localhost:3000/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok",
+  "message": "Server is running and Firebase is connected",
+  "timestamp": "2026-01-01T00:00:00.000Z"
+}
+```
+
+## Docker Support
+
+A Dockerfile is included in the project root for containerized deployment.
+
+### Build Docker Image and Push to Docker Hub
+
+```bash
+docker buildx build --platform linux/amd64 -t username/recap-backend:latest --push .
+```
+
+### Run Container
+
+```bash
+docker run --platform linux/amd64 \
+--name recappp \
+--env-file recapEnv.env \
+-p 3000:3000 \
+username/recap-backend
+```
+
 ## Project Structure
 
 ```
@@ -549,56 +604,6 @@ DELETE /api/citations/:id
 
 ---
 
-## Running the Application
-
-### Development Mode
-
-```bash
-npm run dev
-```
-
-Uses nodemon for automatic server restart on file changes.
-
-### Production Mode
-
-```bash
-npm start
-```
-
-The server will start on the configured PORT (default: 3000).
-
-### Verify Installation
-
-```bash
-curl http://localhost:3000/health
-```
-
-Expected response:
-
-```json
-{
-  "status": "ok",
-  "message": "Server is running and Firebase is connected",
-  "timestamp": "2026-01-01T00:00:00.000Z"
-}
-```
-
-## Docker Support
-
-A Dockerfile is included in the project root for containerized deployment.
-
-### Build Docker Image
-
-```bash
-docker build -t recap-backend .
-```
-
-### Run Container
-
-```bash
-docker run -p 3000:3000 --env-file .env recap-backend
-```
-
 ## Data Models
 
 ### Patient Schema
@@ -798,6 +803,6 @@ Gaps of more than 24 hours reset the current streak but are recorded for max str
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: January 1, 2026
+**Version**: 1.5.0
+**Last Updated**: January 6, 2026
 **Maintainer**: Recap Development Team
