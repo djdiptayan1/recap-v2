@@ -56,7 +56,8 @@ struct AestheticInput: View {
                 }
             }
             .padding(12)
-            .background(Color.white) // Clean white background
+//            .background(Color.white) // Clean white background
+            .glassEffect(.clear, in: .rect)
             .cornerRadius(AppConfig.UI.cornerRadius)
             // Soft Shadow + Border
             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
