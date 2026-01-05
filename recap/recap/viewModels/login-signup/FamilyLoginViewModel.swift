@@ -91,15 +91,19 @@ class FamilyLoginViewModel: ObservableObject {
                 return nil
             }
             
+        } catch let error as NetworkError {
+            // Handle 404 (Not Found) specifically to trigger signup
+            if case .httpError(let statusCode) = error, statusCode == 404 {
+                pendingGoogleUser = GoogleUserData(
+                    email: email,
+                    name: user.displayName ?? "",
+                    profileImageURL: user.photoURL?.absoluteString
+                )
+                showSignupSheet = true
+                return nil
+            }
+            throw error
         } catch {
-             // If verify fails strictly (network error etc), throw.
-             // But if it fails because "not found" (404/409 logic in service?), we might need to handle it.
-             // Assuming verifyFamilyMember returns success=false if not found but no error thrown if 200 OK with success=false.
-             // If the service throws on 404, we catch it here.
-             
-             // Quick fix: Check if error is "not found" type or just proceed to signup?
-             // Safest is to rely on success bool if service suppresses error, or catch specific error.
-             // Assuming service returns VerifyFamilyMemberResponse with success=false for non-existence.
              throw error
         }
     }
