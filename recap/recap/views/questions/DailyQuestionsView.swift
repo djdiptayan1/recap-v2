@@ -10,7 +10,7 @@ import SwiftUI
 struct DailyQuestionsView: View {
     @StateObject private var viewModel = DailyQuestionsViewModel()
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -37,21 +37,24 @@ struct DailyQuestionsView: View {
                 } else if let question = viewModel.currentQuestion {
                     // 3. Question Flow
                     VStack(spacing: 24) {
-                        
+
                         // Progress Bar
                         ProgressBar(value: viewModel.progress)
                             .padding(.horizontal, AppConfig.UI.screenPadding)
                             .padding(.top, 10)
-                        
+
                         // Question Card
                         QuestionDisplayCard(question: question)
                             .padding(.horizontal, AppConfig.UI.screenPadding)
-                        
+
                         // Answer Options (Scrollable if many options)
                         ScrollView {
                             VStack(spacing: 16) {
                                 ForEach(question.answerOptions, id: \.self) { option in
-                                    Button(action: { viewModel.submitAnswer(option) }) {
+                                    Button(action: {
+                                        HapticManager.shared.trigger(.selection)
+                                        viewModel.submitAnswer(option)
+                                    }) {
                                         AnswerOptionButton(text: option)
                                     }
                                 }
@@ -74,12 +77,12 @@ struct DailyQuestionsView: View {
             .standardBackground()
             .navigationTitle("Daily Check-in")
             .navigationBarTitleDisplayMode(.inline)
-//            .toolbar {
-//                ToolbarItem(placement: .navigationBarLeading) {
-//                    Button("Exit") { dismiss() }
-//                        .foregroundColor(AppConfig.Colors.textSecondary)
-//                }
-//            }
+            //            .toolbar {
+            //                ToolbarItem(placement: .navigationBarLeading) {
+            //                    Button("Exit") { dismiss() }
+            //                        .foregroundColor(AppConfig.Colors.textSecondary)
+            //                }
+            //            }
             .animation(.easeInOut, value: viewModel.currentIndex)
         }
     }
@@ -89,19 +92,19 @@ struct DailyQuestionsView: View {
 
 struct ProgressBar: View {
     var value: CGFloat
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Progress")
                 .font(AppConfig.Fonts.small)
                 .foregroundColor(AppConfig.Colors.textSecondary)
-            
+
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(AppConfig.Colors.stroke)
                         .frame(height: 6)
-                    
+
                     Capsule()
                         .fill(AppConfig.Colors.accent)
                         .frame(width: geo.size.width * value, height: 6)
@@ -115,35 +118,35 @@ struct ProgressBar: View {
 
 struct QuestionDisplayCard: View {
     let question: QuestionModel
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Category Tag
-//            Text(question.subcategory.capitalized)
-//                .font(.caption)
-//                .fontWeight(.bold)
-//                .foregroundColor(AppConfig.Colors.accent)
-//                .padding(.horizontal, 10)
-//                .padding(.vertical, 4)
-//                .background(AppConfig.Colors.accent.opacity(0.1))
-//                .cornerRadius(8)
-            
+            //            Text(question.subcategory.capitalized)
+            //                .font(.caption)
+            //                .fontWeight(.bold)
+            //                .foregroundColor(AppConfig.Colors.accent)
+            //                .padding(.horizontal, 10)
+            //                .padding(.vertical, 4)
+            //                .background(AppConfig.Colors.accent.opacity(0.1))
+            //                .cornerRadius(8)
+
             // The Question
             Text(question.text)
-                .font(AppConfig.Fonts.headline) // Size 22
+                .font(AppConfig.Fonts.headline)  // Size 22
                 .foregroundColor(AppConfig.Colors.textPrimary)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
-            
+
             Divider()
-            
+
             // Hint (if available)
             if let hint = question.hint, !hint.isEmpty {
                 HStack(spacing: 6) {
                     Image(systemName: "lightbulb.fill")
                         .foregroundColor(.yellow)
                     Text(hint)
-                        .font(AppConfig.Fonts.small) // Size 14
+                        .font(AppConfig.Fonts.small)  // Size 14
                         .foregroundColor(AppConfig.Colors.textSecondary)
                         .italic()
                 }
@@ -163,15 +166,15 @@ struct QuestionDisplayCard: View {
 
 struct AnswerOptionButton: View {
     let text: String
-    
+
     var body: some View {
         HStack {
             Text(text)
-                .font(AppConfig.Fonts.bodyBold) // Size 18, readable
+                .font(AppConfig.Fonts.bodyBold)  // Size 18, readable
                 .foregroundColor(AppConfig.Colors.textPrimary)
-            
+
             Spacer()
-            
+
             Image(systemName: "circle")
                 .foregroundColor(AppConfig.Colors.stroke)
                 .font(.system(size: 20))
@@ -191,26 +194,29 @@ struct AnswerOptionButton: View {
 
 struct CompletionView: View {
     let onDismiss: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 80))
-                .foregroundColor(AppConfig.Colors.success) // Green
+                .foregroundColor(AppConfig.Colors.success)  // Green
                 .shadow(color: AppConfig.Colors.success.opacity(0.3), radius: 10, x: 0, y: 5)
-            
+
             VStack(spacing: 8) {
                 Text("All Done!")
                     .font(AppConfig.Fonts.titleMedium)
                     .foregroundColor(AppConfig.Colors.textPrimary)
-                
+
                 Text("Great job completing your daily check-in.")
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textSecondary)
                     .multilineTextAlignment(.center)
             }
-            
-            Button(action: onDismiss) {
+
+            Button(action: {
+                HapticManager.shared.trigger(.success)
+                onDismiss()
+            }) {
                 Text("Finish")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
