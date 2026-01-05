@@ -148,6 +148,12 @@ struct ProfileFamilyView: View {
                                 }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
+                                            .frame(width: 24)
+                                            .foregroundColor(.red.opacity(0.8))
+
+                                        Text("Delete Account")
+                                            .font(AppConfig.Fonts.body)
+                                            .foregroundColor(.red)
 
                                         Spacer()
                                     }
