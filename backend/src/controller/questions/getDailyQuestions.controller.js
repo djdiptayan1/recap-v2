@@ -55,35 +55,6 @@ export const getDailyQuestions = async (req, res, next) => {
             }
         });
 
-        // const results = await Promise.allSettled([
-        //     fetchCategoryQuestions(immediate, number_of_immediate_questions),
-        //     fetchCategoryQuestions(recent, number_of_recent_questions),
-        //     fetchCategoryQuestions(remote, number_of_remote_questions)
-        // ]);
-
-        // const extract = (r) => (r.status === 'fulfilled' ? r.value : []);
-
-        // const selectedImmediate = extract(results[0]);
-        // const selectedRecent = extract(results[1]);
-        // const selectedRemote = extract(results[2]);
-
-        // const finalQuestions = [
-        //     ...selectedImmediate,
-        //     ...selectedRecent,
-        //     ...selectedRemote
-        // ];
-
-        // res.status(200).json({
-        //     success: true,
-        //     count: finalQuestions.length,
-        //     data: finalQuestions,
-        //     meta: {
-        //         immediate: selectedImmediate.length,
-        //         recent: selectedRecent.length,
-        //         remote: selectedRemote.length
-        //     }
-        // });
-
     } catch (error) {
         next(error);
     }

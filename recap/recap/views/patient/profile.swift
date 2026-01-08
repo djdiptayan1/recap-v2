@@ -269,6 +269,7 @@ struct ProfileView: View {
             .alert("Log Out", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
+                    try? AuthService.shared.signOut()
                     appState.isLoggedIn = false
                 }
             } message: {
