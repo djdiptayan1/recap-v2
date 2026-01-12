@@ -34,11 +34,36 @@ export const deleteQuestion = async (req, res, next) => {
             return res.status(404).json({ success: false, error: 'Patient not found' });
         }
 
-        // Verify question exists
-        const questionRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, questionId);
-        const questionSnap = await getDoc(questionRef);
+        // Verify question exists - Check subcollections first
+        const today = new Date().toISOString().split('T')[0];
+        const dailyDocRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, today);
 
-        if (!questionSnap.exists()) {
+        let questionRef = null;
+        let questionSnap = null;
+
+        const subcollections = ['immediateQuestions', 'recentQuestions', 'remoteQuestions'];
+
+        for (const sub of subcollections) {
+            const tempRef = doc(dailyDocRef, sub, questionId);
+            const tempSnap = await getDoc(tempRef);
+            if (tempSnap.exists()) {
+                questionRef = tempRef;
+                questionSnap = tempSnap;
+                break;
+            }
+        }
+
+        // Fallback to legacy path if not found in daily subcollections
+        if (!questionSnap) {
+            const legacyRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, questionId);
+            const legacySnap = await getDoc(legacyRef);
+            if (legacySnap.exists()) {
+                questionRef = legacyRef;
+                questionSnap = legacySnap;
+            }
+        }
+
+        if (!questionSnap) {
             return res.status(404).json({ success: false, error: 'Question not found' });
         }
 

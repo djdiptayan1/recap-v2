@@ -2,6 +2,7 @@ import {
     collection,
     getDocs,
     doc,
+    getDoc,
     query,
     orderBy
 } from 'firebase/firestore';
@@ -26,31 +27,52 @@ export const getFamilyQuestions = async (req, res, next) => {
         // Normalize sort order
         const sortOrder = order === 'asc' ? 'asc' : 'desc';
 
-        const questionsRef = collection(
-            firestore,
-            USERS_COLLECTION,
-            patient_documentId,
-            QUESTIONS_SUBCOLLECTION
-        );
+        const today = new Date().toISOString().split('T')[0];
+        // The daily questions are stored under: users/{pid}/questions/{today}
+        const dailyDocRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, today);
+        const dailyDocSnap = await getDoc(dailyDocRef);
 
-        // Firestore ordered query
-        const questionsQuery = query(
-            questionsRef,
-            orderBy('createdAt', sortOrder)
-        );
+        let allQuestions = [];
 
-        const snapshot = await getDocs(questionsQuery);
+        if (dailyDocSnap.exists()) {
+            const { immediate, recent, remote } = config.question_category;
+            const subcollections = [
+                { name: 'immediateQuestions', category: immediate },
+                { name: 'recentQuestions', category: recent },
+                { name: 'remoteQuestions', category: remote }
+            ];
 
-        const questions = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
+            const fetchPromises = subcollections.map(async (sub) => {
+                const subColRef = collection(dailyDocRef, sub.name);
+                // We can't easily order by createdAt across multiple subcollections without combining first, 
+                // or we query each and sort in memory.
+                // For simplicity, fetch all and sort in memory.
+                const snapshot = await getDocs(subColRef);
+                return snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    // Ensure category is set if missing, though it should be there
+                    category: doc.data().category || sub.category
+                }));
+            });
+
+            const results = await Promise.all(fetchPromises);
+            allQuestions = results.flat();
+        }
+
+        // Sort in memory
+        allQuestions.sort((a, b) => {
+            const dateA = new Date(a.createdAt || 0);
+            const dateB = new Date(b.createdAt || 0);
+            return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+        });
 
         return res.status(200).json({
             success: true,
-            count: questions.length,
+            count: allQuestions.length,
             order: sortOrder,
-            data: questions
+            meta: { date: today, source: 'daily-subcollections' },
+            data: allQuestions
         });
 
     } catch (error) {

@@ -3,7 +3,15 @@ import { body, param, query } from 'express-validator';
 import memoryQuizController from '../controller/memoryQuiz/getQuizQuestions.controller.js';
 import { submitQuiz } from '../controller/memoryQuiz/submitQuiz.controller.js';
 
+import { getMemoryReports } from '../controller/memoryQuiz/memoryReport.controller.js';
+
 const router = express.Router();
+
+/**
+ * GET /api/memoryquiz/reports/:patientId
+ * Get memory quiz history for a patient
+ */
+router.get('/reports/:patientId', getMemoryReports);
 
 /**
  * GET /api/memoryquiz
@@ -17,7 +25,6 @@ router.get('/', memoryQuizController.getQuizQuestions);
  */
 router.post('/',
     body('score').isInt({ min: 0, max: 15 }).withMessage('Score must be between 0 and 15'),
-
     submitQuiz
 );
 

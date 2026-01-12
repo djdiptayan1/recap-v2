@@ -12,9 +12,13 @@ struct ProfileFamilyView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
 
+    @StateObject private var quizViewModel = MemoryQuizViewModel()
     @State private var showLogoutAlert = false
 
     var body: some View {
+        let documentID =
+            KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id
+            ?? ""
         NavigationStack {
             ScrollView {
                 if let familyMember = appState.currentUser {
@@ -88,9 +92,30 @@ struct ProfileFamilyView: View {
                                     InfoTile(
                                         icon: "number", title: "Patient UID",
                                         value: patient.patientUID, iconColor: .blue)
+
+                                    if let latestReport = quizViewModel.reports.first {
+                                        NavigationLink(
+                                            destination: MemoryQuizHistoryListView(
+                                                reports: quizViewModel.reports)
+                                        ) {
+                                            InfoTile(
+                                                icon: latestReport.safeIcon,
+                                                title: "Latest Check",
+                                                value: latestReport.safeStatus,
+                                                iconColor: latestReport.swiftColor
+                                            )
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                    }
                                 }
                             }
                             .padding(.horizontal, AppConfig.UI.screenPadding - 10)
+                            .onAppear {
+                                Task {
+                                    await quizViewModel.fetchMemoryReports(
+                                        patientId: documentID)
+                                }
+                            }
                         }
 
                         VStack(alignment: .leading, spacing: 16) {
@@ -201,6 +226,61 @@ struct ProfileFamilyView: View {
                 Text("Are you sure you want to log out?")
             }
         }
+    }
+}
+
+struct QuizHistoryRow: View {
+    let report: MemoryReport
+
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(report.swiftColor.opacity(0.1))
+                    .frame(width: 48, height: 48)
+
+                Image(systemName: report.safeIcon)
+                    .font(.system(size: 20))
+                    .foregroundColor(report.swiftColor)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(report.safeStatus)
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+
+                // Assuming date is string for now, user can format if needed
+                Text(formatDate(dateString: report.date))
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 4) {
+                Text("\(report.safeTotalScore)/\(report.safeTotalQuestions)")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(report.swiftColor)
+
+                Text("Score")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+            }
+        }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+
+    // Helper to try formatting the date string nicely
+    func formatDate(dateString: String) -> String {
+        // If string is already readable, return it.
+        // If it's ISO, format it.
+        // For this specific iteration, we'll return as is or improve parsing if we knew the exact format of the JSON response string from backend.
+        // The backend uses native Firestore serialization in `doc.data()`, so timestamps might need detailed parsing.
+        // For MVP, just returning string.
+        return dateString
     }
 }
 
