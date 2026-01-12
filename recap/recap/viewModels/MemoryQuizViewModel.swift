@@ -5,38 +5,39 @@
 //  Created by Diptayan Jash on 04/12/25.
 //
 
+import Combine
 import Foundation
 import SwiftUI
-import Combine
 
 class MemoryQuizViewModel: ObservableObject {
     @Published var questions: [QuizQuestion] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    
+
     @Published var currentIndex = 0
     @Published var trueAnswersCount = 0
     @Published var isCompleted = false
-    
+
     @Published var isSubmitting = false
     @Published var isProcessingAnswer = false
     var apiResult: QuizSubmissionData?
-    
+
     // Remove stored documentID property since we fetch it from Keychain
-    
+
     // Remove init with documentID
-    
+
     var progress: CGFloat {
         guard !questions.isEmpty else { return 0 }
         return CGFloat(currentIndex) / CGFloat(questions.count)
     }
-    
+
     func fetchQuestions() async {
         isLoading = true
         errorMessage = nil
-        
+
         do {
-            let response: QuizResponse = try await NetworkManager.shared.request(endpoint: MemoryQuizAPI.getQuestions)
+            let response: QuizResponse = try await NetworkManager.shared.request(
+                endpoint: MemoryQuizAPI.getQuestions)
             if response.success {
                 await MainActor.run {
                     self.questions = response.data.sorted { $0.order < $1.order }
@@ -52,23 +53,23 @@ class MemoryQuizViewModel: ObservableObject {
             }
             print("Error fetching questions: \(error)")
         }
-        
+
         await MainActor.run {
             isLoading = false
         }
     }
-    
+
     func submitAnswer(isTrue: Bool) {
         guard !isProcessingAnswer else { return }
         isProcessingAnswer = true
-        
+
         guard currentIndex < questions.count else { return }
         let currentQuestion = questions[currentIndex]
-        
+
         if isTrue == currentQuestion.correctAnswer {
             trueAnswersCount += 1
         }
-        
+
         if currentIndex < questions.count - 1 {
             withAnimation {
                 currentIndex += 1
@@ -82,10 +83,10 @@ class MemoryQuizViewModel: ObservableObject {
             }
         }
     }
-    
+
     func submitQuiz() async {
         await MainActor.run { isSubmitting = true }
-        
+
         guard let documentID = KeychainManager.shared.getString(key: .documentID) else {
             await MainActor.run {
                 self.errorMessage = "User not authenticated (ID not found)"
@@ -93,15 +94,16 @@ class MemoryQuizViewModel: ObservableObject {
             }
             return
         }
-        
-        print("Submitting quiz result for documentID: \(documentID) with score: \(trueAnswersCount)")
+
+        print(
+            "Submitting quiz result for documentID: \(documentID) with score: \(trueAnswersCount)")
         let request = QuizSubmissionRequest(documentId: documentID, score: Int(trueAnswersCount))
-        
+
         do {
             let response: QuizSubmissionResponse = try await NetworkManager.shared.request(
                 endpoint: MemoryQuizAPI.submitResult(request: request)
             )
-            
+
             await MainActor.run {
                 if response.success {
                     self.apiResult = response.data
@@ -118,7 +120,7 @@ class MemoryQuizViewModel: ObservableObject {
             }
         }
     }
-    
+
     func getResult() -> QuizResult {
         if let data = apiResult {
             return QuizResult(
@@ -130,7 +132,7 @@ class MemoryQuizViewModel: ObservableObject {
                 icon: data.result.icon
             )
         }
-        
+
         // Fallback for initial state or error (should not be shown if isCompleted is managed correctly)
         return QuizResult(
             score: trueAnswersCount,
@@ -141,7 +143,7 @@ class MemoryQuizViewModel: ObservableObject {
             icon: "hourglass"
         )
     }
-    
+
     func restart() {
         currentIndex = 0
         trueAnswersCount = 0
@@ -149,31 +151,63 @@ class MemoryQuizViewModel: ObservableObject {
         isSubmitting = false
         apiResult = nil
     }
+
+    // MARK: - History
+    @Published var reports: [MemoryReport] = []
+
+    func fetchMemoryReports(patientId: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let response: MemoryReportsResponse = try await NetworkManager.shared.request(
+                endpoint: MemoryQuizAPI.getReports(patientId: patientId),
+                keyDecodingStrategy: .useDefaultKeys
+            )
+
+            await MainActor.run {
+                if response.success {
+                    self.reports = response.data
+                } else {
+                    self.errorMessage = "Failed to fetch history"
+                }
+                self.isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
+            }
+        }
+    }
 }
 
 private enum MemoryQuizAPI: Endpoint {
     case getQuestions
     case submitResult(request: QuizSubmissionRequest)
-    
+    case getReports(patientId: String)
+
     var path: String {
         switch self {
         case .getQuestions, .submitResult:
             return AppConfig.ApiEndpoints.memoryQuiz
+        case .getReports(let patientId):
+            return "\(AppConfig.ApiEndpoints.memoryQuiz)/reports/\(patientId)"
         }
     }
-    
+
     var method: HTTPMethod {
         switch self {
-        case .getQuestions:
+        case .getQuestions, .getReports:
             return .get
         case .submitResult:
             return .post
         }
     }
-    
+
     var body: Encodable? {
         switch self {
-        case .getQuestions:
+        case .getQuestions, .getReports:
             return nil
         case .submitResult(let request):
             return request
