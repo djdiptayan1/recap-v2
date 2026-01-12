@@ -18,6 +18,9 @@ struct familyTabbar: View {
                     ArticlesView()
                 }
             }
+            Tab("Smriti", systemImage: "apple.intelligence") {
+                SmritiView()
+            }
         }
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)

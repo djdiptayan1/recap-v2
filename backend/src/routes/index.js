@@ -7,6 +7,7 @@ import familyMemberRouter from './familyMember.routes.js';
 import authRouter from './auth.route.js';
 import patientRouter from './patient.routes.js';
 import questionsRouter from './questions.routes.js';
+import smritiRouter from './smriti.routes.js';
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use('/patient', patientRouter);
 router.use('/familymembers', familyMemberRouter);
 router.use('/auth', authRouter);
 router.use('/questions', questionsRouter);
+router.use('/smriti', smritiRouter);
 
 export default router;

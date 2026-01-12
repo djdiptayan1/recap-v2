@@ -19,6 +19,9 @@ struct patientTabbar: View {
             Tab("Games", systemImage: "gamecontroller.fill") {
                 games()
             }
+            Tab("Smriti", systemImage: "apple.intelligence") {
+                SmritiView()
+            }
         }
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)
