@@ -2,6 +2,10 @@
 import { firestore } from '../../utils/db.js';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import config from '../../../config.js';
+import streakController from '../streaks/updateStreak.controller.js';
+
+const { updateStreak } = streakController;
+
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const USER_QUESTIONS_COLLECTION = config.firestoreNames.personalQuestions_SubCollection;
@@ -63,7 +67,28 @@ export const answerDailyQuestion = async (req, res, next) => {
             });
         }
 
+        // ...
+
         await updateDoc(questionRef, updateData);
+
+        // If patient answered, update their streak
+        if (answeredBy === 'patient') {
+            try {
+                // Mock Express objects to reuse the existing controller logic
+                const mockReq = { body: { documentId: patientId } };
+                const mockRes = {
+                    status: (code) => ({
+                        json: (data) => console.log(`Internal Streak Update [${code}]:`, data)
+                    })
+                };
+                const mockNext = (err) => console.error("Internal Streak Update Error:", err);
+
+                // Call the controller as if it were a route handler
+                await updateStreak(mockReq, mockRes, mockNext);
+            } catch (error) {
+                console.error('Error updating streak:', error);
+            }
+        }
 
         res.status(200).json({
             success: true,
