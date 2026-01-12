@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 
 struct AppConfig {
-
     /// UI constants
     struct UI {
         static let cornerRadius: CGFloat = 18
@@ -55,23 +54,23 @@ struct AppConfig {
         static let small = Font.system(size: 14, weight: .regular, design: .rounded)
     }
 
-    struct ApiEndpoints{
-        static let baseURL = "http://localhost:3000/api/" //-> USE WHEN USING SIMULATOR
-        //        static let baseURL = "http://172.20.10.2:3000/api/"  //-> USE WHEN USING REAL PHONE
+    struct ApiEndpoints {
+//        static let baseURL = "http://localhost:3000/api/" //-> USE WHEN USING SIMULATOR
+        static let baseURL = "http://192.168.1.2:3000/api/" // -> USE WHEN USING REAL PHONE
         //        static let baseURL = "https://recap-v2.vercel.app/api/"  //-> PRODUCTION
         static let articles = "articles"
         static let citations = "citations"
         static let memoryQuiz = "memoryquiz"
-        //streaks
+        // streaks
         static let streaks = "streaks"
         static let streakStats = "streaks/stats"
         static let streakYear = "streaks/year"
         static let streakMonth = "streaks/month"
 
-        //family members
+        // family members
         static let familyMembers = "familymembers"
 
-        //auth
+        // auth
         static let verifyUID = "auth/verify-uid"
         static let veryfyFamily = "auth/verify-familymember"
         static let createFamilyUser = "auth/create-family-user"
@@ -79,7 +78,7 @@ struct AppConfig {
         static let patientSignupCompletion = "auth/patientsignup"
         static let familySignupCompletion = "auth/familysignup"
 
-        //questions
+        // questions
         static let getAllQuestions = "questions"
         static let getDailyQuestions = "questions/dailyquestions"
         static let familyQuestions = "questions/family"
@@ -91,6 +90,7 @@ struct AppConfig {
         static let users = "users"
     }
 }
+
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -114,6 +114,6 @@ extension Color {
 
 extension View {
     func standardBackground() -> some View {
-        self.background(AppBackground())
+        background(AppBackground())
     }
 }
