@@ -55,8 +55,8 @@ struct AppConfig {
         static let small = Font.system(size: 14, weight: .regular, design: .rounded)
     }
 
-    struct ApiEndpoints{
-        static let baseURL = "http://localhost:3000/api/" //-> USE WHEN USING SIMULATOR
+    struct ApiEndpoints {
+        static let baseURL = "http://localhost:3000/api/"  //-> USE WHEN USING SIMULATOR
         //        static let baseURL = "http://172.20.10.2:3000/api/"  //-> USE WHEN USING REAL PHONE
         //        static let baseURL = "https://recap-v2.vercel.app/api/"  //-> PRODUCTION
         static let articles = "articles"
@@ -83,6 +83,7 @@ struct AppConfig {
         static let getAllQuestions = "questions"
         static let getDailyQuestions = "questions/dailyquestions"
         static let familyQuestions = "questions/family"
+        static let answerDailyQuestion = "questions/answer"
 
         static let smriti = "smriti"
     }

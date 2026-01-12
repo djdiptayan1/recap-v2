@@ -34,20 +34,54 @@ export const addQuestion = async (req, res, next) => {
             return res.status(404).json({ success: false, error: 'Patient not found' });
         }
 
+        const { category } = req.body;
+
+        // Map category to subcollection
+        let subCollectionName = '';
+        const { immediate, recent, remote } = config.question_category; // immediateMemory, recentMemory, etc.
+
+        if (category === immediate) subCollectionName = 'immediateQuestions';
+        else if (category === recent) subCollectionName = 'recentQuestions';
+        else if (category === remote) subCollectionName = 'remoteQuestions';
+        else {
+            // Fallback or error? User said "ADD THE TYPE".
+            // If category is "Personal" or "General" (frontend old default), map to something?
+            // But I updated Frontend to send the correct keys.
+            // Let's assume valid keys or default to immediateQuestions as safety.
+            subCollectionName = 'immediateQuestions';
+        }
+
         // Prepare the question object
-        // Ensure default values are set if not provided, though the user request suggests they might send a full object.
-        // We'll trust the body for now but add server-side timestamps.
         const newQuestion = {
             ...questionData,
-            createdAt: Timestamp.now(),
-            addedAt: Timestamp.now(),
+            createdAt: new Date().toISOString(), // Use string to match typical Firestore JSON
+            addedAt: new Date().toISOString(), // Use string
             isActive: true,
             isAnswered: false,
             timesAsked: 0,
-            timesAnsweredCorrectly: 0
+            timesAnsweredCorrectly: 0,
+            // Ensure category is set correctly on the doc
+            category: category
         };
 
-        const questionsRef = collection(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION);
+        // Path: users/{patientId}/questions/{today}/{subCollectionName}
+        const today = new Date().toISOString().split('T')[0];
+
+        // Ensure the date document exists (it might not if it's a new day and getDaily hasn't run)
+        // Check if date doc exists at users/{pid}/questions/{today}
+        // Actually, getDailyQuestions creates it. If we add before getDaily runs, we should create it.
+        const dailyQuestionsCollection = config.firestoreNames.personalQuestions_SubCollection; // 'questions'
+        const dateDocRef = doc(firestore, USERS_COLLECTION, patient_documentId, dailyQuestionsCollection, today);
+
+        const dateSnap = await getDoc(dateDocRef);
+        if (!dateSnap.exists()) {
+            await setDoc(dateDocRef, {
+                createdAt: new Date().toISOString(),
+                date: today
+            });
+        }
+
+        const questionsRef = collection(dateDocRef, subCollectionName);
         const docRef = await addDoc(questionsRef, newQuestion);
 
         return res.status(201).json({

@@ -8,8 +8,15 @@
 import SwiftUI
 
 struct DailyQuestionsView: View {
-    @StateObject private var viewModel = DailyQuestionsViewModel()
+    @StateObject private var viewModel: DailyQuestionsViewModel
+    @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
+
+    @State private var selectedAnswers: Set<String> = []
+
+    init(patientId: String) {
+        _viewModel = StateObject(wrappedValue: DailyQuestionsViewModel(patientId: patientId))
+    }
 
     var body: some View {
         NavigationStack {
@@ -27,7 +34,7 @@ struct DailyQuestionsView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Button("Retry") {
-                            viewModel.fetchQuestions()
+                            viewModel.loadQuestions(role: appState.currentUser?.type ?? "patient")
                         }
                     }
                 } else if viewModel.isCompleted {
@@ -47,21 +54,49 @@ struct DailyQuestionsView: View {
                         QuestionDisplayCard(question: question)
                             .padding(.horizontal, AppConfig.UI.screenPadding)
 
-                        // Answer Options (Scrollable if many options)
+                        // Answer Options
                         ScrollView {
                             VStack(spacing: 16) {
                                 ForEach(question.answerOptions, id: \.self) { option in
                                     Button(action: {
                                         HapticManager.shared.trigger(.selection)
-                                        viewModel.submitAnswer(option)
+                                        if selectedAnswers.contains(option) {
+                                            selectedAnswers.remove(option)
+                                        } else {
+                                            selectedAnswers.insert(option)
+                                        }
                                     }) {
-                                        AnswerOptionButton(text: option)
+                                        AnswerOptionButton(
+                                            text: option,
+                                            isSelected: selectedAnswers.contains(option))
                                     }
                                 }
                             }
                             .padding(.horizontal, AppConfig.UI.screenPadding)
                             .padding(.bottom, 20)
                         }
+
+                        // Submit Button
+                        Button(action: {
+                            HapticManager.shared.trigger(.selection)
+                            let answeredBy =
+                                appState.currentUser?.type == "patient" ? "patient" : "family"
+                            viewModel.submitAnswer(Array(selectedAnswers), answeredBy: answeredBy)
+                            selectedAnswers.removeAll()  // Clear for next question
+                        }) {
+                            Text("Submit Answer")
+                                .font(AppConfig.Fonts.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 56)
+                                .background(
+                                    selectedAnswers.isEmpty ? Color.gray : AppConfig.Colors.accent
+                                )
+                                .cornerRadius(AppConfig.UI.buttonCornerRadius)
+                        }
+                        .disabled(selectedAnswers.isEmpty)
+                        .padding(.horizontal, AppConfig.UI.screenPadding)
+                        .padding(.bottom, 20)
                     }
                 } else {
                     VStack(spacing: 16) {
@@ -77,13 +112,13 @@ struct DailyQuestionsView: View {
             .standardBackground()
             .navigationTitle("Daily Check-in")
             .navigationBarTitleDisplayMode(.inline)
-            //            .toolbar {
-            //                ToolbarItem(placement: .navigationBarLeading) {
-            //                    Button("Exit") { dismiss() }
-            //                        .foregroundColor(AppConfig.Colors.textSecondary)
-            //                }
-            //            }
             .animation(.easeInOut, value: viewModel.currentIndex)
+            .onChange(of: viewModel.currentQuestion?.id) { _ in
+                selectedAnswers.removeAll()
+            }
+            .onAppear {
+                viewModel.loadQuestions(role: appState.currentUser?.type ?? "patient")
+            }
         }
     }
 }
@@ -166,28 +201,34 @@ struct QuestionDisplayCard: View {
 
 struct AnswerOptionButton: View {
     let text: String
+    let isSelected: Bool
 
     var body: some View {
         HStack {
             Text(text)
-                .font(AppConfig.Fonts.bodyBold)  // Size 18, readable
-                .foregroundColor(AppConfig.Colors.textPrimary)
+                .font(AppConfig.Fonts.bodyBold)
+                .foregroundColor(
+                    isSelected ? AppConfig.Colors.accent : AppConfig.Colors.textPrimary)
 
             Spacer()
 
-            Image(systemName: "circle")
-                .foregroundColor(AppConfig.Colors.stroke)
-                .font(.system(size: 20))
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .foregroundColor(isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke)
+                .font(.system(size: 24))
         }
         .padding()
         .frame(height: 60)
         .background(Color.white)
         .cornerRadius(16)
-        // Soft shadow to lift button off background
-        .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+        .shadow(
+            color: isSelected ? AppConfig.Colors.accent.opacity(0.2) : Color.black.opacity(0.03),
+            radius: 5, x: 0, y: 2
+        )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                .stroke(
+                    isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
+                    lineWidth: isSelected ? 2 : 1)
         )
     }
 }
@@ -236,5 +277,5 @@ struct CompletionView: View {
 }
 
 #Preview {
-    DailyQuestionsView()
+    DailyQuestionsView(patientId: "preview_patient_id")
 }

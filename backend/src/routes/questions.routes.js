@@ -19,6 +19,20 @@ const extendedValidation = [
 router.get('/', getQuestions);
 router.get('/dailyquestions', getDailyQuestions);
 
+import { answerDailyQuestion } from '../controller/questions/answerDailyQuestion.controller.js';
+router.post(
+    '/answer',
+    [
+        body('patientId').isString().notEmpty(),
+        body('questionId').isString().notEmpty(),
+        body('answer').exists().withMessage('Answer is required'), // Can be string or array
+        body('answeredBy').isIn(['patient', 'family']),
+        body('date').isString().notEmpty(),
+        body('category').isString().notEmpty()
+    ],
+    answerDailyQuestion
+);
+
 router.get(
     '/family/:patient_documentId',
     [

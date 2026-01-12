@@ -37,10 +37,27 @@ export const editQuestion = async (req, res, next) => {
         }
 
         // Verify question exists
-        const questionRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, questionId);
-        const questionSnap = await getDoc(questionRef);
+        // Search for question in subcollections under today's date
+        const today = new Date().toISOString().split('T')[0];
+        const dailyDocRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, today);
 
-        if (!questionSnap.exists()) {
+        const subcollections = ['immediateQuestions', 'recentQuestions', 'remoteQuestions'];
+        let foundSubCollection = null;
+        let questionSnap = null;
+        let questionRef = null;
+
+        for (const subName of subcollections) {
+            const tempRef = doc(dailyDocRef, subName, questionId);
+            const tempSnap = await getDoc(tempRef);
+            if (tempSnap.exists()) {
+                foundSubCollection = subName;
+                questionSnap = tempSnap;
+                questionRef = tempRef;
+                break;
+            }
+        }
+
+        if (!questionSnap) {
             return res.status(404).json({ success: false, error: 'Question not found' });
         }
 
