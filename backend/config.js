@@ -12,6 +12,10 @@ export default {
         measurementId: process.env.FIREBASE_MEASUREMENT_ID,
     },
 
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY,
+    },
+
     firestoreNames: {
         articlesCollection: 'Articles',
         citationsCollection: 'Citations',

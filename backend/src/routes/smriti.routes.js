@@ -4,6 +4,8 @@ import smritiController from '../controller/smriti/smriti.controller.js';
 
 const router = express.Router();
 
-router.post('/', smritiController.smriti);
+router.post('/', [
+    body('query').notEmpty().withMessage('Query is required').isString().withMessage('Query must be a string')
+], smritiController.smriti);
 
 export default router;
