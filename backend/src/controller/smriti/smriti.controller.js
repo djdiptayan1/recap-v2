@@ -19,12 +19,12 @@ async function smriti(req, res, next) {
             apiKey: config.gemini.apiKey,
         });
 
-        const tools = [
-            { urlContext: {} },
-            {
-                googleSearch: {}
-            },
-        ];
+        // const tools = [
+        //     { urlContext: {} },
+        //     {
+        //         googleSearch: {}
+        //     },
+        // ];
 
         const aiConfig = {
             temperature: 0.95,
@@ -32,7 +32,7 @@ async function smriti(req, res, next) {
             thinkingConfig: {
                 thinkingLevel: 'HIGH',
             },
-            tools,
+            // tools,
             responseMimeType: 'application/json',
             responseSchema: {
                 type: Type.OBJECT,
@@ -153,7 +153,7 @@ Less alone in their caregiving journey`,
             ],
         };
 
-        const model = 'gemini-2.0-flash';
+        const model = 'gemini-3-flash-preview';
 
         const contents = [
             {
@@ -172,8 +172,13 @@ Less alone in their caregiving journey`,
             contents,
         });
 
-        if (result && result.response) {
-            const responseText = result.response.text();
+        if (result && (result.text || result.candidates)) {
+            const responseText = typeof result.text === 'function' ? result.text() : (result.text || result.candidates?.[0]?.content?.parts?.[0]?.text);
+
+            if (!responseText) {
+                throw new Error("Empty response from AI");
+            }
+
             const jsonResponse = JSON.parse(responseText);
             return res.status(200).json(jsonResponse);
         } else {
