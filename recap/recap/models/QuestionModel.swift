@@ -25,17 +25,18 @@ struct QuestionModel: Codable, Identifiable {
     let text: String
     let answerOptions: [String]
     let hint: String?
-    let category: String // "immediateMemory", "recentMemory", etc.
-    let subcategory: String // "nutrition", "socialInteraction", etc.
-    let questionType: String // "multipleChoice", "yesNo"
-    
+    let category: String  // "immediateMemory", "recentMemory", etc.
+    let subcategory: String  // "nutrition", "socialInteraction", etc.
+    let questionType: String  // "multipleChoice", "yesNo"
+
     // Additional fields
     let hardness: Int?
     let priority: Int?
     let isActive: Bool?
     let isAnswered: Bool?
     let correctAnswers: [String]?
-    
+    let assignedDate: String?
+
     // Use coding keys to map JSON keys safely if needed,
     // but your JSON keys match these property names well.
 }

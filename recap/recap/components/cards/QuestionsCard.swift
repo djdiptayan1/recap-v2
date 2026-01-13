@@ -21,7 +21,7 @@ struct QuestionsCard: View {
                     cardContent
                 }
                 .alert("Add Family Member", isPresented: $showAddMemberAlert) {
-                    Button("OK", role: .cancel) { }
+                    Button("OK", role: .cancel) {}
                 } message: {
                     Text("Please add a caretaker/family member to start answering questions.")
                 }
@@ -33,7 +33,7 @@ struct QuestionsCard: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
+
     private var cardContent: some View {
         VStack(spacing: 0) {
             HStack {
@@ -84,18 +84,18 @@ struct QuestionsCard: View {
                     //                    .cornerRadius(20)
                     //                    .padding(.top, 4)
                 }
-//                        Spacer()
+                //                        Spacer()
                 Image("oldMan")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 80, height: 80)
-//                            .clipShape(Circle())
-//                            .overlay(
-//                                Circle()
-//                                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-//                            )
+                    //                            .clipShape(Circle())
+                    //                            .overlay(
+                    //                                Circle()
+                    //                                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                    //                            )
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-//                            .padding(.horizontal, 20)
+                //                            .padding(.horizontal, 20)
             }
             .padding(20)
         }
@@ -108,17 +108,17 @@ struct QuestionsCard: View {
             x: 0,
             y: AppConfig.UI.cardShadowOffsetY
         )
-//            .overlay(
-//                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-//                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-//            )
+        //            .overlay(
+        //                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+        //                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+        //            )
     }
 
     @ViewBuilder
     private var destinationView: some View {
         if appState.isLoggedIn {
-            if appState.currentUser?.type == "patient" {
-                DailyQuestionsView()
+            if appState.currentUser?.type == "patient", let patientId = appState.currentUser?.id {
+                DailyQuestionsView(patientId: patientId)
                     .environmentObject(appState)
             } else {
                 familyQuestionMain()

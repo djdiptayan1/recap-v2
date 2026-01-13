@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 
 struct AppConfig {
-    
     /// UI constants
     struct UI {
         static let cornerRadius: CGFloat = 18
@@ -20,7 +19,7 @@ struct AppConfig {
         static let screenPadding: CGFloat = 24
         static let spacing: CGFloat = 12
     }
-    
+
     struct Colors {
         static let background = Color("AppBackground")
         static let card = Color("CardBackground")
@@ -30,22 +29,22 @@ struct AppConfig {
         static let alert = Color("Alert")
         static let success = Color("Success")
         static let stroke = Color("Stroke")
-        
+
         static let bg_teal = Color("bg_teal")
         static let bg_pink = Color("bg_pink")
     }
-    
-//    | Name           | Light (Hex) | Dark (Hex) |
-//    | -------------- | ----------- | ---------- |
-//    | AppBackground  | `#F9FAF7`   | `#0B0B0B`  |
-//    | CardBackground | `#FFFFFF`   | `#1A1A1A`  |
-//    | PrimaryText    | `#0E2A47`   | `#D6E6F5`  |
-//    | SecondaryText  | `#5A6777`   | `#AEB8C2`  |
-//    | Accent         | `#8DD3BB`   | `#6AB89B`  |
-//    | Alert          | `#E86C6C`   | `#FF9A9A`  |
-//    | Success        | `#A8E063`   | `#83C94B`  |
-//    | Stroke         | `#E2E8EC`   | `#2C2C2C`  |
-    
+
+    //    | Name           | Light (Hex) | Dark (Hex) |
+    //    | -------------- | ----------- | ---------- |
+    //    | AppBackground  | `#F9FAF7`   | `#0B0B0B`  |
+    //    | CardBackground | `#FFFFFF`   | `#1A1A1A`  |
+    //    | PrimaryText    | `#0E2A47`   | `#D6E6F5`  |
+    //    | SecondaryText  | `#5A6777`   | `#AEB8C2`  |
+    //    | Accent         | `#8DD3BB`   | `#6AB89B`  |
+    //    | Alert          | `#E86C6C`   | `#FF9A9A`  |
+    //    | Success        | `#A8E063`   | `#83C94B`  |
+    //    | Stroke         | `#E2E8EC`   | `#2C2C2C`  |
+
     struct Fonts {
         static let titleLarge = Font.system(size: 34, weight: .bold, design: .rounded)
         static let titleMedium = Font.system(size: 28, weight: .semibold, design: .rounded)
@@ -55,40 +54,44 @@ struct AppConfig {
         static let small = Font.system(size: 14, weight: .regular, design: .rounded)
     }
 
-    struct ApiEndpoints{
-//        static let baseURL = "http://localhost:3000/api/" //-> USE WHEN USING SIMULATOR
-        static let baseURL = "http://192.168.1.2:3000/api/"  //-> USE WHEN USING REAL PHONE
-//        static let baseURL = "https://recap-v2.vercel.app/api/"  //-> PRODUCTION
+    struct ApiEndpoints {
+        static let baseURL = "http://localhost:3000/api/"  //-> USE WHEN USING SIMULATOR
+        //        static let baseURL = "http://172.20.10.2:3000/api/"  //-> USE WHEN USING REAL PHONE
+        //        static let baseURL = "https://recap-v2.vercel.app/api/"  //-> PRODUCTION
         static let articles = "articles"
         static let citations = "citations"
         static let memoryQuiz = "memoryquiz"
-        //streaks
+        // streaks
         static let streaks = "streaks"
         static let streakStats = "streaks/stats"
         static let streakYear = "streaks/year"
         static let streakMonth = "streaks/month"
-        
-        //family members
+
+        // family members
         static let familyMembers = "familymembers"
-        
-        //auth
+
+        // auth
         static let verifyUID = "auth/verify-uid"
         static let veryfyFamily = "auth/verify-familymember"
         static let createFamilyUser = "auth/create-family-user"
         static let verifyFamilyMember = "auth/verify-familymember"
         static let patientSignupCompletion = "auth/patientsignup"
         static let familySignupCompletion = "auth/familysignup"
-        
-        //questions
+
+        // questions
         static let getAllQuestions = "questions"
         static let getDailyQuestions = "questions/dailyquestions"
         static let familyQuestions = "questions/family"
+        static let answerDailyQuestion = "questions/answer"
+
+        static let smriti = "smriti"
     }
 
-    struct FirebaseCollections{
+    struct FirebaseCollections {
         static let users = "users"
     }
 }
+
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -112,6 +115,6 @@ extension Color {
 
 extension View {
     func standardBackground() -> some View {
-        self.background(AppBackground())
+        background(AppBackground())
     }
 }

@@ -13,11 +13,13 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@google/genai": "^1.35.0",
     "cloudinary": "^2.8.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-validator": "^7.3.0",
     "firebase": "^12.5.0",
+    "mime": "^4.1.0",
     "morgan": "^1.10.1"
   }
 }
