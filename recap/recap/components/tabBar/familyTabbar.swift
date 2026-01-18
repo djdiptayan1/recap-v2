@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct familyTabbar: View {
+    @StateObject private var reminderViewModel = ReminderViewModel()
+
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
@@ -23,7 +25,7 @@ struct familyTabbar: View {
             }
             Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
                 NavigationStack {
-                    remindersView()
+                    remindersView(viewModel: reminderViewModel)
                 }
             }
         }

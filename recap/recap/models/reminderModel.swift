@@ -104,18 +104,92 @@ enum ReminderCategory: String, Codable, CaseIterable, Identifiable {
 
 enum ReminderFrequency: String, Codable, CaseIterable, Identifiable {
     case once = "once"
+    case hourly = "hourly"
     case daily = "daily"
+    case weekdays = "weekdays"
+    case weekends = "weekends"
     case weekly = "weekly"
+    case biweekly = "biweekly"
     case monthly = "monthly"
+    case yearly = "yearly"
 
     var id: String { self.rawValue }
 
     var displayName: String {
         switch self {
         case .once: return "Once"
+        case .hourly: return "Hourly"
         case .daily: return "Daily"
+        case .weekdays: return "Weekdays"
+        case .weekends: return "Weekends"
         case .weekly: return "Weekly"
+        case .biweekly: return "Biweekly"
         case .monthly: return "Monthly"
+        case .yearly: return "Yearly"
+        }
+    }
+
+    /// Returns suggested calendar date components and whether they should repeat,
+    /// suitable for creating `UNCalendarNotificationTrigger`s.
+    /// - Note: Some patterns (like biweekly) are not directly expressible as a repeating
+    ///   calendar trigger and should be scheduled manually by re-queuing the next fire date
+    ///   when a notification is delivered.
+    func calendarDateComponents(for time: Date, calendar: Calendar = .current) -> (components: [DateComponents], repeats: Bool)? {
+        switch self {
+        case .once:
+            let comp = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: time)
+            return ([comp], false)
+        case .hourly:
+            // Fires every hour at the specified minute/second
+            let base = calendar.dateComponents([.minute, .second], from: time)
+            return ([base], true)
+        case .daily:
+            // Fires every day at the specified time
+            let base = calendar.dateComponents([.hour, .minute, .second], from: time)
+            return ([base], true)
+        case .weekdays:
+            // Fires Monday (2) through Friday (6) at the specified time
+            let hm = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var list: [DateComponents] = []
+            for weekday in 2...6 { // Monday=2, ..., Friday=6 in Gregorian calendar
+                var c = hm
+                c.weekday = weekday
+                list.append(c)
+            }
+            return (list, true)
+        case .weekends:
+            // Fires on Saturday (7) and Sunday (1) at the specified time
+            let hm = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var list: [DateComponents] = []
+            for weekday in [1, 7] { // Sunday=1, Saturday=7
+                var c = hm
+                c.weekday = weekday
+                list.append(c)
+            }
+            return (list, true)
+        case .weekly:
+            // Fires every week on the same weekday at the specified time
+            let c = calendar.dateComponents([.weekday, .hour, .minute, .second], from: time)
+            return ([c], true)
+        case .monthly:
+            // Fires every month on the same day at the specified time
+            let c = calendar.dateComponents([.day, .hour, .minute, .second], from: time)
+            return ([c], true)
+        case .yearly:
+            // Fires every year on the same month/day at the specified time
+            let c = calendar.dateComponents([.month, .day, .hour, .minute, .second], from: time)
+            return ([c], true)
+        case .biweekly:
+            // Not directly supported by a repeating calendar trigger
+            return nil
+        }
+    }
+
+    /// Whether this frequency can be scheduled using a repeating `UNCalendarNotificationTrigger`.
+    var supportsRepeatingCalendarTrigger: Bool {
+        switch self {
+            case .biweekly: return false
+            case .once, .hourly, .daily, .weekdays, .weekends, .weekly, .monthly, .yearly: return true
         }
     }
 }

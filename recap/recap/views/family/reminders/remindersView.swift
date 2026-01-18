@@ -9,7 +9,12 @@ import SwiftUI
 
 struct remindersView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel = ReminderViewModel()
+    @ObservedObject var viewModel: ReminderViewModel
+
+    init(viewModel: ReminderViewModel = ReminderViewModel()) {
+        self.viewModel = viewModel
+    }
+
     @State private var showingAddSheet = false
     @State private var selectedCategory: ReminderCategory? = nil
     @State private var reminderToEdit: Reminder? = nil
@@ -128,7 +133,9 @@ struct remindersView: View {
             }
         }
         .onAppear {
-            viewModel.fetchReminders(patientId: patientId)
+            if !patientId.isEmpty {
+                viewModel.fetchReminders(patientId: patientId)
+            }
         }
         .sheet(isPresented: $showingAddSheet, onDismiss: { reminderToEdit = nil }) {
             AddReminderSheet(
