@@ -30,6 +30,9 @@ export default {
 
         // QUESTIONS
         personalQuestions_SubCollection: 'questions',
+
+        //reminders
+        reminders_SubCollection: 'reminders',
     },
 
     questions: {

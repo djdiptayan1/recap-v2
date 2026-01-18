@@ -21,6 +21,11 @@ struct familyTabbar: View {
             Tab("Smriti", systemImage: "apple.intelligence") {
                 SmritiView()
             }
+            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
+                NavigationStack {
+                    remindersView()
+                }
+            }
         }
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)
