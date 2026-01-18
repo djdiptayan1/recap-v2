@@ -20,6 +20,7 @@ struct remindersView: View {
     @State private var reminderToEdit: Reminder? = nil
     @State private var reminderToDelete: Reminder? = nil
     @State private var showDeleteConfirmation = false
+    @State private var patientId: String = ""
 
     // Grid layout for category filters
     let rows = [GridItem(.fixed(30))]
@@ -32,9 +33,6 @@ struct remindersView: View {
     }
 
     var body: some View {
-        let patientId =
-            KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id
-            ?? ""
         ZStack {
             VStack(alignment: .leading, spacing: 20) {
                 //                // Header
@@ -133,6 +131,9 @@ struct remindersView: View {
             }
         }
         .onAppear {
+            patientId =
+                KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?
+                .id ?? ""
             if !patientId.isEmpty {
                 viewModel.fetchReminders(patientId: patientId)
             }
@@ -149,8 +150,12 @@ struct remindersView: View {
                 reminderToDelete = nil
             }
             Button("Delete", role: .destructive) {
-                withAnimation {
-                    viewModel.deleteReminder(patientId: patientId, reminderId: reminder.id)
+                viewModel.deleteReminder(patientId: patientId, reminderId: reminder.id) { success in
+                    if success {
+                        withAnimation {
+                            reminderToDelete = nil
+                        }
+                    }
                 }
             }
         } message: { reminder in

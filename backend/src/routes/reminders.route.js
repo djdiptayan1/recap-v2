@@ -13,7 +13,7 @@ router.post('/', [
     body('patientId').notEmpty().withMessage('Patient ID is required'),
     body('title').notEmpty().withMessage('Title is required'),
     body('category').isIn(['Medicine', 'Daily Chore', 'Appointment', 'Exercise', 'Meal', 'Hydration', 'Other']).withMessage('Invalid category'),
-    body('frequency').isIn(['once', 'daily', 'weekly', 'monthly']).withMessage('Frequency must be once, daily, weekly, or monthly'),
+    body('frequency').isIn(['once', 'hourly', 'daily', 'weekdays', 'weekends', 'weekly', 'biweekly', 'monthly', 'yearly']).withMessage('Invalid frequency'),
     body('time').notEmpty().withMessage('Time is required'),
 ], addReminder);
 

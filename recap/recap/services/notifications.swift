@@ -214,13 +214,16 @@ final class NotificationManager: NSObject {
         }
     }
     /// Removes all pending notifications with the "reminder" category.
-    func removeAllReminderNotifications() {
+    func removeAllReminderNotifications(completion: (() -> Void)? = nil) {
         center.getPendingNotificationRequests { [weak self] requests in
             let ids = requests.filter { $0.content.categoryIdentifier == "reminder" }.map {
                 $0.identifier
             }
             if !ids.isEmpty {
                 self?.center.removePendingNotificationRequests(withIdentifiers: ids)
+            }
+            DispatchQueue.main.async {
+                completion?()
             }
         }
     }

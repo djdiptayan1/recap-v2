@@ -104,23 +104,44 @@ class ReminderViewModel: ObservableObject {
                     }
                     // End: Debugging Step
 
+                    // Check for success/failure structure first
+                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        if let success = json["success"] as? Bool, !success {
+                            if let errors = json["errors"] as? [[String: Any]] {
+                                // Extract content from express-validator errors
+                                let msgs = errors.compactMap { $0["msg"] as? String }
+                                self?.errorMessage = msgs.joined(separator: ", ")
+                            } else if let errorMsg = json["error"] as? String {
+                                self?.errorMessage = errorMsg
+                            } else {
+                                self?.errorMessage = "Failed to add reminder"
+                            }
+                            completion(false)
+                            return
+                        }
+                    }
+
                     let result = try JSONDecoder().decode(SingleReminderResponse.self, from: data)
                     if result.success {
                         self?.reminders.append(result.data)
                         completion(true)
                     } else {
+                        self?.errorMessage = "Failed to add reminder"
                         completion(false)
                     }
                 } catch {
                     print("Decoding error (Add): \(error)")
+                    self?.errorMessage = "Failed to parse response"
                     completion(false)
                 }
             }
         }.resume()
     }
 
-    func deleteReminder(patientId: String, reminderId: String) {
+    func deleteReminder(patientId: String, reminderId: String, completion: ((Bool) -> Void)? = nil)
+    {
         guard let url = URL(string: "\(baseURL)\(AppConfig.ApiEndpoints.reminders)") else {
+            completion?(false)
             return
         }
 
@@ -134,6 +155,8 @@ class ReminderViewModel: ObservableObject {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
         } catch {
             print("Error encoding delete body: \(error)")
+            self.errorMessage = "Failed to encode delete request"
+            completion?(false)
             return
         }
 
@@ -141,12 +164,19 @@ class ReminderViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if let error = error {
                     print("Delete error: \(error)")
+                    self?.errorMessage = error.localizedDescription
+                    completion?(false)
                     return
                 }
 
-                // Optimistic update or fetch again?
-                // Let's remove locally for speed
-                self?.reminders.removeAll { $0.id == reminderId }
+                if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                    // Successful delete
+                    self?.reminders.removeAll { $0.id == reminderId }
+                    completion?(true)
+                } else {
+                    self?.errorMessage = "Failed to delete reminder"
+                    completion?(false)
+                }
             }
         }.resume()
     }

@@ -55,26 +55,27 @@ struct patientTabbar: View {
     private func scheduleNotifications(for reminders: [Reminder]) {
         let manager = NotificationManager.shared
         // Clear existing to avoid duplicates/stale data
-        manager.removeAllReminderNotifications()
+        manager.removeAllReminderNotifications {
+            // Schedule new ones only after removal is complete
+            for reminder in reminders {
+                let frequency = reminder.frequency
 
-        for reminder in reminders {
-            let frequency = reminder.frequency
-
-            // Generate notification content
-            // Using logic from frequencies
-            if let (componentsList, repeats) = frequency.calendarDateComponents(
-                for: reminder.time, calendar: NotificationManager.istCalendar)
-            {
-                for components in componentsList {
-                    manager.schedule(
-                        on: components,
-                        title: reminder.title,
-                        body: reminder.notes
-                            ?? "It's time for your \(reminder.category.rawValue) reminder!",
-                        repeats: repeats,
-                        categoryIdentifier: "reminder",
-                        sound: .default
-                    )
+                // Generate notification content
+                // Using logic from frequencies
+                if let (componentsList, repeats) = frequency.calendarDateComponents(
+                    for: reminder.time, calendar: NotificationManager.istCalendar)
+                {
+                    for components in componentsList {
+                        manager.schedule(
+                            on: components,
+                            title: reminder.title,
+                            body: reminder.notes
+                                ?? "It's time for your \(reminder.category.rawValue) reminder!",
+                            repeats: repeats,
+                            categoryIdentifier: "reminder",
+                            sound: .default
+                        )
+                    }
                 }
             }
         }
