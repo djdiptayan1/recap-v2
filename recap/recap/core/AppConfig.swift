@@ -85,6 +85,8 @@ struct AppConfig {
         static let answerDailyQuestion = "questions/answer"
 
         static let smriti = "smriti"
+        
+        static let reminders = "reminders"
     }
 
     struct FirebaseCollections {
