@@ -1,15 +1,12 @@
-# -------- Base --------
 FROM node:24-alpine AS base
 WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
 
-# -------- Dependencies --------
 FROM base AS deps
 COPY package*.json ./
 RUN npm ci --omit=dev
 
-# -------- Runtime --------
 FROM base AS runner
 
 ENV NODE_ENV=production
