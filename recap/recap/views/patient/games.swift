@@ -40,8 +40,8 @@ private func destinationView(for game: gamesModel) -> some View {
         MemoryGameView()
     } else if game.screenName == "WordAssociationGameView" {
         WordAssociationGameView()
-    } else if game.screenName == "PatternMemoryGameView" {
-        PatternMemoryGameView()
+    } else if game.screenName == "NumberBubblesGameView" {
+        NumberBubblesGameView()
     } else {
         VStack {
             Text("Game: \(game.name)")

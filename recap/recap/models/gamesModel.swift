@@ -18,6 +18,6 @@ struct gamesModel: Identifiable, Equatable {
 let gamesDemo = [
     gamesModel(imageName: "text.bubble.fill", name: "Word Link", description: "Connect related words", screenName: "WordAssociationGameView"),
     gamesModel(imageName: "brain.fill", name: "Match Mania", description: "Increase memory agility", screenName: "MemoryGameView"),
-    gamesModel(imageName: "square.grid.2x2.fill", name: "Pattern Memory", description: "Remember sequences", screenName: "PatternMemoryGameView"),
+    gamesModel(imageName: "number.circle.fill", name: "Number Bubbles", description: "Pop numbers in order!", screenName: "NumberBubblesGameView"),
     gamesModel(imageName: "house.fill", name: "Daily Objects", description: "Recall everyday items", screenName: "DailyObjectsGameView"),
 ]

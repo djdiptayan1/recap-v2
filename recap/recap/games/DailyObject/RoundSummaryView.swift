@@ -13,45 +13,56 @@ struct RoundSummaryView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            Image(systemName: "star.circle.fill")
+            Text("⭐️")
                 .font(.system(size: 80))
-                .foregroundColor(AppConfig.Colors.accent)
-                .padding(.bottom, 10)
 
             Text("Round Complete!")
                 .font(AppConfig.Fonts.titleLarge)
                 .foregroundColor(AppConfig.Colors.textPrimary)
 
-            VStack(spacing: 8) {
-                Text("Current Score")
+            VStack(spacing: 6) {
+                Text("Score")
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textSecondary)
 
                 Text("\(score)")
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
-                    .foregroundColor(AppConfig.Colors.textPrimary)
+                    .font(.system(size: 52, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
             }
-            .padding()
+            .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
-            .background(Color.white)
+            .background(
+                LinearGradient(
+                    colors: [Color(hex: "43C57A"), Color(hex: "1DBBAA")],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .cornerRadius(AppConfig.UI.cornerRadius)
-            .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
+            .shadow(color: Color(hex: "43C57A").opacity(0.3), radius: 10, x: 0, y: 5)
             .padding(.horizontal, 40)
 
             Button(action: {
                 HapticManager.shared.trigger(.selection)
                 onNext()
             }) {
-                Text("Next Round")
+                Text("Next Round →")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(AppConfig.Colors.accent)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(hex: "43C57A"), Color(hex: "1DBBAA")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
+                    .shadow(color: Color(hex: "43C57A").opacity(0.35), radius: 8, x: 0, y: 4)
             }
             .padding(.horizontal, 40)
-            .padding(.top, 20)
+            .padding(.top, 10)
         }
     }
 }

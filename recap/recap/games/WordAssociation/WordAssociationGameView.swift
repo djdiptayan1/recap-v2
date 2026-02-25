@@ -67,16 +67,22 @@ struct WordAssociationGameView: View {
             VStack(spacing: 6) {
                 Text("Find words related to:")
                     .font(AppConfig.Fonts.small)
-                    .foregroundColor(AppConfig.Colors.textSecondary)
+                    .foregroundColor(.white.opacity(0.85))
                 Text(viewModel.promptWord)
                     .font(AppConfig.Fonts.titleMedium)
-                    .foregroundColor(AppConfig.Colors.textPrimary)
+                    .foregroundColor(.white)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
-            .background(Color.white)
+            .background(
+                LinearGradient(
+                    colors: [Color(hex: "7B4FD9"), Color(hex: "B067E8")],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .cornerRadius(AppConfig.UI.cornerRadius)
-            .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 2)
+            .shadow(color: Color(hex: "7B4FD9").opacity(0.3), radius: 8, x: 0, y: 4)
             .padding(.horizontal, AppConfig.UI.screenPadding)
             .padding(.top, 16)
 
@@ -98,25 +104,35 @@ struct WordAssociationGameView: View {
             // Action button
             if viewModel.currentPhase == .playing {
                 Button(action: viewModel.submitAnswer) {
-                    Text("Submit")
+                    Text("Submit ✓")
                         .font(AppConfig.Fonts.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, minHeight: 56)
-                        .background(AppConfig.Colors.accent)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: "7B4FD9"), Color(hex: "B067E8")],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
                         .cornerRadius(AppConfig.UI.buttonCornerRadius)
-                        .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .shadow(color: Color(hex: "7B4FD9").opacity(0.35), radius: 8, x: 0, y: 4)
                 }
                 .padding(.horizontal, AppConfig.UI.screenPadding)
                 .padding(.bottom, 24)
             } else if viewModel.currentPhase == .feedback {
                 Button(action: viewModel.continueAfterFeedback) {
-                    Text(viewModel.isLastRound ? "See Results" : "Next Round")
+                    Text(viewModel.isLastRound ? "See Results 🏆" : "Next Round →")
                         .font(AppConfig.Fonts.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, minHeight: 56)
-                        .background(AppConfig.Colors.accent)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: "7B4FD9"), Color(hex: "B067E8")],
+                                startPoint: .leading, endPoint: .trailing
+                            )
+                        )
                         .cornerRadius(AppConfig.UI.buttonCornerRadius)
-                        .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
+                        .shadow(color: Color(hex: "7B4FD9").opacity(0.35), radius: 8, x: 0, y: 4)
                 }
                 .padding(.horizontal, AppConfig.UI.screenPadding)
                 .padding(.bottom, 24)
