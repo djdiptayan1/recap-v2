@@ -8,8 +8,7 @@ const ANALYTICS_CACHE_COLLECTION = config.firestoreNames.analyticsCache_SubColle
 
 const SUBCOLLECTIONS = ['immediateQuestions', 'recentQuestions', 'remoteQuestions'];
 
-/** Cache TTL in milliseconds (1 hour) */
-const CACHE_TTL_MS = 60 * 60 * 1000;
+const TIMEZONE = config.timezone || 'Asia/Kolkata';
 
 /**
  * Fetch all questions for a patient on a given date
@@ -112,24 +111,24 @@ function calculateCategoryStats(questions) {
 }
 
 /**
- * Format date as YYYY-MM-DD
+ * Format date as YYYY-MM-DD in configured timezone
  */
 function formatDate(date) {
-    return date.toISOString().split('T')[0];
+    return date.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
 }
 
 /**
- * Get short day name
+ * Get short day name in configured timezone
  */
 function getDayLabel(date) {
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
+    return date.toLocaleDateString('en-US', { weekday: 'short', timeZone: TIMEZONE });
 }
 
 /**
- * Get month short name
+ * Get month short name in configured timezone
  */
 function getMonthLabel(date) {
-    return date.toLocaleDateString('en-US', { month: 'short' });
+    return date.toLocaleDateString('en-US', { month: 'short', timeZone: TIMEZONE });
 }
 
 /**
@@ -167,14 +166,11 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
         if (cacheSnap.exists()) {
             const cached = cacheSnap.data();
-            const cachedAt = cached.cachedAt || 0;
-            if (now.getTime() - cachedAt < CACHE_TTL_MS) {
-                return res.status(200).json({
-                    success: true,
-                    data: cached.data,
-                    cached: true
-                });
-            }
+            return res.status(200).json({
+                success: true,
+                data: cached.data,
+                cached: true
+            });
         }
 
         // --- Compute analytics (cache miss or stale) ---
@@ -341,11 +337,10 @@ export const getDashboardAnalytics = async (req, res, next) => {
             engagementHeatmap
         };
 
-        // --- Write to cache ---
+        // --- Store in cache ---
         try {
             await setDoc(cacheDocRef, {
                 data: responseData,
-                cachedAt: now.getTime(),
                 date: today
             });
         } catch (cacheErr) {

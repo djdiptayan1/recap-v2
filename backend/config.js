@@ -49,6 +49,8 @@ export default {
 
     },
 
+    timezone: 'Asia/Kolkata',
+
     question_category: {
         immediate: 'immediateMemory',
         recent: 'recentMemory',
