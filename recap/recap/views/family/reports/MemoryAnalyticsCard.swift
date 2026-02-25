@@ -11,6 +11,7 @@ import Charts
 struct MemoryAnalyticsCard: View {
     @StateObject private var viewModel: AnalyticsViewModel
     @State private var navigateToDetail = false
+    @State private var navigateToOverall = false
     @State private var selectedDetailType: TimeFrame?
     
     @State private var selectedDataPoint: AnalyticsData?
@@ -24,14 +25,20 @@ struct MemoryAnalyticsCard: View {
         VStack(spacing: 20) {
             
             VStack(spacing: 16) {
-                HStack{
-                    Text("Trends")
-                        .font(AppConfig.Fonts.headline)
-                        .foregroundColor(AppConfig.Colors.textPrimary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                // Tappable header for overall analytics
+                Button(action: {
+                    HapticManager.shared.trigger(.selection)
+                    navigateToOverall = true
+                }) {
+                    HStack{
+                        Text("Trends")
+                            .font(AppConfig.Fonts.headline)
+                            .foregroundColor(AppConfig.Colors.textPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                    }
                 }
                 .padding(.top, 24)
                 .padding(.horizontal, 20)
@@ -133,6 +140,9 @@ struct MemoryAnalyticsCard: View {
             if let type = selectedDetailType {
                 DetailedAnalyticsView(timeFrame: type, viewModel: viewModel)
             }
+        }
+        .navigationDestination(isPresented: $navigateToOverall) {
+            OverallAnalyticsView(viewModel: viewModel)
         }
     }
     

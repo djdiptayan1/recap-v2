@@ -36,6 +36,9 @@ struct AnalyticsDashboardData: Codable {
     let weekly: [WeeklyAnalytics]
     let monthly: [MonthlyAnalytics]
     let declineAlert: DeclineAlert
+    let overallSummary: OverallSummary?
+    let categoryBreakdown: [CategoryBreakdown]?
+    let engagementHeatmap: [EngagementDay]?
 }
 
 struct DailyAnalytics: Codable {
@@ -69,6 +72,41 @@ struct DeclineAlert: Codable {
     let weeklyScores: [Double]
 }
 
+struct OverallSummary: Codable {
+    let score: Double
+    let totalCorrect: Int
+    let totalAnswered: Int
+    let totalQuestions: Int
+    let activeDaysLast7: Int
+    let activeDaysLast30: Int
+}
+
+struct CategoryBreakdown: Codable, Identifiable {
+    var id: String { category }
+    let category: String
+    let correct: Int
+    let incorrect: Int
+    let total: Int
+    let score: Double
+
+    var displayName: String {
+        switch category {
+        case "immediateMemory": return "Immediate"
+        case "recentMemory": return "Recent"
+        case "remoteMemory": return "Remote"
+        default: return category.capitalized
+        }
+    }
+}
+
+struct EngagementDay: Codable, Identifiable {
+    var id: String { date }
+    let date: String
+    let questionsAnswered: Int
+    let totalQuestions: Int
+    let score: Double
+}
+
 // MARK: - API Endpoint
 
 private enum AnalyticsAPI: Endpoint {
@@ -95,6 +133,9 @@ class AnalyticsViewModel: ObservableObject {
     @Published var weeklyData: [AnalyticsData] = []
     @Published var monthlyData: [AnalyticsData] = []
     @Published var declineAlert: DeclineAlert?
+    @Published var overallSummary: OverallSummary?
+    @Published var categoryBreakdown: [CategoryBreakdown] = []
+    @Published var engagementHeatmap: [EngagementDay] = []
 
     private let patientId: String
 
@@ -143,6 +184,15 @@ class AnalyticsViewModel: ObservableObject {
 
                     // Decline alert
                     self.declineAlert = data.declineAlert
+
+                    // Overall summary
+                    self.overallSummary = data.overallSummary
+
+                    // Category breakdown
+                    self.categoryBreakdown = data.categoryBreakdown ?? []
+
+                    // Engagement heatmap
+                    self.engagementHeatmap = data.engagementHeatmap ?? []
                 } else {
                     self.errorMessage = "Failed to fetch analytics"
                 }

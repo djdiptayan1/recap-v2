@@ -82,6 +82,32 @@ function calculateStats(questions) {
 }
 
 /**
+ * Calculate stats per category for a set of questions
+ */
+function calculateCategoryStats(questions) {
+    const categories = {
+        immediateMemory: { correct: 0, incorrect: 0, total: 0 },
+        recentMemory: { correct: 0, incorrect: 0, total: 0 },
+        remoteMemory: { correct: 0, incorrect: 0, total: 0 }
+    };
+
+    for (const q of questions) {
+        const cat = q.category || 'immediateMemory';
+        if (!categories[cat]) continue;
+        categories[cat].total++;
+        const result = isAnswerCorrect(q);
+        if (result === true) categories[cat].correct++;
+        else if (result === false) categories[cat].incorrect++;
+    }
+
+    return Object.entries(categories).map(([category, stats]) => {
+        const answered = stats.correct + stats.incorrect;
+        const score = answered > 0 ? Math.round((stats.correct / answered) * 100 * 10) / 10 : 0;
+        return { category, ...stats, score };
+    });
+}
+
+/**
  * Format date as YYYY-MM-DD
  */
 function formatDate(date) {
@@ -232,6 +258,44 @@ export const getDashboardAnalytics = async (req, res, next) => {
             };
         }
 
+        // 5. Overall summary (last 30 days)
+        let overallCorrect = 0;
+        let overallAnswered = 0;
+        let overallTotal = 0;
+        let activeDaysLast7 = 0;
+        let activeDaysLast30 = 0;
+        const allQuestionsLast30 = [];
+        const engagementHeatmap = [];
+
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            const dateStr = formatDate(d);
+            const questions = await getCachedQuestions(dateStr);
+            const stats = calculateStats(questions);
+
+            overallCorrect += stats.correct;
+            overallAnswered += stats.correct + stats.incorrect;
+            overallTotal += stats.total;
+
+            const hasActivity = stats.total > 0;
+            if (hasActivity && i < 7) activeDaysLast7++;
+            if (hasActivity) activeDaysLast30++;
+
+            allQuestionsLast30.push(...questions);
+            engagementHeatmap.push({
+                date: dateStr,
+                questionsAnswered: stats.correct + stats.incorrect,
+                totalQuestions: stats.total,
+                score: stats.score
+            });
+        }
+
+        const overallScore = overallAnswered > 0 ? Math.round((overallCorrect / overallAnswered) * 100 * 10) / 10 : 0;
+
+        // 6. Category breakdown (from last 30 days)
+        const categoryBreakdown = calculateCategoryStats(allQuestionsLast30);
+
         res.status(200).json({
             success: true,
             data: {
@@ -244,7 +308,17 @@ export const getDashboardAnalytics = async (req, res, next) => {
                 },
                 weekly: weeklyData,
                 monthly: monthlyData,
-                declineAlert
+                declineAlert,
+                overallSummary: {
+                    score: overallScore,
+                    totalCorrect: overallCorrect,
+                    totalAnswered: overallAnswered,
+                    totalQuestions: overallTotal,
+                    activeDaysLast7,
+                    activeDaysLast30
+                },
+                categoryBreakdown,
+                engagementHeatmap
             }
         });
 
