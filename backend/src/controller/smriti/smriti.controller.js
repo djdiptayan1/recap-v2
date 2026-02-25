@@ -2,6 +2,54 @@ import { GoogleGenAI, Type } from '@google/genai';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
 
+const SYSTEM_PROMPT = `You are Smriti, a warm Alzheimer's & Dementia Care companion. You help patients, caregivers, and families with empathy and evidence-based care.
+
+RULES:
+- ONLY discuss Alzheimer's, dementia, memory, elderly care, caregiving, or engage in reminiscence therapy about the patient's past. Politely decline unrelated topics.
+- Never diagnose or prescribe. Suggest consulting healthcare professionals for medical concerns.
+- Keep answers concise (2-4 paragraphs max). Use simple, calm language.
+- If the user seems confused or frustrated: acknowledge feelings first, simplify language, be extra reassuring.
+- Use patient context naturally: reference their name, family members, activities. Make it personal.
+- If mode is "memoryLane": Act as a reminiscence therapy companion. Gently ask about the patient's past — wedding day, childhood, favorite foods, school days, family traditions, old hobbies. Use family names. Be warm, curious, patient. Celebrate every memory shared.
+- Always include a warm followup_prompt to encourage memory recall. Use patient's family names if available.
+- Only include care_strategies, sources, medical_disclaimer when genuinely relevant — skip for casual conversation and reminiscence.`;
+
+function buildContextBlock(context) {
+    if (!context) return '';
+    const parts = [];
+    if (context.patientName) parts.push(`Patient: ${context.patientName}`);
+    if (context.stage) parts.push(`Stage: ${context.stage}`);
+    if (context.dob) parts.push(`DOB: ${context.dob}`);
+    if (context.familyMembers && context.familyMembers.length > 0) {
+        const familyStr = context.familyMembers.map(m => `${m.name} (${m.relation})`).join(', ');
+        parts.push(`Family: ${familyStr}`);
+    }
+    if (context.recentActivities) {
+        const a = context.recentActivities;
+        if (a.streakDays != null) parts.push(`Current streak: ${a.streakDays} days`);
+        if (a.reminders && a.reminders.length > 0) {
+            parts.push(`Active reminders: ${a.reminders.join(', ')}`);
+        }
+    }
+    if (context.mode === 'memoryLane') parts.push('MODE: memoryLane (reminiscence therapy active)');
+    return parts.length > 0 ? `\n\nPATIENT CONTEXT:\n${parts.join('. ')}.` : '';
+}
+
+function buildContents(history, query) {
+    const contents = [];
+    if (history && Array.isArray(history)) {
+        const recentHistory = history.slice(-20);
+        for (const msg of recentHistory) {
+            contents.push({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }],
+            });
+        }
+    }
+    contents.push({ role: 'user', parts: [{ text: query }] });
+    return contents;
+}
+
 async function smriti(req, res, next) {
     try {
         const errors = validationResult(req);
@@ -15,130 +63,64 @@ async function smriti(req, res, next) {
             return res.status(400).json({ error: 'Query input is required' });
         }
 
-        const ai = new GoogleGenAI({
-            apiKey: config.gemini.apiKey,
-        });
-
-        // Build context block if patient info is provided
-        let contextBlock = '';
-        if (context) {
-            const parts = [];
-            if (context.patientName) parts.push(`Patient: ${context.patientName}`);
-            if (context.stage) parts.push(`Stage: ${context.stage}`);
-            if (context.familyMembers && context.familyMembers.length > 0) {
-                const familyStr = context.familyMembers.map(m => `${m.name} (${m.relation})`).join(', ');
-                parts.push(`Family: ${familyStr}`);
-            }
-            if (parts.length > 0) {
-                contextBlock = `\n\nPATIENT CONTEXT:\n${parts.join('. ')}.\nUse this to personalize. Address by name. Reference family naturally.`;
-            }
-        }
-
-        // const tools = [
-        //     { urlContext: {} },
-        //     {
-        //         googleSearch: {}
-        //     },
-        // ];
+        const ai = new GoogleGenAI({ apiKey: config.gemini.apiKey });
+        const contextBlock = buildContextBlock(context);
 
         const aiConfig = {
-            temperature: 0.95,
-            maxOutputTokens: 2000,
+            temperature: 1.0,
+            maxOutputTokens: 1000,
             thinkingConfig: {
-                thinkingLevel: 'HIGH',
+                thinkingLevel: 'low',
             },
-            // tools,
             responseMimeType: 'application/json',
             responseSchema: {
                 type: Type.OBJECT,
-                description: "Structured response for Alzheimer’s, dementia, and elderly care guidance.",
-                required: ["summary", "answer", "care_strategies", "medical_disclaimer", "sources"],
+                description: "Smriti AI response",
+                required: ["answer", "followup_prompt"],
                 properties: {
-                    summary: {
-                        type: Type.STRING,
-                        description: "Concise restatement of the user's question or concern.",
-                    },
                     answer: {
                         type: Type.STRING,
-                        description: "Clear, empathetic explanation related to Alzheimer’s or dementia.",
+                        description: "Clear, empathetic response.",
                     },
                     care_strategies: {
                         type: Type.ARRAY,
-                        description: "Actionable caregiving or coping strategies.",
-                        items: {
-                            type: Type.STRING,
-                        },
+                        description: "Actionable tips (only if relevant).",
+                        items: { type: Type.STRING },
                     },
                     medical_disclaimer: {
                         type: Type.STRING,
-                        description: "Reminder that this is not a medical diagnosis or treatment advice.",
+                        description: "Brief reminder to consult a doctor (only for medical questions).",
                     },
                     sources: {
                         type: Type.ARRAY,
-                        description: "Authoritative references supporting the response.",
+                        description: "1-2 references (only if citing specific info).",
                         items: {
                             type: Type.OBJECT,
                             required: ["name", "url"],
                             properties: {
-                                name: {
-                                    type: Type.STRING,
-                                },
-                                url: {
-                                    type: Type.STRING,
-                                    format: "uri",
-                                },
+                                name: { type: Type.STRING },
+                                url: { type: Type.STRING, format: "uri" },
                             },
                         },
                     },
                     supportive_note: {
                         type: Type.STRING,
-                        description: "Brief empathetic statement for caregivers or family members.",
+                        description: "Brief empathetic note (only for emotional topics).",
                     },
                     followup_prompt: {
                         type: Type.STRING,
-                        description: "A warm reminiscence question about the patient's past memories, childhood, family, or favorite experiences.",
+                        description: "A warm reminiscence question about the patient's memories. Make it personal.",
                     },
                 },
             },
-            systemInstruction: [
-                {
-                    text: `You are Smriti, an Alzheimer's & Dementia Care expert. You educate, support, and guide patients, caregivers and families with empathy and evidence-based info.
-
-SCOPE: ONLY Alzheimer's, dementia, memory loss, elderly care, caregiver strategies. Politely refuse other topics with: "I'm here to help with Alzheimer's, dementia, and elderly care. I'm happy to help with questions about memory loss or caregiving."
-
-MEDICAL SAFETY: Never diagnose or prescribe. Always remind to consult a healthcare professional.
-
-TONE: Empathetic, calm, simple language. Concise but meaningful. No fear-based messaging.
-
-EMOTION DETECTION: If the user seems confused, frustrated, or distressed — simplify language, use shorter sentences, acknowledge their feelings first, and be extra reassuring before providing information.
-
-REMINISCENCE THERAPY: Always include a warm follow-up question in "followup_prompt" to gently encourage memory recall (e.g., about their wedding day, childhood games, favorite foods, family traditions, old hobbies, school days). Make it personal using patient context if available.
-
-SOURCES: Include 2-4 sources from WHO, Alzheimer's Association, NIH/NIA, NHS, Mayo Clinic, or CDC.${contextBlock}`,
-                }
-            ],
+            systemInstruction: [{ text: SYSTEM_PROMPT + contextBlock }],
         };
 
         const model = 'gemini-3-flash-preview';
-
-        // Build conversation contents with history for multi-turn context
-        const contents = [];
-        if (history && Array.isArray(history)) {
-            const recentHistory = history.slice(-6);
-            for (const msg of recentHistory) {
-                contents.push({
-                    role: msg.role === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.text }],
-                });
-            }
-        }
-        contents.push({
-            role: 'user',
-            parts: [{ text: query }],
-        });
+        const contents = buildContents(history, query);
 
         const result = await ai.models.generateContent({
-            model: model,
+            model,
             config: aiConfig,
             contents,
         });
@@ -157,11 +139,9 @@ SOURCES: Include 2-4 sources from WHO, Alzheimer's Association, NIH/NIA, NHS, Ma
         }
 
     } catch (error) {
-        // console.error("Error in Smriti AI:", error); // Handled by global error handler
+        console.error("Smriti structured error:", error.message);
         next(error);
     }
 }
 
-export default {
-    smriti
-};
+export default { smriti };

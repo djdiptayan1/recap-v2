@@ -19,10 +19,11 @@ struct SmritiView: View {
         case fetch(documentID: String)
         var path: String {
             switch self {
-            case .fetch(let documentID):
+            case let .fetch(documentID):
                 return AppConfig.ApiEndpoints.familyMembers + "/\(documentID)"
             }
         }
+
         var method: HTTPMethod { .get }
     }
 
@@ -30,11 +31,10 @@ struct SmritiView: View {
         NavigationStack {
             ZStack {
                 VStack(spacing: 0) {
-
                     ScrollViewReader { proxy in
                         ScrollView {
                             VStack(spacing: 20) {
-                                Spacer().frame(height: 20)
+                                Spacer().frame(height: 12)
 
                                 // Chat Bubbles
                                 ForEach(viewModel.messages) { message in
@@ -42,15 +42,34 @@ struct SmritiView: View {
                                         .id(message.id)
                                 }
 
+                                // Typing indicator
                                 if viewModel.isLoading {
-                                    HStack {
-                                        ProgressView()
-                                            .padding()
-                                            .background(.ultraThinMaterial, in: Circle())
+                                    HStack(spacing: 8) {
+                                        ThinkingDots()
+                                        Text("Smriti is thinking...")
+                                            .font(
+                                                .system(size: 14, weight: .medium, design: .rounded)
+                                            )
+                                            .foregroundStyle(.secondary)
                                         Spacer()
                                     }
                                     .padding(.horizontal)
                                     .id("loading")
+                                }
+
+                                // Follow-up prompt chip
+                                if let followup = viewModel.followupPrompt, !viewModel.isLoading {
+                                    FollowupChip(text: followup) {
+                                        textInput = followup
+                                    }
+                                    .transition(
+                                        .asymmetric(
+                                            insertion: .move(edge: .bottom).combined(
+                                                with: .opacity),
+                                            removal: .opacity
+                                        )
+                                    )
+                                    .id("followup")
                                 }
                             }
                             .padding(.horizontal)
@@ -58,8 +77,11 @@ struct SmritiView: View {
                         }
                         .scrollIndicators(.hidden)
                         .onChange(of: viewModel.messages.count) { _ in
+                            scrollToBottom(proxy)
+                        }
+                        .onChange(of: viewModel.messages.last?.text) { _ in
                             if let lastId = viewModel.messages.last?.id {
-                                withAnimation {
+                                withAnimation(.easeOut(duration: 0.1)) {
                                     proxy.scrollTo(lastId, anchor: .bottom)
                                 }
                             }
@@ -69,6 +91,11 @@ struct SmritiView: View {
                                 withAnimation {
                                     proxy.scrollTo("loading", anchor: .bottom)
                                 }
+                            }
+                        }
+                        .onChange(of: viewModel.followupPrompt) { _ in
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                proxy.scrollTo("followup", anchor: .bottom)
                             }
                         }
                     }
@@ -90,17 +117,36 @@ struct SmritiView: View {
         }
     }
 
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        if let lastId = viewModel.messages.last?.id {
+            withAnimation {
+                proxy.scrollTo(lastId, anchor: .bottom)
+            }
+        }
+    }
+
     private func loadContext() async {
         let patient = appState.currentUser
         let docId = KeychainManager.shared.getString(key: .patientDocumentID) ?? patient?.id ?? ""
-        var members: [FamilyMember]? = nil
+        var members: [FamilyMember]?
         if !docId.isEmpty {
             let response: FamilyMemberResponse? = try? await NetworkManager.shared.request(
                 endpoint: FamilyAPI.fetch(documentID: docId))
             members = response?.data
         }
         familyMembers = members
-        viewModel.configure(patient: patient, familyMembers: members)
+
+        var streakDays: Int?
+        if let cachedStreak = UserDefaults.standard.object(forKey: "currentStreakDays") as? Int {
+            streakDays = cachedStreak
+        }
+
+        viewModel.configure(
+            patient: patient,
+            familyMembers: members,
+            streakDays: streakDays,
+            reminderTitles: nil
+        )
     }
 
     func sendMessage() {
@@ -109,12 +155,81 @@ struct SmritiView: View {
         generator.impactOccurred()
 
         let textToSend = textInput
-        textInput = ""  // Clear immediately
+        textInput = ""
 
-        // Let ViewModel handle the networking and list updating
         viewModel.sendMessage(text: textToSend)
     }
 }
+
+// MARK: - Follow-up Prompt Chip
+
+struct FollowupChip: View {
+    let text: String
+    let onTap: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onTap) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.blue)
+                    Text(text)
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(.ultraThinMaterial, in: Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [.blue.opacity(0.4), .blue.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+            Spacer()
+        }
+    }
+}
+
+// MARK: - Thinking Dots Animation
+
+struct ThinkingDots: View {
+    @State private var phase = 0.0
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0 ..< 3) { i in
+                Circle()
+                    .fill(Color.blue.opacity(0.6))
+                    .frame(width: 8, height: 8)
+                    .scaleEffect(dotScale(for: i))
+                    .animation(
+                        .easeInOut(duration: 0.6)
+                            .repeatForever()
+                            .delay(Double(i) * 0.2),
+                        value: phase
+                    )
+            }
+        }
+        .onAppear { phase = 1.0 }
+    }
+
+    private func dotScale(for index: Int) -> CGFloat {
+        phase == 0 ? 0.5 : 1.0
+    }
+}
+
+// MARK: - Input Bar
 
 struct InputBar: View {
     @Binding var text: String
@@ -123,7 +238,6 @@ struct InputBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-
             Button(action: { showCamera.toggle() }) {
                 Image(systemName: "camera.fill")
                     .font(.system(size: 18, weight: .semibold))
@@ -141,16 +255,14 @@ struct InputBar: View {
                     .foregroundStyle(.primary)
                     .tint(.white)
                     .padding(.leading, 12)
+                    .onSubmit(onSend)
 
-                // Send Button
                 Button(action: onSend) {
                     Image(systemName: "arrow.up")
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 36, height: 36)
-                        .background(
-                            Color.blue.gradient
-                        )
+                        .background(Color.blue.gradient)
                         .clipShape(Circle())
                 }
                 .padding(4)
@@ -183,14 +295,14 @@ struct ChatBubble: View {
         HStack(alignment: .bottom, spacing: 12) {
             if message.isUser { Spacer() }
 
-            Text(LocalizedStringKey(message.text))  // Use LocalizedStringKey to support Markdown!
+            Text(LocalizedStringKey(message.text))
                 .font(.system(size: 16, weight: .regular, design: .rounded))
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .background(
                     message.isUser
                         ? AnyShapeStyle(Color.blue.gradient)
-                        : AnyShapeStyle(Color.yellow.gradient)  // Or a different color for AI
+                        : AnyShapeStyle(Color.yellow.gradient)
                 )
                 .foregroundStyle(message.isUser ? .white : .primary)
                 .clipShape(

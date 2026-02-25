@@ -17,7 +17,15 @@ struct SmritiRequest: Codable {
 struct SmritiContext: Codable {
     let patientName: String?
     let stage: String?
+    let dob: String?
     let familyMembers: [SmritiFamilyMember]?
+    let recentActivities: SmritiActivities?
+    let mode: String?  // "care" or "memoryLane"
+}
+
+struct SmritiActivities: Codable {
+    let streakDays: Int?
+    let reminders: [String]?
 }
 
 struct SmritiFamilyMember: Codable {
@@ -30,7 +38,7 @@ struct SmritiHistoryMessage: Codable {
     let text: String
 }
 
-// MARK: - API Response
+// MARK: - API Response (structured endpoint)
 struct SmritiResponse: Codable {
     let summary: String?
     let answer: String
