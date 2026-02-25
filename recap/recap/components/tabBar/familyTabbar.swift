@@ -20,6 +20,11 @@ struct familyTabbar: View {
                     ArticlesView()
                 }
             }
+            Tab("Journal", systemImage: "book.fill") {
+                NavigationStack {
+                    JournalView()
+                }
+            }
             Tab("Smriti", systemImage: "apple.intelligence") {
                 SmritiView()
             }

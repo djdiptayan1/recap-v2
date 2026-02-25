@@ -17,6 +17,7 @@ struct home: View {
                 VStack(spacing: 24) {
                     QuestionsCard(hasFamilyMembers: !familyViewModel.familyMembers.isEmpty)
                     StreaksCard()
+                    JournalHomeCard()
                     LetsReadCard()
                 }
                 .padding(AppConfig.UI.screenPadding - 10)
