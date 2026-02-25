@@ -33,6 +33,9 @@ export default {
 
         //reminders
         reminders_SubCollection: 'reminders',
+
+        //journal
+        journalEntries_SubCollection: 'journal_entries',
     },
 
     questions: {

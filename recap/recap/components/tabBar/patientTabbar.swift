@@ -22,6 +22,11 @@ struct patientTabbar: View {
             Tab("Games", systemImage: "gamecontroller.fill") {
                 games()
             }
+            Tab("Journal", systemImage: "book.fill") {
+                NavigationStack {
+                    JournalView()
+                }
+            }
             Tab("Smriti", systemImage: "apple.intelligence") {
                 SmritiView()
             }
