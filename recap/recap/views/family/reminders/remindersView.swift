@@ -83,14 +83,45 @@ struct remindersView: View {
                     ProgressView()
                     Spacer()
                 } else if filteredReminders.isEmpty {
-                    VStack(spacing: 15) {
+                    VStack(spacing: 20) {
                         Spacer()
-                        Image(systemName: "bell.slash")
-                            .font(.system(size: 50))
-                            .foregroundColor(AppConfig.Colors.textSecondary)
-                        Text("No reminders found")
-                            .font(AppConfig.Fonts.body)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
+                        ZStack {
+                            Circle()
+                                .fill(AppConfig.Colors.accent.opacity(0.1))
+                                .frame(width: 100, height: 100)
+                            Image(systemName: selectedCategory == nil ? "bell.badge.fill" : "bell.slash")
+                                .font(.system(size: 44))
+                                .foregroundColor(AppConfig.Colors.accent.opacity(0.7))
+                        }
+                        VStack(spacing: 8) {
+                            Text(selectedCategory == nil ? "No Reminders Yet" : "No \(selectedCategory!.rawValue) Reminders")
+                                .font(AppConfig.Fonts.titleMedium)
+                                .foregroundColor(AppConfig.Colors.textPrimary)
+                            Text(selectedCategory == nil ? "Stay on track by adding your first reminder." : "No reminders found in this category.")
+                                .font(AppConfig.Fonts.body)
+                                .foregroundColor(AppConfig.Colors.textSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, AppConfig.UI.screenPadding)
+                        }
+                        if selectedCategory == nil {
+                            Button {
+                                HapticManager.shared.trigger(.selection)
+                                reminderToEdit = nil
+                                showingAddSheet = true
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus")
+                                    Text("Create First Reminder")
+                                }
+                                .font(AppConfig.Fonts.bodyBold)
+                                .foregroundColor(.white)
+                                .padding(.vertical, 14)
+                                .padding(.horizontal, 28)
+                                .background(AppConfig.Colors.accent)
+                                .cornerRadius(AppConfig.UI.buttonCornerRadius)
+                            }
+                            .padding(.top, 8)
+                        }
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)

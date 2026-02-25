@@ -17,6 +17,9 @@ struct familyView: View {
         GridItem(.flexible(), spacing: 20),
     ]
 
+    @State private var memberToDelete: FamilyMember? = nil
+    @State private var showDeleteConfirmation = false
+
     var body: some View {
         let documentID = appState.currentUser?.id ?? ""
 
@@ -42,6 +45,11 @@ struct familyView: View {
                         LazyVGrid(columns: columns, spacing: 24) {
                             ForEach(viewModel.familyMembers) { member in
                                 FamilyCard(member: member)
+                                    .onLongPressGesture {
+                                        HapticManager.shared.trigger(.warning)
+                                        memberToDelete = member
+                                        showDeleteConfirmation = true
+                                    }
                             }
                         }
 
@@ -68,6 +76,19 @@ struct familyView: View {
                         await viewModel.fetchFamilyMembers()
                     }
                 }
+            }
+            .alert("Remove Family Member?", isPresented: $showDeleteConfirmation, presenting: memberToDelete) { member in
+                Button("Cancel", role: .cancel) {
+                    memberToDelete = nil
+                }
+                Button("Remove", role: .destructive) {
+                    Task {
+                        await viewModel.deleteFamilyMember(memberID: member.id)
+                        memberToDelete = nil
+                    }
+                }
+            } message: { member in
+                Text("Are you sure you want to remove \(member.name) from your family? This cannot be undone.")
             }
         }
     }

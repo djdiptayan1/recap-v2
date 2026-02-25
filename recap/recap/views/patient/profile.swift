@@ -12,9 +12,35 @@ struct ProfileView: View {
     @State private var showMemoryCheck = false
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
+    @StateObject private var quizViewModel = MemoryQuizViewModel()
 
     @State private var showLogoutAlert = false
     @State private var showCopyAlert = false
+
+    private var lastCheckSubtitle: String {
+        guard let latest = quizViewModel.reports.first else {
+            return "No check taken yet"
+        }
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        guard let date = formatter.date(from: latest.date) else {
+            return "Last check: \(latest.date)"
+        }
+        let components = Calendar.current.dateComponents([.minute, .hour, .day, .weekOfYear, .month], from: date, to: Date())
+        if let months = components.month, months > 0 {
+            return "Last check: \(months) month\(months == 1 ? "" : "s") ago"
+        } else if let weeks = components.weekOfYear, weeks > 0 {
+            return "Last check: \(weeks) week\(weeks == 1 ? "" : "s") ago"
+        } else if let days = components.day, days > 0 {
+            return "Last check: \(days) day\(days == 1 ? "" : "s") ago"
+        } else if let hours = components.hour, hours > 0 {
+            return "Last check: \(hours) hour\(hours == 1 ? "" : "s") ago"
+        } else if let minutes = components.minute, minutes > 0 {
+            return "Last check: \(minutes) minute\(minutes == 1 ? "" : "s") ago"
+        } else {
+            return "Last check: just now"
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -127,7 +153,7 @@ struct ProfileView: View {
                             VStack(spacing: 0) {
                                 SettingsRow(
                                     icon: "brain.head.profile", title: "Memory Check",
-                                    subtitle: "Last check: 2 days ago"
+                                    subtitle: lastCheckSubtitle
                                 ) {
                                     HapticManager.shared.trigger(.selection)
                                     showMemoryCheck = true
@@ -261,6 +287,14 @@ struct ProfileView: View {
             .standardBackground()
             .scrollIndicators(.hidden)
             //            .navigationTitle("Profile")
+            .onAppear {
+                let patientId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+                if !patientId.isEmpty {
+                    Task {
+                        await quizViewModel.fetchMemoryReports(patientId: patientId)
+                    }
+                }
+            }
             .alert("Copied", isPresented: $showCopyAlert) {
                 Button("OK", role: .cancel) {}
             } message: {

@@ -238,17 +238,17 @@ struct InputBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Button(action: { showCamera.toggle() }) {
-                Image(systemName: "camera.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .frame(width: 44, height: 44)
-                    .background(
-                        ConcentricRectangle(corners: .concentric)
-                            .foregroundStyle(.ultraThinMaterial)
-                    )
-                    .containerShape(Circle())
-            }
+//            Button(action: { showCamera.toggle() }) {
+//                Image(systemName: "camera.fill")
+//                    .font(.system(size: 18, weight: .semibold))
+//                    .foregroundStyle(.white.opacity(0.9))
+//                    .frame(width: 44, height: 44)
+//                    .background(
+//                        ConcentricRectangle(corners: .concentric)
+//                            .foregroundStyle(.ultraThinMaterial)
+//                    )
+//                    .containerShape(Circle())
+//            }
 
             HStack {
                 TextField("Ask Smriti...", text: $text)
