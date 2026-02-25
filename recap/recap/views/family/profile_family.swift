@@ -93,20 +93,20 @@ struct ProfileFamilyView: View {
                                         icon: "number", title: "Patient UID",
                                         value: patient.patientUID, iconColor: .blue)
 
-                                    if let latestReport = quizViewModel.reports.first {
-                                        NavigationLink(
-                                            destination: MemoryQuizHistoryListView(
-                                                reports: quizViewModel.reports)
-                                        ) {
-                                            InfoTile(
-                                                icon: latestReport.safeIcon,
-                                                title: "Latest Check",
-                                                value: latestReport.safeStatus,
-                                                iconColor: latestReport.swiftColor
-                                            )
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                    }
+                                    // if let latestReport = quizViewModel.reports.first {
+                                    //     NavigationLink(
+                                    //         destination: MemoryQuizHistoryListView(
+                                    //             reports: quizViewModel.reports)
+                                    //     ) {
+                                    //         InfoTile(
+                                    //             icon: latestReport.safeIcon,
+                                    //             title: "Latest Check",
+                                    //             value: latestReport.safeStatus,
+                                    //             iconColor: latestReport.swiftColor
+                                    //         )
+                                    //     }
+                                    //     .buttonStyle(PlainButtonStyle())
+                                    // }
                                 }
                             }
                             .padding(.horizontal, AppConfig.UI.screenPadding - 10)

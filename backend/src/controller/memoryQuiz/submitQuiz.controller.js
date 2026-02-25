@@ -2,6 +2,7 @@ import { doc, setDoc, updateDoc, serverTimestamp, getDoc } from 'firebase/firest
 import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
+import { getLocalToday } from '../../utils/dateUtils.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const REPORTS_COLLECTION = config.firestoreNames.memoryCheckReports_SubCollection;
@@ -69,7 +70,7 @@ export async function submitQuiz(req, res, next) {
         }
 
         const now = new Date();
-        const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dateString = getLocalToday(now); // YYYY-MM-DD in configured timezone
 
         const reportData = {
             date: serverTimestamp(),

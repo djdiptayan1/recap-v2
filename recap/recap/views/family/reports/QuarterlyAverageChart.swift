@@ -15,12 +15,12 @@ struct QuarterlyAverageChart: View {
     var body: some View {
         Chart(data) { item in
             BarMark(
-                x: .value("Quarter", item.label),
+                x: .value("Month", item.label),
                 y: .value("Average", item.value)
             )
             .foregroundStyle(
                 LinearGradient(
-                    colors: [Color.blue, Color.purple],
+                    colors: [AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6)],
                     startPoint: .bottom,
                     endPoint: .top
                 )

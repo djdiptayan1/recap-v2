@@ -38,8 +38,8 @@ struct JournalComposeView: View {
 
     private var canSave: Bool {
         !title.isEmpty
-        && (isPatient ? selectedMood != nil : true)
-        && (!content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty)
+            && (isPatient ? selectedMood != nil : true)
+            && (!content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty)
     }
 
     var body: some View {
@@ -90,13 +90,18 @@ struct JournalComposeView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if viewModel.isCreating {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: AppConfig.Colors.accent))
+                            .progressViewStyle(
+                                CircularProgressViewStyle(tint: AppConfig.Colors.accent))
                     } else {
                         Button("Save") {
                             saveEntry()
                         }
                         .font(AppConfig.Fonts.bodyBold)
-                        .foregroundColor(canSave ? AppConfig.Colors.accent : AppConfig.Colors.textSecondary.opacity(0.4))
+                        .foregroundColor(
+                            canSave
+                                ? AppConfig.Colors.accent
+                                : AppConfig.Colors.textSecondary.opacity(0.4)
+                        )
                         .disabled(!canSave)
                     }
                 }
@@ -138,7 +143,8 @@ struct JournalComposeView: View {
                                 Text(mood.label)
                                     .font(AppConfig.Fonts.small)
                                     .foregroundColor(
-                                        selectedMood == mood.key ? .white : AppConfig.Colors.textSecondary
+                                        selectedMood == mood.key
+                                            ? .white : AppConfig.Colors.textSecondary
                                     )
                             }
                             .padding(.vertical, 10)
@@ -148,6 +154,7 @@ struct JournalComposeView: View {
                                     ? AppConfig.Colors.accent
                                     : AppConfig.Colors.card
                             )
+                            .cornerRadius(AppConfig.UI.cornerRadius)
                         }
                     }
                 }
@@ -183,7 +190,10 @@ struct JournalComposeView: View {
                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppConfig.UI.buttonCornerRadius)
-                        .stroke(title.isEmpty ? AppConfig.Colors.alert.opacity(0.5) : AppConfig.Colors.stroke, lineWidth: 1)
+                        .stroke(
+                            title.isEmpty
+                                ? AppConfig.Colors.alert.opacity(0.5) : AppConfig.Colors.stroke,
+                            lineWidth: 1)
                 )
 
             if title.isEmpty {
@@ -234,23 +244,23 @@ struct JournalComposeView: View {
                 Text("Photos")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(AppConfig.Colors.textPrimary)
-                Spacer()
-                PhotosPicker(
-                    selection: $selectedPhotoItems,
-                    maxSelectionCount: 10,
-                    matching: .images
-                ) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                        Text("Add")
-                    }
-                    .font(AppConfig.Fonts.small)
-                    .foregroundColor(AppConfig.Colors.accent)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .background(AppConfig.Colors.accent.opacity(0.1))
-                    .cornerRadius(AppConfig.UI.buttonCornerRadius)
-                }
+                // Spacer()
+                // PhotosPicker(
+                //     selection: $selectedPhotoItems,
+                //     maxSelectionCount: 10,
+                //     matching: .images
+                // ) {
+                //     HStack(spacing: 4) {
+                //         Image(systemName: "plus")
+                //         Text("Add")
+                //     }
+                //     .font(AppConfig.Fonts.small)
+                //     .foregroundColor(AppConfig.Colors.accent)
+                //     .padding(.vertical, 6)
+                //     .padding(.horizontal, 12)
+                //     .background(AppConfig.Colors.accent.opacity(0.1))
+                //     .cornerRadius(AppConfig.UI.buttonCornerRadius)
+                // }
             }
 
             if photoPreviews.isEmpty {
@@ -321,10 +331,13 @@ struct JournalComposeView: View {
                 .padding(4)
             }
 
-            TextField("Caption…", text: Binding(
-                get: { photoPreviews[index].caption },
-                set: { photoPreviews[index].caption = $0 }
-            ))
+            TextField(
+                "Caption…",
+                text: Binding(
+                    get: { photoPreviews[index].caption },
+                    set: { photoPreviews[index].caption = $0 }
+                )
+            )
             .font(AppConfig.Fonts.small)
             .foregroundColor(AppConfig.Colors.textPrimary)
             .frame(width: 120)
@@ -339,16 +352,24 @@ struct JournalComposeView: View {
                 .font(AppConfig.Fonts.headline)
                 .foregroundColor(AppConfig.Colors.textPrimary)
 
-            metadataField(icon: "person.2.fill", placeholder: "Who's in this photo? (e.g. Mum, Dad)", text: $people)
-            metadataField(icon: "mappin.circle.fill", placeholder: "Where was this? (e.g. Home, Mumbai)", text: $place)
-            metadataField(icon: "tag.fill", placeholder: "Occasion (e.g. Birthday, Holiday, Daily life)", text: $eventTag)
+            metadataField(
+                icon: "person.2.fill", placeholder: "Who's in this photo? (e.g. Mum, Dad)",
+                text: $people)
+            metadataField(
+                icon: "mappin.circle.fill", placeholder: "Where was this? (e.g. Home, Mumbai)",
+                text: $place)
+            metadataField(
+                icon: "tag.fill", placeholder: "Occasion (e.g. Birthday, Holiday, Daily life)",
+                text: $eventTag)
         }
         .padding(AppConfig.UI.padding)
         .background(AppConfig.Colors.card)
         .cornerRadius(AppConfig.UI.cornerRadius)
     }
 
-    private func metadataField(icon: String, placeholder: String, text: Binding<String>) -> some View {
+    private func metadataField(icon: String, placeholder: String, text: Binding<String>)
+        -> some View
+    {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 16))
@@ -425,7 +446,9 @@ struct JournalComposeView: View {
                     .fill(Color.red)
                     .frame(width: 12, height: 12)
                     .scaleEffect(viewModel.isRecording ? 1.2 : 1.0)
-                    .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: viewModel.isRecording)
+                    .animation(
+                        .easeInOut(duration: 0.6).repeatForever(autoreverses: true),
+                        value: viewModel.isRecording)
 
                 Text(formatDuration(viewModel.recordingDuration))
                     .font(AppConfig.Fonts.bodyBold)
@@ -469,7 +492,8 @@ struct JournalComposeView: View {
                     if viewModel.isPlaying {
                         viewModel.stopAudio()
                     } else if let data = viewModel.audioData,
-                              let url = saveToTempFile(data: data) {
+                        let url = saveToTempFile(data: data)
+                    {
                         viewModel.playAudio(from: url.absoluteString, entryId: "preview")
                     }
                 } label: {
@@ -510,13 +534,16 @@ struct JournalComposeView: View {
         HapticManager.shared.trigger(.selection)
         let createdBy = appState.currentUser?.type == "family" ? "family" : "patient"
         let duration = viewModel.audioData != nil ? viewModel.recordingDuration : nil
-        let uploads: [JournalPhotoUpload]? = photoPreviews.isEmpty ? nil : photoPreviews.map {
-            let jpeg = $0.image.jpegData(compressionQuality: 0.8) ?? Data()
-            return JournalPhotoUpload(
-                imageBase64: "data:image/jpeg;base64," + jpeg.base64EncodedString(),
-                caption: $0.caption.isEmpty ? nil : $0.caption
-            )
-        }
+        let uploads: [JournalPhotoUpload]? =
+            photoPreviews.isEmpty
+            ? nil
+            : photoPreviews.map {
+                let jpeg = $0.image.jpegData(compressionQuality: 0.8) ?? Data()
+                return JournalPhotoUpload(
+                    imageBase64: "data:image/jpeg;base64," + jpeg.base64EncodedString(),
+                    caption: $0.caption.isEmpty ? nil : $0.caption
+                )
+            }
         let resolvedType: String? = uploads != nil ? "memory" : nil
 
         Task {
@@ -550,7 +577,8 @@ struct JournalComposeView: View {
             var newPreviews: [(image: UIImage, caption: String)] = []
             for item in items {
                 if let data = try? await item.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
+                    let uiImage = UIImage(data: data)
+                {
                     newPreviews.append((image: uiImage, caption: ""))
                 }
             }

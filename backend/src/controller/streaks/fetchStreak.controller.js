@@ -8,6 +8,7 @@ import { firestore } from '../../utils/db.js';
 import { calculateStreakMetrics } from '../../utils/streakCalculator.js';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
+import { getLocalToday } from '../../utils/dateUtils.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
@@ -47,7 +48,7 @@ async function getStreakStats(req, res, next) {
         const { currentStreak, maxStreak, activeDays, lastAnsweredDate } = calculateStreakMetrics(allStreakData);
 
         // Determine if answered today
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalToday();
         const answeredToday = !!allStreakData[todayStr];
 
         return res.status(200).json({

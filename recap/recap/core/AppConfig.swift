@@ -89,6 +89,9 @@ struct AppConfig {
         static let reminders = "reminders"
 
         static let journal = "journal"
+
+        // analytics
+        static let analyticsDashboard = "analytics/dashboard"
     }
 
     struct FirebaseCollections {
