@@ -15,7 +15,7 @@ struct QuarterlyAverageChart: View {
     var body: some View {
         Chart(data) { item in
             BarMark(
-                x: .value("Quarter", item.label),
+                x: .value("Month", item.label),
                 y: .value("Average", item.value)
             )
             .foregroundStyle(
