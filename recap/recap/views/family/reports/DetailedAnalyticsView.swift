@@ -17,22 +17,26 @@ struct DetailedAnalyticsView: View {
         ZStack {
             AppConfig.Colors.background.ignoresSafeArea()
             
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     
                     // Header
-                    VStack(spacing: 8) {
-                        Image(systemName: iconForType)
-                            .font(.system(size: 50))
-                            .foregroundColor(AppConfig.Colors.accent)
-                            .padding()
-                            .background(Circle().fill(AppConfig.Colors.accent.opacity(0.1)))
+                    VStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(AppConfig.Colors.accent.opacity(0.1))
+                                .frame(width: 80, height: 80)
+                            
+                            Image(systemName: iconForType)
+                                .font(.system(size: 36))
+                                .foregroundColor(AppConfig.Colors.accent)
+                        }
                         
                         Text("\(timeFrame.rawValue) Report")
                             .font(AppConfig.Fonts.titleMedium)
                             .foregroundColor(AppConfig.Colors.textPrimary)
                         
-                        Text("Detailed breakdown of cognitive performance.")
+                        Text("Detailed breakdown of cognitive performance")
                             .font(AppConfig.Fonts.body)
                             .foregroundColor(AppConfig.Colors.textSecondary)
                             .multilineTextAlignment(.center)
@@ -42,44 +46,7 @@ struct DetailedAnalyticsView: View {
                     
                     // Decline Alert
                     if let alert = viewModel.declineAlert, alert.detected {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 10) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 20))
-                                Text("Decline Alert")
-                                    .font(AppConfig.Fonts.headline)
-                                    .foregroundColor(.white)
-                                Spacer()
-                            }
-                            
-                            Text(alert.message)
-                                .font(AppConfig.Fonts.body)
-                                .foregroundColor(.white.opacity(0.9))
-                                .lineSpacing(4)
-                            
-                            // Weekly scores trend
-                            HStack(spacing: 12) {
-                                ForEach(Array(alert.weeklyScores.enumerated()), id: \.offset) { index, score in
-                                    VStack(spacing: 4) {
-                                        Text("W\(index + 1)")
-                                            .font(.caption2)
-                                            .foregroundColor(.white.opacity(0.7))
-                                        Text("\(Int(score))%")
-                                            .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(.white)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 8)
-                                    .background(Color.white.opacity(0.15))
-                                    .cornerRadius(8)
-                                }
-                            }
-                        }
-                        .padding(20)
-                        .background(AppConfig.Colors.alert)
-                        .cornerRadius(20)
-                        .padding(.horizontal)
+                        declineAlertCard(alert: alert)
                     }
                     
                     // Stats based on selected timeframe
@@ -98,51 +65,78 @@ struct DetailedAnalyticsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
     
+    // MARK: - Decline Alert Card
+    
+    private func declineAlertCard(alert: DeclineAlert) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.white)
+                    .font(.system(size: 20))
+                Text("Decline Alert")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(.white)
+                Spacer()
+            }
+            
+            Text(alert.message)
+                .font(AppConfig.Fonts.body)
+                .foregroundColor(.white.opacity(0.9))
+                .lineSpacing(4)
+            
+            HStack(spacing: 8) {
+                ForEach(Array(alert.weeklyScores.enumerated()), id: \.offset) { index, score in
+                    VStack(spacing: 4) {
+                        Text("W\(index + 1)")
+                            .font(.caption2)
+                            .foregroundColor(.white.opacity(0.7))
+                        Text("\(Int(score))%")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.15))
+                    .cornerRadius(8)
+                }
+            }
+        }
+        .padding(20)
+        .background(AppConfig.Colors.alert)
+        .cornerRadius(20)
+        .padding(.horizontal)
+    }
+    
     // MARK: - Daily Detail
     
     private var dailyDetailSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            SectionHeader(title: "Today's Performance")
+        VStack(spacing: 20) {
+            // Chart card
+            analyticsCard(title: "Today's Performance", icon: "sun.max.fill") {
+                if viewModel.dailyData.isEmpty {
+                    emptyStateView(message: "No questions answered today yet.")
+                } else {
+                    DailyPerformanceChart(data: viewModel.dailyData)
+                        .frame(height: 200)
+                        .padding(.horizontal, 8)
+                }
+            }
             
-            if viewModel.dailyData.isEmpty {
-                emptyStateView(message: "No questions answered today yet.")
-            } else {
+            // Stats
+            if !viewModel.dailyData.isEmpty {
                 let correct = viewModel.dailyData.first(where: { $0.label == "Correct" })?.value ?? 0
                 let incorrect = viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
                 let total = correct + incorrect
                 let percentage = total > 0 ? Int((correct / total) * 100) : 0
                 
-                HStack(spacing: 16) {
-                    StatCard(
-                        title: "Correct",
-                        value: "\(Int(correct))",
-                        icon: "checkmark.circle.fill",
-                        color: AppConfig.Colors.success
-                    )
-                    StatCard(
-                        title: "Incorrect",
-                        value: "\(Int(incorrect))",
-                        icon: "xmark.circle.fill",
-                        color: AppConfig.Colors.alert
-                    )
+                analyticsCard(title: "Key Metrics", icon: "chart.bar.fill") {
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        DetailStatTile(icon: "checkmark.circle.fill", title: "Correct", value: "\(Int(correct))", color: AppConfig.Colors.success)
+                        DetailStatTile(icon: "xmark.circle.fill", title: "Incorrect", value: "\(Int(incorrect))", color: AppConfig.Colors.alert)
+                        DetailStatTile(icon: "number.circle.fill", title: "Total", value: "\(Int(total))", color: AppConfig.Colors.accent)
+                        DetailStatTile(icon: "percent", title: "Accuracy", value: "\(percentage)%", color: percentage >= 70 ? AppConfig.Colors.success : (percentage >= 40 ? .orange : AppConfig.Colors.alert))
+                    }
                 }
-                .padding(.horizontal)
-                
-                HStack(spacing: 16) {
-                    StatCard(
-                        title: "Total",
-                        value: "\(Int(total))",
-                        icon: "number.circle.fill",
-                        color: AppConfig.Colors.accent
-                    )
-                    StatCard(
-                        title: "Accuracy",
-                        value: "\(percentage)%",
-                        icon: "percent",
-                        color: .blue
-                    )
-                }
-                .padding(.horizontal)
             }
         }
     }
@@ -150,46 +144,76 @@ struct DetailedAnalyticsView: View {
     // MARK: - Weekly Detail
     
     private var weeklyDetailSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            SectionHeader(title: "Weekly Trend")
+        VStack(spacing: 20) {
+            // Chart card
+            analyticsCard(title: "Weekly Trend", icon: "calendar") {
+                if viewModel.weeklyData.isEmpty {
+                    emptyStateView(message: "No weekly data available yet.")
+                } else {
+                    Chart(viewModel.weeklyData) { item in
+                        AreaMark(
+                            x: .value("Day", item.label),
+                            y: .value("Score", item.value)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [AppConfig.Colors.accent.opacity(0.4), AppConfig.Colors.accent.opacity(0.0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        
+                        LineMark(
+                            x: .value("Day", item.label),
+                            y: .value("Score", item.value)
+                        )
+                        .interpolationMethod(.catmullRom)
+                        .foregroundStyle(AppConfig.Colors.accent)
+                        .symbol {
+                            Circle()
+                                .fill(AppConfig.Colors.accent)
+                                .frame(width: 6, height: 6)
+                        }
+                    }
+                    .chartYScale(domain: 0...100)
+                    .frame(height: 180)
+                    .padding(.horizontal, 8)
+                }
+            }
             
-            if viewModel.weeklyData.isEmpty {
-                emptyStateView(message: "No weekly data available yet.")
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(viewModel.weeklyData) { item in
-                        HStack {
-                            Text(item.label)
-                                .font(AppConfig.Fonts.bodyBold)
-                                .foregroundColor(AppConfig.Colors.textPrimary)
-                                .frame(width: 40, alignment: .leading)
-                            
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule()
-                                        .fill(Color.gray.opacity(0.15))
-                                        .frame(height: 8)
-                                    
-                                    Capsule()
-                                        .fill(barColor(for: item.value))
-                                        .frame(width: geo.size.width * (item.value / 100), height: 8)
+            // Day breakdown
+            if !viewModel.weeklyData.isEmpty {
+                analyticsCard(title: "Daily Scores", icon: "list.bullet") {
+                    VStack(spacing: 10) {
+                        ForEach(viewModel.weeklyData) { item in
+                            HStack(spacing: 12) {
+                                Text(item.label)
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundColor(AppConfig.Colors.textPrimary)
+                                    .frame(width: 40, alignment: .leading)
+                                
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        Capsule()
+                                            .fill(Color.gray.opacity(0.12))
+                                            .frame(height: 10)
+                                        
+                                        Capsule()
+                                            .fill(barColor(for: item.value).gradient)
+                                            .frame(width: max(geo.size.width * (item.value / 100), 0), height: 10)
+                                    }
                                 }
+                                .frame(height: 10)
+                                
+                                Text("\(Int(item.value))%")
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundColor(barColor(for: item.value))
+                                    .frame(width: 45, alignment: .trailing)
                             }
-                            .frame(height: 8)
-                            
-                            Text("\(Int(item.value))%")
-                                .font(AppConfig.Fonts.small)
-                                .fontWeight(.bold)
-                                .foregroundColor(barColor(for: item.value))
-                                .frame(width: 45, alignment: .trailing)
                         }
                     }
                 }
-                .padding(20)
-                .background(Color.white)
-                .cornerRadius(20)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                .padding(.horizontal)
             }
         }
     }
@@ -197,48 +221,94 @@ struct DetailedAnalyticsView: View {
     // MARK: - Monthly Detail
     
     private var monthlyDetailSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            SectionHeader(title: "Monthly Overview")
-            
-            if viewModel.monthlyData.isEmpty {
-                emptyStateView(message: "No monthly data available yet.")
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(viewModel.monthlyData) { item in
-                        HStack {
-                            Text(item.label)
-                                .font(AppConfig.Fonts.bodyBold)
-                                .foregroundColor(AppConfig.Colors.textPrimary)
-                                .frame(width: 40, alignment: .leading)
-                            
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule()
-                                        .fill(Color.gray.opacity(0.15))
-                                        .frame(height: 8)
-                                    
-                                    Capsule()
-                                        .fill(barColor(for: item.value))
-                                        .frame(width: geo.size.width * (item.value / 100), height: 8)
-                                }
-                            }
-                            .frame(height: 8)
-                            
+        VStack(spacing: 20) {
+            // Chart card
+            analyticsCard(title: "Monthly Overview", icon: "clock.arrow.circlepath") {
+                if viewModel.monthlyData.isEmpty {
+                    emptyStateView(message: "No monthly data available yet.")
+                } else {
+                    Chart(viewModel.monthlyData) { item in
+                        BarMark(
+                            x: .value("Month", item.label),
+                            y: .value("Score", item.value)
+                        )
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6)],
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                        )
+                        .cornerRadius(8)
+                        .annotation(position: .top) {
                             Text("\(Int(item.value))%")
-                                .font(AppConfig.Fonts.small)
-                                .fontWeight(.bold)
-                                .foregroundColor(barColor(for: item.value))
-                                .frame(width: 45, alignment: .trailing)
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(AppConfig.Colors.textSecondary)
+                        }
+                    }
+                    .chartYScale(domain: 0...100)
+                    .frame(height: 180)
+                    .padding(.horizontal, 8)
+                }
+            }
+            
+            // Month breakdown
+            if !viewModel.monthlyData.isEmpty {
+                analyticsCard(title: "Monthly Scores", icon: "list.bullet") {
+                    VStack(spacing: 10) {
+                        ForEach(viewModel.monthlyData) { item in
+                            HStack(spacing: 12) {
+                                Text(item.label)
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundColor(AppConfig.Colors.textPrimary)
+                                    .frame(width: 40, alignment: .leading)
+                                
+                                GeometryReader { geo in
+                                    ZStack(alignment: .leading) {
+                                        Capsule()
+                                            .fill(Color.gray.opacity(0.12))
+                                            .frame(height: 10)
+                                        
+                                        Capsule()
+                                            .fill(barColor(for: item.value).gradient)
+                                            .frame(width: max(geo.size.width * (item.value / 100), 0), height: 10)
+                                    }
+                                }
+                                .frame(height: 10)
+                                
+                                Text("\(Int(item.value))%")
+                                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                                    .foregroundColor(barColor(for: item.value))
+                                    .frame(width: 45, alignment: .trailing)
+                            }
                         }
                     }
                 }
-                .padding(20)
-                .background(Color.white)
-                .cornerRadius(20)
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                .padding(.horizontal)
             }
         }
+    }
+    
+    // MARK: - Reusable Card Wrapper
+    
+    private func analyticsCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .foregroundColor(AppConfig.Colors.accent)
+                    .font(.system(size: 16))
+                Text(title)
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+                Spacer()
+            }
+            
+            content()
+        }
+        .padding(20)
+        .background(Color.white)
+        .cornerRadius(20)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .padding(.horizontal)
     }
     
     // MARK: - Helpers
@@ -254,9 +324,6 @@ struct DetailedAnalyticsView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(30)
-        .background(Color.white)
-        .cornerRadius(20)
-        .padding(.horizontal)
     }
     
     private func barColor(for value: Double) -> Color {
@@ -271,5 +338,34 @@ struct DetailedAnalyticsView: View {
         case .recent: return "calendar"
         case .remote: return "clock.arrow.circlepath"
         }
+    }
+}
+
+// MARK: - Detail Stat Tile
+
+struct DetailStatTile: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 22))
+                .foregroundColor(color)
+            
+            Text(value)
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundColor(AppConfig.Colors.textPrimary)
+            
+            Text(title)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(AppConfig.Colors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 16)
+        .background(color.opacity(0.08))
+        .cornerRadius(16)
     }
 }

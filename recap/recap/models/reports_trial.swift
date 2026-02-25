@@ -111,11 +111,14 @@ struct EngagementDay: Codable, Identifiable {
 
 private enum AnalyticsAPI: Endpoint {
     case dashboard(patientId: String)
+    case memoryReports(patientId: String)
 
     var path: String {
         switch self {
         case .dashboard(let patientId):
             return "\(AppConfig.ApiEndpoints.analyticsDashboard)/\(patientId)"
+        case .memoryReports(let patientId):
+            return "\(AppConfig.ApiEndpoints.memoryQuiz)/reports/\(patientId)"
         }
     }
 
@@ -136,6 +139,7 @@ class AnalyticsViewModel: ObservableObject {
     @Published var overallSummary: OverallSummary?
     @Published var categoryBreakdown: [CategoryBreakdown] = []
     @Published var engagementHeatmap: [EngagementDay] = []
+    @Published var memoryReports: [MemoryReport] = []
 
     private let patientId: String
 
@@ -143,6 +147,7 @@ class AnalyticsViewModel: ObservableObject {
         self.patientId = patientId
         if !patientId.isEmpty {
             fetchAnalytics()
+            fetchMemoryReports()
         }
     }
 
@@ -202,6 +207,25 @@ class AnalyticsViewModel: ObservableObject {
             }
 
             self.isLoading = false
+        }
+    }
+
+    func fetchMemoryReports() {
+        guard !patientId.isEmpty else { return }
+
+        Task { @MainActor in
+            do {
+                let response: MemoryReportsResponse = try await NetworkManager.shared.request(
+                    endpoint: AnalyticsAPI.memoryReports(patientId: patientId),
+                    keyDecodingStrategy: .useDefaultKeys
+                )
+
+                if response.success {
+                    self.memoryReports = response.data
+                }
+            } catch {
+                print("Error fetching memory reports: \(error)")
+            }
         }
     }
 }

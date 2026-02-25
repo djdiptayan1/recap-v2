@@ -20,7 +20,7 @@ struct QuarterlyAverageChart: View {
             )
             .foregroundStyle(
                 LinearGradient(
-                    colors: [Color.blue, Color.purple],
+                    colors: [AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6)],
                     startPoint: .bottom,
                     endPoint: .top
                 )
