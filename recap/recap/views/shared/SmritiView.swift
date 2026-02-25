@@ -9,8 +9,22 @@ import SwiftUI
 
 struct SmritiView: View {
     @StateObject private var viewModel = SmritiViewModel()
+    @EnvironmentObject var appState: AppState
     @State private var textInput: String = ""
     @State private var showCamera: Bool = false
+    @State private var familyMembers: [FamilyMember]? = nil
+
+    // Endpoint for fetching family members
+    private enum FamilyAPI: Endpoint {
+        case fetch(documentID: String)
+        var path: String {
+            switch self {
+            case .fetch(let documentID):
+                return AppConfig.ApiEndpoints.familyMembers + "/\(documentID)"
+            }
+        }
+        var method: HTTPMethod { .get }
+    }
 
     var body: some View {
         NavigationStack {
@@ -70,7 +84,23 @@ struct SmritiView: View {
             }
             .navigationTitle("Smriti")
             .standardBackground()
+            .task {
+                await loadContext()
+            }
         }
+    }
+
+    private func loadContext() async {
+        let patient = appState.currentUser
+        let docId = KeychainManager.shared.getString(key: .patientDocumentID) ?? patient?.id ?? ""
+        var members: [FamilyMember]? = nil
+        if !docId.isEmpty {
+            let response: FamilyMemberResponse? = try? await NetworkManager.shared.request(
+                endpoint: FamilyAPI.fetch(documentID: docId))
+            members = response?.data
+        }
+        familyMembers = members
+        viewModel.configure(patient: patient, familyMembers: members)
     }
 
     func sendMessage() {
@@ -180,4 +210,5 @@ struct ChatBubble: View {
 
 #Preview {
     SmritiView()
+        .environmentObject(AppState())
 }
