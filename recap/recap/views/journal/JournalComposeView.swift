@@ -31,17 +31,37 @@ struct JournalComposeView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: AppConfig.UI.spacing) {
-                    moodSelector
+            ZStack {
+                ScrollView {
+                    VStack(spacing: AppConfig.UI.spacing) {
+                        moodSelector
 
-                    titleField
+                        titleField
 
-                    contentField
+                        contentField
 
-                    audioSection
+                        audioSection
+                    }
+                    .padding(AppConfig.UI.screenPadding)
                 }
-                .padding(AppConfig.UI.screenPadding)
+                .disabled(viewModel.isCreating)
+
+                // Saving overlay
+                if viewModel.isCreating {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+                    VStack(spacing: 14) {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(1.4)
+                        Text("Saving…")
+                            .font(AppConfig.Fonts.bodyBold)
+                            .foregroundColor(.white)
+                    }
+                    .padding(28)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(AppConfig.UI.cornerRadius)
+                }
             }
             .navigationTitle("New Entry")
             .navigationBarTitleDisplayMode(.inline)
@@ -53,14 +73,20 @@ struct JournalComposeView: View {
                         dismiss()
                     }
                     .foregroundColor(AppConfig.Colors.textSecondary)
+                    .disabled(viewModel.isCreating)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveEntry()
+                    if viewModel.isCreating {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: AppConfig.Colors.accent))
+                    } else {
+                        Button("Save") {
+                            saveEntry()
+                        }
+                        .font(AppConfig.Fonts.bodyBold)
+                        .foregroundColor(canSave ? AppConfig.Colors.accent : AppConfig.Colors.textSecondary.opacity(0.4))
+                        .disabled(!canSave)
                     }
-                    .font(AppConfig.Fonts.bodyBold)
-                    .foregroundColor(canSave ? AppConfig.Colors.accent : AppConfig.Colors.textSecondary.opacity(0.4))
-                    .disabled(!canSave || viewModel.isCreating)
                 }
             }
             .standardBackground()

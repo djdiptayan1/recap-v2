@@ -34,6 +34,15 @@ struct JournalView: View {
                 .refreshable {
                     await viewModel.fetchEntries(patientId: patientId)
                 }
+                // Subtle top-of-list loading bar when refreshing existing entries
+                if viewModel.isLoading {
+                    VStack {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: AppConfig.Colors.accent))
+                            .padding(.top, 8)
+                        Spacer()
+                    }
+                }
             }
         }
         .navigationTitle("My Journal")

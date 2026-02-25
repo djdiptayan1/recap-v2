@@ -24,6 +24,22 @@ const JOURNAL_SUBCOLLECTION = config.firestoreNames.journalEntries_SubCollection
 const journalRef = (patientId) =>
     collection(firestore, USERS_COLLECTION, patientId, JOURNAL_SUBCOLLECTION);
 
+/**
+ * Converts Firestore Timestamp objects to ISO date strings so the JSON
+ * response contains plain strings that iOS Codable (String?) can decode.
+ */
+function serializeEntry(data) {
+    const result = {};
+    for (const [key, value] of Object.entries(data)) {
+        if (value && typeof value.toDate === 'function') {
+            result[key] = value.toDate().toISOString();
+        } else {
+            result[key] = value;
+        }
+    }
+    return result;
+}
+
 async function createEntry(req, res, next) {
     try {
         const errors = validationResult(req);
@@ -76,7 +92,7 @@ async function createEntry(req, res, next) {
         const docRef = await addDoc(journalRef(patientId), entryData);
         const snap = await getDoc(docRef);
 
-        return res.status(201).json({ success: true, data: { id: snap.id, ...snap.data() } });
+        return res.status(201).json({ success: true, data: { id: snap.id, ...serializeEntry(snap.data()) } });
     } catch (err) {
         next(err);
     }
@@ -109,7 +125,7 @@ async function getEntries(req, res, next) {
         }
 
         const snap = await getDocs(q);
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = snap.docs.map(d => ({ id: d.id, ...serializeEntry(d.data()) }));
 
         return res.status(200).json({ success: true, data, count: data.length });
     } catch (err) {
@@ -135,7 +151,7 @@ async function getEntryById(req, res, next) {
             return res.status(404).json({ success: false, error: 'Journal entry not found' });
         }
 
-        return res.status(200).json({ success: true, data: { id: snap.id, ...snap.data() } });
+        return res.status(200).json({ success: true, data: { id: snap.id, ...serializeEntry(snap.data()) } });
     } catch (err) {
         next(err);
     }
@@ -191,7 +207,7 @@ async function updateEntry(req, res, next) {
         await updateDoc(entryDocRef, { ...updates, updatedAt: serverTimestamp() });
         const snap = await getDoc(entryDocRef);
 
-        return res.status(200).json({ success: true, data: { id: snap.id, ...snap.data() } });
+        return res.status(200).json({ success: true, data: { id: snap.id, ...serializeEntry(snap.data()) } });
     } catch (err) {
         next(err);
     }
