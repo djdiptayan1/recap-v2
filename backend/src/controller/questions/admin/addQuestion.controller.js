@@ -3,11 +3,13 @@ import {
     doc,
     addDoc,
     getDoc,
+    setDoc,
     Timestamp
 } from 'firebase/firestore';
 import { firestore } from '../../../utils/db.js';
 import config from '../../../../config.js';
 import { validationResult } from 'express-validator';
+import { getLocalToday } from '../../../utils/dateUtils.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const QUESTIONS_SUBCOLLECTION = config.firestoreNames.personalQuestions_SubCollection;
@@ -65,7 +67,7 @@ export const addQuestion = async (req, res, next) => {
         };
 
         // Path: users/{patientId}/questions/{today}/{subCollectionName}
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalToday();
 
         // Ensure the date document exists (it might not if it's a new day and getDaily hasn't run)
         // Check if date doc exists at users/{pid}/questions/{today}

@@ -6,6 +6,7 @@ import {
 import { firestore } from '../../../utils/db.js';
 import config from '../../../../config.js';
 import { validationResult } from 'express-validator';
+import { getLocalToday } from '../../../utils/dateUtils.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const QUESTIONS_SUBCOLLECTION = config.firestoreNames.personalQuestions_SubCollection;
@@ -35,7 +36,7 @@ export const deleteQuestion = async (req, res, next) => {
         }
 
         // Verify question exists - Check subcollections first
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalToday();
         const dailyDocRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, today);
 
         let questionRef = null;

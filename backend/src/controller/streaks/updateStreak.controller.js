@@ -10,20 +10,15 @@ import { firestore } from '../../utils/db.js';
 import { calculateStreakMetrics } from '../../utils/streakCalculator.js';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
+import { getFormattedLocalDate } from '../../utils/dateUtils.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const STREAKS_COLLECTION = config.firestoreNames.streaks_SubCollection;
 // const STREAKS_CORE_COLLECTION = config.firestoreNames.streaksCore_SubCollection;
 
-// Helper to get formatted date strings
+// Helper to get formatted date strings (timezone-aware)
 const getFormattedDate = (date = new Date()) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return {
-        full: `${year}-${month}-${day}`,
-        yearMonth: `${year}-${month}`,
-    };
+    return getFormattedLocalDate(date);
 };
 
 const getDaysInMonth = (yearMonth) => {
