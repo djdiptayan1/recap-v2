@@ -112,15 +112,15 @@ struct DetailedAnalyticsView: View {
     private var dailyDetailSection: some View {
         VStack(spacing: 20) {
             // Chart card
-            analyticsCard(title: "Today's Performance", icon: "sun.max.fill") {
-                if viewModel.dailyData.isEmpty {
-                    emptyStateView(message: "No questions answered today yet.")
-                } else {
-                    DailyPerformanceChart(data: viewModel.dailyData)
-                        .frame(height: 200)
-                        .padding(.horizontal, 8)
-                }
-            }
+            // analyticsCard(title: "Today's Performance", icon: "sun.max.fill") {
+            //     if viewModel.dailyData.isEmpty {
+            //         emptyStateView(message: "No questions answered today yet.")
+            //     } else {
+            //         DailyPerformanceChart(data: viewModel.dailyData)
+            //             .frame(height: 200)
+            //             .padding(.horizontal, 8)
+            //     }
+            // }
             
             // Stats
             if !viewModel.dailyData.isEmpty {
@@ -146,41 +146,41 @@ struct DetailedAnalyticsView: View {
     private var weeklyDetailSection: some View {
         VStack(spacing: 20) {
             // Chart card
-            analyticsCard(title: "Weekly Trend", icon: "calendar") {
-                if viewModel.weeklyData.isEmpty {
-                    emptyStateView(message: "No weekly data available yet.")
-                } else {
-                    Chart(viewModel.weeklyData) { item in
-                        AreaMark(
-                            x: .value("Day", item.label),
-                            y: .value("Score", item.value)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [AppConfig.Colors.accent.opacity(0.4), AppConfig.Colors.accent.opacity(0.0)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+            // analyticsCard(title: "Weekly Trend", icon: "calendar") {
+            //     if viewModel.weeklyData.isEmpty {
+            //         emptyStateView(message: "No weekly data available yet.")
+            //     } else {
+            //         Chart(viewModel.weeklyData) { item in
+            //             AreaMark(
+            //                 x: .value("Day", item.label),
+            //                 y: .value("Score", item.value)
+            //             )
+            //             .interpolationMethod(.catmullRom)
+            //             .foregroundStyle(
+            //                 LinearGradient(
+            //                     colors: [AppConfig.Colors.accent.opacity(0.4), AppConfig.Colors.accent.opacity(0.0)],
+            //                     startPoint: .top,
+            //                     endPoint: .bottom
+            //                 )
+            //             )
                         
-                        LineMark(
-                            x: .value("Day", item.label),
-                            y: .value("Score", item.value)
-                        )
-                        .interpolationMethod(.catmullRom)
-                        .foregroundStyle(AppConfig.Colors.accent)
-                        .symbol {
-                            Circle()
-                                .fill(AppConfig.Colors.accent)
-                                .frame(width: 6, height: 6)
-                        }
-                    }
-                    .chartYScale(domain: 0...100)
-                    .frame(height: 180)
-                    .padding(.horizontal, 8)
-                }
-            }
+            //             LineMark(
+            //                 x: .value("Day", item.label),
+            //                 y: .value("Score", item.value)
+            //             )
+            //             .interpolationMethod(.catmullRom)
+            //             .foregroundStyle(AppConfig.Colors.accent)
+            //             .symbol {
+            //                 Circle()
+            //                     .fill(AppConfig.Colors.accent)
+            //                     .frame(width: 6, height: 6)
+            //             }
+            //         }
+            //         .chartYScale(domain: 0...100)
+            //         .frame(height: 180)
+            //         .padding(.horizontal, 8)
+            //     }
+            // }
             
             // Day breakdown
             if !viewModel.weeklyData.isEmpty {
@@ -223,34 +223,34 @@ struct DetailedAnalyticsView: View {
     private var monthlyDetailSection: some View {
         VStack(spacing: 20) {
             // Chart card
-            analyticsCard(title: "Monthly Overview", icon: "clock.arrow.circlepath") {
-                if viewModel.monthlyData.isEmpty {
-                    emptyStateView(message: "No monthly data available yet.")
-                } else {
-                    Chart(viewModel.monthlyData) { item in
-                        BarMark(
-                            x: .value("Month", item.label),
-                            y: .value("Score", item.value)
-                        )
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6)],
-                                startPoint: .bottom,
-                                endPoint: .top
-                            )
-                        )
-                        .cornerRadius(8)
-                        .annotation(position: .top) {
-                            Text("\(Int(item.value))%")
-                                .font(.system(size: 11, weight: .bold, design: .rounded))
-                                .foregroundColor(AppConfig.Colors.textSecondary)
-                        }
-                    }
-                    .chartYScale(domain: 0...100)
-                    .frame(height: 180)
-                    .padding(.horizontal, 8)
-                }
-            }
+            // analyticsCard(title: "Monthly Overview", icon: "clock.arrow.circlepath") {
+            //     if viewModel.monthlyData.isEmpty {
+            //         emptyStateView(message: "No monthly data available yet.")
+            //     } else {
+            //         Chart(viewModel.monthlyData) { item in
+            //             BarMark(
+            //                 x: .value("Month", item.label),
+            //                 y: .value("Score", item.value)
+            //             )
+            //             .foregroundStyle(
+            //                 LinearGradient(
+            //                     colors: [AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6)],
+            //                     startPoint: .bottom,
+            //                     endPoint: .top
+            //                 )
+            //             )
+            //             .cornerRadius(8)
+            //             .annotation(position: .top) {
+            //                 Text("\(Int(item.value))%")
+            //                     .font(.system(size: 11, weight: .bold, design: .rounded))
+            //                     .foregroundColor(AppConfig.Colors.textSecondary)
+            //             }
+            //         }
+            //         .chartYScale(domain: 0...100)
+            //         .frame(height: 180)
+            //         .padding(.horizontal, 8)
+            //     }
+            // }
             
             // Month breakdown
             if !viewModel.monthlyData.isEmpty {
