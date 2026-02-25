@@ -21,7 +21,12 @@ struct JournalView: View {
             } else {
                 List {
                     ForEach(viewModel.entries) { entry in
-                        NavigationLink(destination: JournalDetailView(entry: entry, viewModel: viewModel, patientId: patientId)) {
+                        ZStack {
+                            NavigationLink(destination: JournalDetailView(entry: entry, viewModel: viewModel, patientId: patientId)) {
+                                EmptyView()
+                            }
+                            .opacity(0)
+
                             JournalCard(entry: entry)
                         }
                         .buttonStyle(PlainButtonStyle())
