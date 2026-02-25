@@ -17,6 +17,27 @@ private struct _FirestoreTimestamp: Decodable {
     }
 }
 
+// MARK: - Photo
+
+/// A single photo attached to a journal/memory entry.
+struct JournalPhoto: Codable, Equatable {
+    let url: String
+    let publicId: String?
+    let caption: String?
+}
+
+extension JournalPhoto: Identifiable {
+    var id: String { url }
+}
+
+/// Payload for uploading a new photo with a journal entry.
+struct JournalPhotoUpload: Encodable {
+    let imageBase64: String
+    let caption: String?
+}
+
+// MARK: - Entry
+
 struct JournalEntry: Identifiable, Codable, Equatable {
     let id: String
     let patientId: String?
@@ -26,6 +47,12 @@ struct JournalEntry: Identifiable, Codable, Equatable {
     let audioURL: String?
     let audioDuration: Double?
     let createdBy: String?
+    // Memory-book fields
+    let entryType: String?      // 'journal' | 'memory'
+    let people: String?         // comma-separated names
+    let place: String?          // location label
+    let eventTag: String?       // birthday, holiday, family, daily, …
+    let photos: [JournalPhoto]?
     // Stored as a plain ISO string after the backend fix, but we keep a
     // custom decoder so older entries (Firestore Timestamp objects) still decode.
     let createdAt: String?
@@ -36,20 +63,26 @@ struct JournalEntry: Identifiable, Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case id, patientId, title, content, mood, audioURL, audioDuration
         case createdBy, createdAt, updatedAt
+        case entryType, people, place, eventTag, photos
     }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        id          = try c.decode(String.self, forKey: .id)
-        patientId   = try c.decodeIfPresent(String.self, forKey: .patientId)
-        title       = try c.decodeIfPresent(String.self, forKey: .title)
-        content     = try c.decodeIfPresent(String.self, forKey: .content)
-        mood        = try c.decodeIfPresent(String.self, forKey: .mood)
-        audioURL    = try c.decodeIfPresent(String.self, forKey: .audioURL)
-        audioDuration = try c.decodeIfPresent(Double.self, forKey: .audioDuration)
-        createdBy   = try c.decodeIfPresent(String.self, forKey: .createdBy)
-        createdAt   = Self.decodeFlexibleDate(c, key: .createdAt)
-        updatedAt   = Self.decodeFlexibleDate(c, key: .updatedAt)
+        id            = try c.decode(String.self, forKey: .id)
+        patientId     = try c.decodeIfPresent(String.self, forKey: .patientId)
+        title         = try c.decodeIfPresent(String.self, forKey: .title)
+        content       = try c.decodeIfPresent(String.self, forKey: .content)
+        mood          = try c.decodeIfPresent(String.self, forKey: .mood)
+        audioURL      = try c.decodeIfPresent(String.self, forKey: .audioURL)
+        audioDuration = try c.decodeIfPresent(Double.self,  forKey: .audioDuration)
+        createdBy     = try c.decodeIfPresent(String.self, forKey: .createdBy)
+        entryType     = try c.decodeIfPresent(String.self, forKey: .entryType)
+        people        = try c.decodeIfPresent(String.self, forKey: .people)
+        place         = try c.decodeIfPresent(String.self, forKey: .place)
+        eventTag      = try c.decodeIfPresent(String.self, forKey: .eventTag)
+        photos        = try c.decodeIfPresent([JournalPhoto].self, forKey: .photos)
+        createdAt     = Self.decodeFlexibleDate(c, key: .createdAt)
+        updatedAt     = Self.decodeFlexibleDate(c, key: .updatedAt)
     }
 
     /// Try to decode the field as a String; fall back to a Firestore Timestamp object.
@@ -67,6 +100,8 @@ struct JournalEntry: Identifiable, Codable, Equatable {
     }
 
     // MARK: - Computed properties
+
+    var isMemory: Bool { entryType == "memory" || hasPhotos }
 
     var moodEmoji: String {
         switch mood?.lowercased() {
@@ -105,7 +140,13 @@ struct JournalEntry: Identifiable, Codable, Equatable {
     var hasText: Bool {
         content != nil && !(content?.isEmpty ?? true)
     }
+
+    var hasPhotos: Bool {
+        !(photos?.isEmpty ?? true)
+    }
 }
+
+// MARK: - Responses / Requests
 
 struct JournalResponse: Codable {
     let success: Bool
@@ -126,6 +167,11 @@ struct JournalCreateRequest: Encodable {
     let audioBase64: String?
     let audioDuration: Double?
     let createdBy: String
+    let entryType: String?
+    let people: String?
+    let place: String?
+    let eventTag: String?
+    let photoBase64s: [JournalPhotoUpload]?
 }
 
 struct JournalUpdateRequest: Encodable {

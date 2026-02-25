@@ -117,7 +117,12 @@ class JournalViewModel: ObservableObject {
         mood: String?,
         audioData: Data?,
         audioDuration: Double?,
-        createdBy: String
+        createdBy: String,
+        entryType: String? = nil,
+        people: String? = nil,
+        place: String? = nil,
+        eventTag: String? = nil,
+        photoUploads: [JournalPhotoUpload]? = nil
     ) async -> Bool {
         isCreating = true
         errorMessage = nil
@@ -131,7 +136,12 @@ class JournalViewModel: ObservableObject {
             mood: mood,
             audioBase64: audioBase64,
             audioDuration: audioDuration,
-            createdBy: createdBy
+            createdBy: createdBy,
+            entryType: entryType,
+            people: people?.isEmpty == true ? nil : people,
+            place: place?.isEmpty == true ? nil : place,
+            eventTag: eventTag?.isEmpty == true ? nil : eventTag,
+            photoBase64s: photoUploads?.isEmpty == true ? nil : photoUploads
         )
 
         do {

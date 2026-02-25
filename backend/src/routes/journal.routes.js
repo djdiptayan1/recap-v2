@@ -86,6 +86,34 @@ router.post('/',
             .optional()
             .isIn(['patient', 'family'])
             .withMessage('createdBy must be "patient" or "family"'),
+        body('entryType')
+            .optional()
+            .isIn(['journal', 'memory'])
+            .withMessage('entryType must be "journal" or "memory"'),
+        body('people')
+            .optional()
+            .isString()
+            .withMessage('people must be a string'),
+        body('place')
+            .optional()
+            .isString()
+            .withMessage('place must be a string'),
+        body('eventTag')
+            .optional()
+            .isString()
+            .withMessage('eventTag must be a string'),
+        body('photoBase64s')
+            .optional()
+            .isArray()
+            .withMessage('photoBase64s must be an array'),
+        body('photoBase64s.*.imageBase64')
+            .optional()
+            .isString()
+            .withMessage('Each photo imageBase64 must be a string'),
+        body('photoBase64s.*.caption')
+            .optional()
+            .isString()
+            .withMessage('Photo caption must be a string'),
     ],
     journalController.createEntry
 );
@@ -130,6 +158,22 @@ router.put('/:id',
             .optional()
             .isNumeric()
             .withMessage('audioDuration must be a number'),
+        body('entryType')
+            .optional()
+            .isIn(['journal', 'memory'])
+            .withMessage('entryType must be "journal" or "memory"'),
+        body('people')
+            .optional()
+            .isString()
+            .withMessage('people must be a string'),
+        body('place')
+            .optional()
+            .isString()
+            .withMessage('place must be a string'),
+        body('eventTag')
+            .optional()
+            .isString()
+            .withMessage('eventTag must be a string'),
     ],
     journalController.updateEntry
 );

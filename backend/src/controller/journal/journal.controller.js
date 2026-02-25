@@ -47,12 +47,13 @@ async function createEntry(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { patientId, title, content, mood, audioBase64, audioDuration, createdBy } = req.body;
+        const { patientId, title, content, mood, audioBase64, audioDuration, createdBy,
+                entryType, people, place, eventTag, photoBase64s } = req.body;
 
-        if (!content && !audioBase64) {
+        if (!content && !audioBase64 && (!photoBase64s || !photoBase64s.length)) {
             return res.status(400).json({
                 success: false,
-                error: 'At least one of content or audioBase64 must be provided',
+                error: 'At least one of content, audioBase64, or photoBase64s must be provided',
             });
         }
 
@@ -81,10 +82,35 @@ async function createEntry(req, res, next) {
             }
         }
 
+        // Upload each photo in photoBase64s
+        const photos = [];
+        if (photoBase64s && Array.isArray(photoBase64s)) {
+            for (let i = 0; i < photoBase64s.length; i++) {
+                const { imageBase64, caption } = photoBase64s[i];
+                if (!imageBase64) continue;
+                const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                const photoId = `journal_${patientId}_photo_${Date.now()}_${i}`;
+                const uploadResult = await uploadOnCloudinary(buffer, 'recap/journal/photos', photoId);
+                if (uploadResult) {
+                    photos.push({
+                        url: uploadResult.secure_url || uploadResult.url,
+                        publicId: uploadResult.public_id,
+                        caption: caption || '',
+                    });
+                }
+            }
+        }
+
+        // Auto-derive entryType if not supplied
+        const resolvedEntryType = entryType || (photos.length > 0 ? 'memory' : 'journal');
+
         const entryData = {
             ...payload,
             ...(audioURL && { audioURL }),
             ...(audioPublicId && { audioPublicId }),
+            ...(photos.length && { photos }),
+            entryType: resolvedEntryType,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
@@ -235,6 +261,13 @@ async function deleteEntry(req, res, next) {
         const entryData = snap.data();
         if (entryData.audioPublicId) {
             await deleteFromCloudinary(entryData.audioPublicId, 'video');
+        }
+        if (entryData.photos && Array.isArray(entryData.photos)) {
+            for (const photo of entryData.photos) {
+                if (photo.publicId) {
+                    await deleteFromCloudinary(photo.publicId, 'image');
+                }
+            }
         }
 
         await deleteDoc(entryDocRef);

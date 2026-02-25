@@ -9,19 +9,56 @@ struct JournalCard: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            Text(entry.moodEmoji)
-                .font(.system(size: 36))
-                .frame(width: 48, height: 48)
+            // Leading: photo thumbnail for memories, mood emoji for journal entries
+            if entry.hasPhotos, let firstPhotoURL = entry.photos?.first?.url {
+                AsyncImage(url: URL(string: firstPhotoURL)) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Color(AppConfig.Colors.stroke)
+                }
+                .frame(width: 52, height: 52)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            } else {
+                Text(entry.moodEmoji)
+                    .font(.system(size: 36))
+                    .frame(width: 48, height: 48)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
-                if let title = entry.title, !title.isEmpty {
-                    Text(title)
-                        .font(AppConfig.Fonts.bodyBold)
-                        .foregroundColor(AppConfig.Colors.textPrimary)
-                        .lineLimit(1)
+                HStack(spacing: 6) {
+                    if let title = entry.title, !title.isEmpty {
+                        Text(title)
+                            .font(AppConfig.Fonts.bodyBold)
+                            .foregroundColor(AppConfig.Colors.textPrimary)
+                            .lineLimit(1)
+                    }
+                    // Badge for memory entries
+                    if entry.isMemory {
+                        Text("Memory")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(AppConfig.Colors.accent)
+                            .padding(.vertical, 2)
+                            .padding(.horizontal, 6)
+                            .background(AppConfig.Colors.accent.opacity(0.12))
+                            .cornerRadius(6)
+                    }
                 }
 
-                if let content = entry.content, !content.isEmpty {
+                // Subtitle: place/people for memories, content preview for journal
+                if entry.isMemory {
+                    let subtitle = [entry.people, entry.place, entry.eventTag]
+                        .compactMap { $0 }
+                        .filter { !$0.isEmpty }
+                        .joined(separator: " · ")
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(AppConfig.Fonts.small)
+                            .foregroundColor(AppConfig.Colors.textSecondary)
+                            .lineLimit(1)
+                    }
+                } else if let content = entry.content, !content.isEmpty {
                     Text(content)
                         .font(AppConfig.Fonts.small)
                         .foregroundColor(AppConfig.Colors.textSecondary)
@@ -35,10 +72,14 @@ struct JournalCard: View {
 
             Spacer()
 
-            VStack(spacing: 8) {
-                if entry.hasAudio {
+            VStack(spacing: 6) {
+                if entry.hasPhotos {
+                    Image(systemName: "photo.fill")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(AppConfig.Colors.accent)
+                } else if entry.hasAudio {
                     Image(systemName: "waveform")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 13, weight: .medium))
                         .foregroundColor(AppConfig.Colors.accent)
                 }
 
