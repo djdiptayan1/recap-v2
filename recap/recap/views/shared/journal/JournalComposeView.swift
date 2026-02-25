@@ -126,14 +126,14 @@ struct JournalComposeView: View {
                                     ? AppConfig.Colors.accent
                                     : AppConfig.Colors.card
                             )
-                            .cornerRadius(AppConfig.UI.buttonCornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppConfig.UI.buttonCornerRadius)
-                                    .stroke(
-                                        selectedMood == mood.key ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
-                                        lineWidth: 1
-                                    )
-                            )
+                            // .cornerRadius(AppConfig.UI.buttonCornerRadius)
+                            // .overlay(
+                            //     RoundedRectangle(cornerRadius: AppConfig.UI.buttonCornerRadius)
+                            //         .stroke(
+                            //             selectedMood == mood.key ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
+                            //             lineWidth: 1
+                            //         )
+                            // )
                         }
                     }
                 }

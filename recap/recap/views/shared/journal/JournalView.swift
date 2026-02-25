@@ -28,7 +28,7 @@ struct JournalView: View {
                             .buttonStyle(PlainButtonStyle())
                         }
                     }
-                    .padding(.horizontal, AppConfig.UI.screenPadding)
+                    .padding(.horizontal, AppConfig.UI.screenPadding - 10)
                     .padding(.vertical, AppConfig.UI.padding)
                 }
                 .refreshable {

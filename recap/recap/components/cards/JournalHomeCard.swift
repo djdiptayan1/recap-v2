@@ -43,9 +43,9 @@ struct JournalHomeCard: View {
                     Spacer()
 
                     ZStack {
-                        Circle()
-                            .fill(AppConfig.Colors.accent.opacity(0.15))
-                            .frame(width: 64, height: 64)
+//                        Circle()
+//                            .fill(AppConfig.Colors.accent.opacity(0.15))
+//                            .frame(width: 64, height: 64)
                         Image(systemName: "book.closed.fill")
                             .font(.system(size: 28))
                             .foregroundColor(AppConfig.Colors.accent)
