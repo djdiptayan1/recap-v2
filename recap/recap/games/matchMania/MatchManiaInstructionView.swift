@@ -41,7 +41,7 @@ struct MatchManiaInstructionView: View {
             .padding(.horizontal, 32)
 
             Button(action: onStart) {
-                Text("Let's Play! 🃏")
+                Text("Let's Play!")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
                     .frame(width: 220, height: 56)

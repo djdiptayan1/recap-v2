@@ -71,19 +71,19 @@ struct GamesCard: View {
             .padding(.horizontal, 12)
 
             // Play pill
-            HStack(spacing: 4) {
-                Text("Play")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                Image(systemName: "play.fill")
-                    .font(.system(size: 10, weight: .bold))
-            }
-            .foregroundColor(.white)
-            .padding(.vertical, 7)
-            .padding(.horizontal, 18)
-            .background(Color.white.opacity(0.25))
-            .cornerRadius(20)
-            .padding(.top, 12)
-            .padding(.bottom, 20)
+            // HStack(spacing: 4) {
+            //     Text("Play")
+            //         .font(.system(size: 13, weight: .bold, design: .rounded))
+            //     Image(systemName: "play.fill")
+            //         .font(.system(size: 10, weight: .bold))
+            // }
+            // .foregroundColor(.white)
+            // .padding(.vertical, 7)
+            // .padding(.horizontal, 18)
+            // .background(Color.white.opacity(0.25))
+            // .cornerRadius(20)
+            // .padding(.top, 12)
+            // .padding(.bottom, 20)
         }
         .background(cardGradient)
         .cornerRadius(AppConfig.UI.cornerRadius)

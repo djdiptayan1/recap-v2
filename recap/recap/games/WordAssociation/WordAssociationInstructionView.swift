@@ -42,7 +42,7 @@ struct WordAssociationInstructionView: View {
                 HapticManager.shared.trigger(.selection)
                 onStart()
             }) {
-                Text("Let's Play! 💬")
+                Text("Let's Play!")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
                     .frame(width: 220, height: 56)
