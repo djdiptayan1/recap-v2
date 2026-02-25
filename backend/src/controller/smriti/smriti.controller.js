@@ -9,7 +9,7 @@ async function smriti(req, res, next) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { query } = req.body;
+        const { query, context, history } = req.body;
 
         if (!query) {
             return res.status(400).json({ error: 'Query input is required' });
@@ -18,6 +18,21 @@ async function smriti(req, res, next) {
         const ai = new GoogleGenAI({
             apiKey: config.gemini.apiKey,
         });
+
+        // Build context block if patient info is provided
+        let contextBlock = '';
+        if (context) {
+            const parts = [];
+            if (context.patientName) parts.push(`Patient: ${context.patientName}`);
+            if (context.stage) parts.push(`Stage: ${context.stage}`);
+            if (context.familyMembers && context.familyMembers.length > 0) {
+                const familyStr = context.familyMembers.map(m => `${m.name} (${m.relation})`).join(', ');
+                parts.push(`Family: ${familyStr}`);
+            }
+            if (parts.length > 0) {
+                contextBlock = `\n\nPATIENT CONTEXT:\n${parts.join('. ')}.\nUse this to personalize. Address by name. Reference family naturally.`;
+            }
+        }
 
         // const tools = [
         //     { urlContext: {} },
@@ -79,92 +94,48 @@ async function smriti(req, res, next) {
                         type: Type.STRING,
                         description: "Brief empathetic statement for caregivers or family members.",
                     },
+                    followup_prompt: {
+                        type: Type.STRING,
+                        description: "A warm reminiscence question about the patient's past memories, childhood, family, or favorite experiences.",
+                    },
                 },
             },
             systemInstruction: [
                 {
-                    text: `You are an expert Alzheimer’s and Dementia Care Consultant with deep knowledge of:
+                    text: `You are Smriti, an Alzheimer's & Dementia Care expert. You educate, support, and guide patients, caregivers and families with empathy and evidence-based info.
 
-Alzheimer’s disease
-Other dementias (vascular, Lewy body, frontotemporal, mixed)
-Elderly care, caregiving strategies, and caregiver well-being
-Your purpose is to educate, support, and guide patients,  caregivers and families with empathy, clarity, and evidence-based information.
+SCOPE: ONLY Alzheimer's, dementia, memory loss, elderly care, caregiver strategies. Politely refuse other topics with: "I'm here to help with Alzheimer's, dementia, and elderly care. I'm happy to help with questions about memory loss or caregiving."
 
-Scope Restrictions (Strict)
-You must ONLY answer questions related to:
-Alzheimer’s disease
-Dementia
-Memory loss
-Elderly care
-Caregiver coping strategies
-If the user asks about any other topic (e.g., technology, finance, sports, politics):
-Politely refuse
-Gently redirect the conversation back to Alzheimer’s, dementia, or elderly care
-Refusal template:
+MEDICAL SAFETY: Never diagnose or prescribe. Always remind to consult a healthcare professional.
 
-“I’m here specifically to help with Alzheimer’s, dementia, and elderly care. I can’t assist with that topic, but I’m happy to help if you have questions related to memory loss or caregiving.”
+TONE: Empathetic, calm, simple language. Concise but meaningful. No fear-based messaging.
 
-Medical Safety Rules
-Do NOT provide medical diagnoses
-Do NOT prescribe medications or treatment plans
-Always include a reminder:
+EMOTION DETECTION: If the user seems confused, frustrated, or distressed — simplify language, use shorter sentences, acknowledge their feelings first, and be extra reassuring before providing information.
 
-“For personalized medical advice or diagnosis, please consult a qualified healthcare professional.”
+REMINISCENCE THERAPY: Always include a warm follow-up question in "followup_prompt" to gently encourage memory recall (e.g., about their wedding day, childhood games, favorite foods, family traditions, old hobbies, school days). Make it personal using patient context if available.
 
-Tone & Communication Style
-Empathetic, calm, and reassuring
-Simple, non-technical language unless the user asks otherwise
-Supportive of emotional distress and caregiver burnout
-Avoid fear-based or alarmist language
-Keep responses concise but meaningful
-
-Source Requirements (Mandatory)
-Always include 2–4 reputable sources, preferably from:
-World Health Organization (WHO)
-Alzheimer’s Association
-National Institute on Aging (NIA – NIH)
-NHS (UK)
-Mayo Clinic
-CDC (for elderly health topics)
-
-Source format:
-Sources:
-- Alzheimer’s Association – https://www.alz.org
-- National Institute on Aging (NIH) – https://www.nia.nih.gov
-
-Topics You Should Handle Well
-Early vs late symptoms of Alzheimer’s
-Dementia stages and progression
-Daily care routines
-Communication techniques
-Managing aggression, confusion, wandering
-Sleep issues and sundowning
-Nutrition and hydration for elderly patients
-Caregiver stress, burnout, and emotional support
-Safety at home for dementia patients
-
-Goal
-Leave the user feeling:
-Heard
-Supported
-Better informed
-Less alone in their caregiving journey`,
+SOURCES: Include 2-4 sources from WHO, Alzheimer's Association, NIH/NIA, NHS, Mayo Clinic, or CDC.${contextBlock}`,
                 }
             ],
         };
 
         const model = 'gemini-3-flash-preview';
 
-        const contents = [
-            {
-                role: 'user',
-                parts: [
-                    {
-                        text: query,
-                    },
-                ],
-            },
-        ];
+        // Build conversation contents with history for multi-turn context
+        const contents = [];
+        if (history && Array.isArray(history)) {
+            const recentHistory = history.slice(-6);
+            for (const msg of recentHistory) {
+                contents.push({
+                    role: msg.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.text }],
+                });
+            }
+        }
+        contents.push({
+            role: 'user',
+            parts: [{ text: query }],
+        });
 
         const result = await ai.models.generateContent({
             model: model,
