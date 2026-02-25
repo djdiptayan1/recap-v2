@@ -36,6 +36,9 @@ export default {
 
         //journal
         journalEntries_SubCollection: 'journal_entries',
+
+        //analytics cache
+        analyticsCache_SubCollection: 'analyticsCache',
     },
 
     questions: {

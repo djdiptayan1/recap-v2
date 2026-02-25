@@ -1,11 +1,15 @@
 import { firestore } from '../../utils/db.js';
-import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
 import config from '../../../config.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const USER_QUESTIONS_COLLECTION = config.firestoreNames.personalQuestions_SubCollection;
+const ANALYTICS_CACHE_COLLECTION = config.firestoreNames.analyticsCache_SubCollection;
 
 const SUBCOLLECTIONS = ['immediateQuestions', 'recentQuestions', 'remoteQuestions'];
+
+/** Cache TTL in milliseconds (1 hour) */
+const CACHE_TTL_MS = 60 * 60 * 1000;
 
 /**
  * Fetch all questions for a patient on a given date
@@ -157,6 +161,24 @@ export const getDashboardAnalytics = async (req, res, next) => {
         const now = new Date();
         const today = formatDate(now);
 
+        // --- Check cache ---
+        const cacheDocRef = doc(firestore, USERS_COLLECTION, patientId, ANALYTICS_CACHE_COLLECTION, today);
+        const cacheSnap = await getDoc(cacheDocRef);
+
+        if (cacheSnap.exists()) {
+            const cached = cacheSnap.data();
+            const cachedAt = cached.cachedAt || 0;
+            if (now.getTime() - cachedAt < CACHE_TTL_MS) {
+                return res.status(200).json({
+                    success: true,
+                    data: cached.data,
+                    cached: true
+                });
+            }
+        }
+
+        // --- Compute analytics (cache miss or stale) ---
+
         // Cache question data to avoid redundant Firestore reads
         const questionCache = new Map();
         async function getCachedQuestions(dateStr) {
@@ -296,30 +318,43 @@ export const getDashboardAnalytics = async (req, res, next) => {
         // 6. Category breakdown (from last 30 days)
         const categoryBreakdown = calculateCategoryStats(allQuestionsLast30);
 
+        const responseData = {
+            daily: {
+                correct: dailyStats.correct,
+                incorrect: dailyStats.incorrect,
+                unanswered: dailyStats.unanswered,
+                total: dailyStats.total,
+                score: dailyStats.score
+            },
+            weekly: weeklyData,
+            monthly: monthlyData,
+            declineAlert,
+            overallSummary: {
+                score: overallScore,
+                totalCorrect: overallCorrect,
+                totalAnswered: overallAnswered,
+                totalQuestions: overallTotal,
+                activeDaysLast7,
+                activeDaysLast30
+            },
+            categoryBreakdown,
+            engagementHeatmap
+        };
+
+        // --- Write to cache ---
+        try {
+            await setDoc(cacheDocRef, {
+                data: responseData,
+                cachedAt: now.getTime(),
+                date: today
+            });
+        } catch (cacheErr) {
+            console.error('Failed to write analytics cache:', cacheErr);
+        }
+
         res.status(200).json({
             success: true,
-            data: {
-                daily: {
-                    correct: dailyStats.correct,
-                    incorrect: dailyStats.incorrect,
-                    unanswered: dailyStats.unanswered,
-                    total: dailyStats.total,
-                    score: dailyStats.score
-                },
-                weekly: weeklyData,
-                monthly: monthlyData,
-                declineAlert,
-                overallSummary: {
-                    score: overallScore,
-                    totalCorrect: overallCorrect,
-                    totalAnswered: overallAnswered,
-                    totalQuestions: overallTotal,
-                    activeDaysLast7,
-                    activeDaysLast30
-                },
-                categoryBreakdown,
-                engagementHeatmap
-            }
+            data: responseData
         });
 
     } catch (error) {
