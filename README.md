@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 RECAP
+# RECAP: Every Memory Matters
 
 ### The Future of Compassionate Memory Care
 
@@ -18,13 +18,11 @@
 
 <br/>
 
-[✨ Features](#-features) • [📸 Screenshots](#-screenshots) • [🚀 Backend Setup](#-backend-setup) • [🛠 Tech Stack](#-tech-stack)
-
 </div>
 
 ---
 
-## 🌟 What is Recap?
+## What is Recap?
 
 **Recap** is a holistic digital memory-care ecosystem designed for:
 
@@ -36,12 +34,12 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ---
 
-## ✨ Core Features
+## Core Features
 
 <div align="center">
 
 
-| 🧩 Cognitive Engagement | 🤖 Smriti AI Companion | 👨‍👩‍👧 Family Synergy |
+| Cognitive Engagement | Smriti AI Companion | Family Synergy |
 | ----------------------- | ---------------------- | ------------------------- |
 | Daily memory exercises  | Real-time AI support   | Shared dashboards         |
 | Cognitive assessments   | Reminiscence therapy   | Custom memories           |
@@ -51,19 +49,19 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ---
 
-### 🧩 Cognitive Engagement
+### Cognitive Engagement
 
 * Personalized daily memory questions
 * Periodic cognitive health quizzes
 * Streak-based motivation system
 
-### 🤖 Smriti AI Care Companion
+### Smriti AI Care Companion
 
 * Powered by Google Gemini
 * Memory-lane reminiscence mode
 * Secure patient context awareness
 
-### 👨‍👩‍👧 Family Synergy
+### Family Synergy
 
 * Real-time health insights
 * Upload photos, voices, stories
@@ -71,9 +69,9 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-### 🧠 Patient App
+### Patient App
 
 <p align="center">
 <img src="https://res.cloudinary.com/dbtijt1zq/image/upload/v1772048140/ufke6lkpp4oxsnjswwr8.png" width="18%" />
@@ -85,7 +83,7 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ---
 
-### 👨‍👩‍👧 Caregiver Portal
+### Caregiver Portal
 
 <p align="center">
 <img src="https://res.cloudinary.com/dbtijt1zq/image/upload/v1772048142/nmexrxae9dg4k8ccrlb6.png" width="18%" />
@@ -102,7 +100,7 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ---
 
-## 🚀 Backend Setup (Docker)
+## Backend Setup (Docker)
 
 > Requires `.env` file with Firebase + Gemini credentials
 
@@ -128,34 +126,32 @@ chmod +x restart-recap.sh
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### 📱 Mobile (iOS)
 
 * Swift 5
 * SwiftUI
 * MVVM Architecture
-* URLSession
 
-### 🖥 Backend
+### Backend
 
-* Node.js 18+
+* Node.js 22+
 * Express 5
 * Docker
-* dotenv
 
-### ☁ Cloud & AI
+### Cloud & AI
 
 * Firebase Firestore
 * Firebase Auth
 * Cloudinary
-* Google Gemini 1.5 Flash
+* Google Gemini 3 
 
 ---
 
 <div align="center">
 
-### ❤️ Built to preserve memories and strengthen families.
+### Built to preserve memories and strengthen families.
 
 *Open an issue, PR, or discussion — contributions welcome.*
 
