@@ -19,18 +19,39 @@ struct JournalView: View {
             } else if viewModel.entries.isEmpty {
                 emptyState
             } else {
-                ScrollView {
-                    LazyVStack(spacing: AppConfig.UI.spacing) {
-                        ForEach(viewModel.entries) { entry in
+                List {
+                    ForEach(viewModel.entries) { entry in
+                        ZStack {
                             NavigationLink(destination: JournalDetailView(entry: entry, viewModel: viewModel, patientId: patientId)) {
-                                JournalCard(entry: entry)
+                                EmptyView()
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .opacity(0)
+
+                            JournalCard(entry: entry)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(
+                            EdgeInsets(
+                                top: 8, leading: AppConfig.UI.screenPadding - 10, bottom: 8,
+                                trailing: AppConfig.UI.screenPadding - 10)
+                        )
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                HapticManager.shared.trigger(.warning)
+                                Task {
+                                    await viewModel.deleteEntry(entryId: entry.id, patientId: patientId)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                            .tint(AppConfig.Colors.alert)
                         }
                     }
-                    .padding(.horizontal, AppConfig.UI.screenPadding - 10)
-                    .padding(.vertical, AppConfig.UI.padding)
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .refreshable {
                     await viewModel.fetchEntries(patientId: patientId)
                 }

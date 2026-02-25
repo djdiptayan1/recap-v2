@@ -154,9 +154,7 @@ struct JournalComposeView: View {
             }
 
             if isPatient && selectedMood == nil {
-                Text("Please select a mood before saving")
-                    .font(AppConfig.Fonts.small)
-                    .foregroundColor(AppConfig.Colors.alert)
+                // validation indicated by * star only; no extra text
             }
         }
         .padding(AppConfig.UI.padding)
@@ -189,9 +187,7 @@ struct JournalComposeView: View {
                 )
 
             if title.isEmpty {
-                Text("A title is required")
-                    .font(AppConfig.Fonts.small)
-                    .foregroundColor(AppConfig.Colors.alert)
+                // validation indicated by * star only; no extra text
             }
         }
     }
