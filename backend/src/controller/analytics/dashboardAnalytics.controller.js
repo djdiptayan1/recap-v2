@@ -131,8 +131,17 @@ export const getDashboardAnalytics = async (req, res, next) => {
         const now = new Date();
         const today = formatDate(now);
 
+        // Cache question data to avoid redundant Firestore reads
+        const questionCache = new Map();
+        async function getCachedQuestions(dateStr) {
+            if (questionCache.has(dateStr)) return questionCache.get(dateStr);
+            const questions = await fetchQuestionsForDate(patientId, dateStr);
+            questionCache.set(dateStr, questions);
+            return questions;
+        }
+
         // 1. Daily stats (today)
-        const todayQuestions = await fetchQuestionsForDate(patientId, today);
+        const todayQuestions = await getCachedQuestions(today);
         const dailyStats = calculateStats(todayQuestions);
 
         // 2. Weekly stats (last 7 days)
@@ -141,7 +150,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             const dateStr = formatDate(d);
-            const questions = await fetchQuestionsForDate(patientId, dateStr);
+            const questions = await getCachedQuestions(dateStr);
             const stats = calculateStats(questions);
             weeklyData.push({
                 date: dateStr,
@@ -169,7 +178,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
                 const d = new Date(year, month, day);
                 if (d > now) break; // Don't go past today
                 const dateStr = formatDate(d);
-                const questions = await fetchQuestionsForDate(patientId, dateStr);
+                const questions = await getCachedQuestions(dateStr);
                 const stats = calculateStats(questions);
                 totalCorrect += stats.correct;
                 totalAnswered += stats.correct + stats.incorrect;
@@ -195,7 +204,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
                 const date = new Date(now);
                 date.setDate(date.getDate() - (w * 7 + d));
                 const dateStr = formatDate(date);
-                const questions = await fetchQuestionsForDate(patientId, dateStr);
+                const questions = await getCachedQuestions(dateStr);
                 const stats = calculateStats(questions);
                 weekCorrect += stats.correct;
                 weekAnswered += stats.correct + stats.incorrect;
