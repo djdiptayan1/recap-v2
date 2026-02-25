@@ -32,8 +32,14 @@ struct JournalComposeView: View {
         ("🙏", "Grateful", "grateful"),
     ]
 
+    private var isPatient: Bool {
+        appState.currentUser?.type != "family"
+    }
+
     private var canSave: Bool {
-        !content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty
+        !title.isEmpty
+        && (isPatient ? selectedMood != nil : true)
+        && (!content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty)
     }
 
     var body: some View {
@@ -106,9 +112,16 @@ struct JournalComposeView: View {
 
     private var moodSelector: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("How are you feeling?")
-                .font(AppConfig.Fonts.headline)
-                .foregroundColor(AppConfig.Colors.textPrimary)
+            HStack(spacing: 4) {
+                Text("How are you feeling?")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+                if isPatient {
+                    Text("*")
+                        .font(AppConfig.Fonts.headline)
+                        .foregroundColor(AppConfig.Colors.alert)
+                }
+            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
@@ -139,6 +152,12 @@ struct JournalComposeView: View {
                     }
                 }
             }
+
+            if isPatient && selectedMood == nil {
+                Text("Please select a mood before saving")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.alert)
+            }
         }
         .padding(AppConfig.UI.padding)
         .background(AppConfig.Colors.card)
@@ -149,9 +168,14 @@ struct JournalComposeView: View {
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Title")
-                .font(AppConfig.Fonts.headline)
-                .foregroundColor(AppConfig.Colors.textPrimary)
+            HStack(spacing: 4) {
+                Text("Title")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+                Text("*")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.alert)
+            }
 
             TextField("Give this memory a title...", text: $title)
                 .font(AppConfig.Fonts.headline)
@@ -161,8 +185,14 @@ struct JournalComposeView: View {
                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                 .overlay(
                     RoundedRectangle(cornerRadius: AppConfig.UI.buttonCornerRadius)
-                        .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+                        .stroke(title.isEmpty ? AppConfig.Colors.alert.opacity(0.5) : AppConfig.Colors.stroke, lineWidth: 1)
                 )
+
+            if title.isEmpty {
+                Text("A title is required")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.alert)
+            }
         }
     }
 

@@ -90,7 +90,7 @@ struct JournalDetailView: View {
                 .padding(.bottom, AppConfig.UI.screenPadding)
             }
         }
-        .navigationTitle(entry.isMemory ? "Memory" : entry.formattedDate)
+        .navigationTitle(entry.title ?? entry.formattedDate)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
