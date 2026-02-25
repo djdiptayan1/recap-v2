@@ -32,8 +32,12 @@ struct JournalComposeView: View {
         ("🙏", "Grateful", "grateful"),
     ]
 
+    private var isPatient: Bool { appState.currentUser?.type != "family" }
+
     private var canSave: Bool {
-        !content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty
+        guard !title.isEmpty else { return false }
+        if isPatient && selectedMood == nil { return false }
+        return !content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty
     }
 
     var body: some View {
@@ -106,9 +110,22 @@ struct JournalComposeView: View {
 
     private var moodSelector: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("How are you feeling?")
-                .font(AppConfig.Fonts.headline)
-                .foregroundColor(AppConfig.Colors.textPrimary)
+            HStack(spacing: 4) {
+                Text("How are you feeling?")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+                if isPatient {
+                    Text("*")
+                        .font(AppConfig.Fonts.headline)
+                        .foregroundColor(AppConfig.Colors.alert)
+                }
+                if isPatient && selectedMood == nil {
+                    Spacer()
+                    Text("Required")
+                        .font(AppConfig.Fonts.small)
+                        .foregroundColor(AppConfig.Colors.alert)
+                }
+            }
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
@@ -149,9 +166,20 @@ struct JournalComposeView: View {
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Title")
-                .font(AppConfig.Fonts.headline)
-                .foregroundColor(AppConfig.Colors.textPrimary)
+            HStack(spacing: 4) {
+                Text("Title")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+                Text("*")
+                    .font(AppConfig.Fonts.headline)
+                    .foregroundColor(AppConfig.Colors.alert)
+                if title.isEmpty {
+                    Spacer()
+                    Text("Required")
+                        .font(AppConfig.Fonts.small)
+                        .foregroundColor(AppConfig.Colors.alert)
+                }
+            }
 
             TextField("Give this memory a title...", text: $title)
                 .font(AppConfig.Fonts.headline)
