@@ -7,6 +7,7 @@
 import SwiftUI
 
 struct home_family: View {
+    @StateObject private var reminderViewModel = ReminderViewModel()
     @State private var showProfile = false
     var body: some View {
         NavigationStack {
@@ -31,6 +32,17 @@ struct home_family: View {
                             .foregroundColor(AppConfig.Colors.accent)
                     }
                 }
+                
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: remindersView(viewModel: reminderViewModel)) {
+                        Image(systemName: "bell.badge.waveform.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(AppConfig.Colors.alert)
+                    }
+                }
+
             }
             .sheet(isPresented: $showProfile) {
                 NavigationStack {

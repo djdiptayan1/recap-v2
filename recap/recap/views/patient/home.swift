@@ -9,10 +9,11 @@ import SwiftUI
 
 struct home: View {
     @EnvironmentObject var appState: AppState
+    @StateObject private var reminderViewModel = ReminderViewModel()
     @StateObject private var familyViewModel = FamilyViewModel(documentID: "")
     @State private var showProfile = false
     var body: some View {
-        NavigationStack{
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     QuestionsCard(hasFamilyMembers: !familyViewModel.familyMembers.isEmpty)
@@ -25,13 +26,29 @@ struct home: View {
             .standardBackground()
             .navigationTitle("Home")
             .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button(action: {
+//                        showProfile.toggle()
+//                    }) {
+//                        Image(systemName: "person.fill")
+//                            .font(.system(size: 16, weight: .semibold))
+//                            .foregroundColor(AppConfig.Colors.accent)
+//                    }
+//                }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
+                    Button("Profile", systemImage: "person.fill") {
                         showProfile.toggle()
-                    }) {
-                        Image(systemName: "person.fill")
+                    }
+                    .tint(AppConfig.Colors.accent)
+                }
+                
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(destination: remindersView(viewModel: reminderViewModel)) {
+                        Image(systemName: "bell.badge.waveform.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(AppConfig.Colors.accent)
+                            .foregroundColor(AppConfig.Colors.alert)
                     }
                 }
             }
@@ -44,10 +61,10 @@ struct home: View {
             }
             .onAppear {
                 if let uid = appState.currentUser?.id {
-                     familyViewModel.updateDocumentID(uid)
-                     Task {
+                    familyViewModel.updateDocumentID(uid)
+                    Task {
                         await familyViewModel.fetchFamilyMembers()
-                     }
+                    }
                 }
             }
         }
