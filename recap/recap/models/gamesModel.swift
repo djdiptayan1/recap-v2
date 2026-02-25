@@ -16,8 +16,8 @@ struct gamesModel: Identifiable, Equatable {
 }
 
 let gamesDemo = [
-    gamesModel(imageName: "globe.central.south.asia.fill", name: "Geo Sorter", description: "Boost memory", screenName: "GeoSorterViewController"),
+    gamesModel(imageName: "text.bubble.fill", name: "Word Link", description: "Connect related words", screenName: "WordAssociationGameView"),
     gamesModel(imageName: "brain.fill", name: "Match Mania", description: "Increase memory agility", screenName: "MemoryGameView"),
-    gamesModel(imageName: "brain.head.profile", name: "Pattern Memory", description: "Remember sequences", screenName: "PatternMemoryViewController"),
+    gamesModel(imageName: "square.grid.2x2.fill", name: "Pattern Memory", description: "Remember sequences", screenName: "PatternMemoryGameView"),
     gamesModel(imageName: "house.fill", name: "Daily Objects", description: "Recall everyday items", screenName: "DailyObjectsGameView"),
 ]
