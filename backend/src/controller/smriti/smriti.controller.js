@@ -2,6 +2,54 @@ import { GoogleGenAI, Type } from '@google/genai';
 import config from '../../../config.js';
 import { validationResult } from 'express-validator';
 
+const SYSTEM_PROMPT = `You are Smriti, a warm Alzheimer's & Dementia Care companion. You help patients, caregivers, and families with empathy and evidence-based care.
+
+RULES:
+- ONLY discuss Alzheimer's, dementia, memory, elderly care, caregiving, or engage in reminiscence therapy about the patient's past. Politely decline unrelated topics.
+- Never diagnose or prescribe. Suggest consulting healthcare professionals for medical concerns.
+- Keep answers concise (2-4 paragraphs max). Use simple, calm language.
+- If the user seems confused or frustrated: acknowledge feelings first, simplify language, be extra reassuring.
+- Use patient context naturally: reference their name, family members, activities. Make it personal.
+- If mode is "memoryLane": Act as a reminiscence therapy companion. Gently ask about the patient's past — wedding day, childhood, favorite foods, school days, family traditions, old hobbies. Use family names. Be warm, curious, patient. Celebrate every memory shared.
+- Always include a warm followup_prompt to encourage memory recall. Use patient's family names if available.
+- Only include care_strategies, sources, medical_disclaimer when genuinely relevant — skip for casual conversation and reminiscence.`;
+
+function buildContextBlock(context) {
+    if (!context) return '';
+    const parts = [];
+    if (context.patientName) parts.push(`Patient: ${context.patientName}`);
+    if (context.stage) parts.push(`Stage: ${context.stage}`);
+    if (context.dob) parts.push(`DOB: ${context.dob}`);
+    if (context.familyMembers && context.familyMembers.length > 0) {
+        const familyStr = context.familyMembers.map(m => `${m.name} (${m.relation})`).join(', ');
+        parts.push(`Family: ${familyStr}`);
+    }
+    if (context.recentActivities) {
+        const a = context.recentActivities;
+        if (a.streakDays != null) parts.push(`Current streak: ${a.streakDays} days`);
+        if (a.reminders && a.reminders.length > 0) {
+            parts.push(`Active reminders: ${a.reminders.join(', ')}`);
+        }
+    }
+    if (context.mode === 'memoryLane') parts.push('MODE: memoryLane (reminiscence therapy active)');
+    return parts.length > 0 ? `\n\nPATIENT CONTEXT:\n${parts.join('. ')}.` : '';
+}
+
+function buildContents(history, query) {
+    const contents = [];
+    if (history && Array.isArray(history)) {
+        const recentHistory = history.slice(-20);
+        for (const msg of recentHistory) {
+            contents.push({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }],
+            });
+        }
+    }
+    contents.push({ role: 'user', parts: [{ text: query }] });
+    return contents;
+}
+
 async function smriti(req, res, next) {
     try {
         const errors = validationResult(req);
@@ -9,165 +57,70 @@ async function smriti(req, res, next) {
             return res.status(400).json({ errors: errors.array() });
         }
 
-        const { query } = req.body;
+        const { query, context, history } = req.body;
 
         if (!query) {
             return res.status(400).json({ error: 'Query input is required' });
         }
 
-        const ai = new GoogleGenAI({
-            apiKey: config.gemini.apiKey,
-        });
-
-        // const tools = [
-        //     { urlContext: {} },
-        //     {
-        //         googleSearch: {}
-        //     },
-        // ];
+        const ai = new GoogleGenAI({ apiKey: config.gemini.apiKey });
+        const contextBlock = buildContextBlock(context);
 
         const aiConfig = {
-            temperature: 0.95,
-            maxOutputTokens: 2000,
+            temperature: 1.0,
+            maxOutputTokens: 1000,
             thinkingConfig: {
-                thinkingLevel: 'HIGH',
+                thinkingLevel: 'low',
             },
-            // tools,
             responseMimeType: 'application/json',
             responseSchema: {
                 type: Type.OBJECT,
-                description: "Structured response for Alzheimer’s, dementia, and elderly care guidance.",
-                required: ["summary", "answer", "care_strategies", "medical_disclaimer", "sources"],
+                description: "Smriti AI response",
+                required: ["answer", "followup_prompt"],
                 properties: {
-                    summary: {
-                        type: Type.STRING,
-                        description: "Concise restatement of the user's question or concern.",
-                    },
                     answer: {
                         type: Type.STRING,
-                        description: "Clear, empathetic explanation related to Alzheimer’s or dementia.",
+                        description: "Clear, empathetic response.",
                     },
                     care_strategies: {
                         type: Type.ARRAY,
-                        description: "Actionable caregiving or coping strategies.",
-                        items: {
-                            type: Type.STRING,
-                        },
+                        description: "Actionable tips (only if relevant).",
+                        items: { type: Type.STRING },
                     },
                     medical_disclaimer: {
                         type: Type.STRING,
-                        description: "Reminder that this is not a medical diagnosis or treatment advice.",
+                        description: "Brief reminder to consult a doctor (only for medical questions).",
                     },
                     sources: {
                         type: Type.ARRAY,
-                        description: "Authoritative references supporting the response.",
+                        description: "1-2 references (only if citing specific info).",
                         items: {
                             type: Type.OBJECT,
                             required: ["name", "url"],
                             properties: {
-                                name: {
-                                    type: Type.STRING,
-                                },
-                                url: {
-                                    type: Type.STRING,
-                                    format: "uri",
-                                },
+                                name: { type: Type.STRING },
+                                url: { type: Type.STRING, format: "uri" },
                             },
                         },
                     },
                     supportive_note: {
                         type: Type.STRING,
-                        description: "Brief empathetic statement for caregivers or family members.",
+                        description: "Brief empathetic note (only for emotional topics).",
+                    },
+                    followup_prompt: {
+                        type: Type.STRING,
+                        description: "A warm reminiscence question about the patient's memories. Make it personal.",
                     },
                 },
             },
-            systemInstruction: [
-                {
-                    text: `You are an expert Alzheimer’s and Dementia Care Consultant with deep knowledge of:
-
-Alzheimer’s disease
-Other dementias (vascular, Lewy body, frontotemporal, mixed)
-Elderly care, caregiving strategies, and caregiver well-being
-Your purpose is to educate, support, and guide patients,  caregivers and families with empathy, clarity, and evidence-based information.
-
-Scope Restrictions (Strict)
-You must ONLY answer questions related to:
-Alzheimer’s disease
-Dementia
-Memory loss
-Elderly care
-Caregiver coping strategies
-If the user asks about any other topic (e.g., technology, finance, sports, politics):
-Politely refuse
-Gently redirect the conversation back to Alzheimer’s, dementia, or elderly care
-Refusal template:
-
-“I’m here specifically to help with Alzheimer’s, dementia, and elderly care. I can’t assist with that topic, but I’m happy to help if you have questions related to memory loss or caregiving.”
-
-Medical Safety Rules
-Do NOT provide medical diagnoses
-Do NOT prescribe medications or treatment plans
-Always include a reminder:
-
-“For personalized medical advice or diagnosis, please consult a qualified healthcare professional.”
-
-Tone & Communication Style
-Empathetic, calm, and reassuring
-Simple, non-technical language unless the user asks otherwise
-Supportive of emotional distress and caregiver burnout
-Avoid fear-based or alarmist language
-Keep responses concise but meaningful
-
-Source Requirements (Mandatory)
-Always include 2–4 reputable sources, preferably from:
-World Health Organization (WHO)
-Alzheimer’s Association
-National Institute on Aging (NIA – NIH)
-NHS (UK)
-Mayo Clinic
-CDC (for elderly health topics)
-
-Source format:
-Sources:
-- Alzheimer’s Association – https://www.alz.org
-- National Institute on Aging (NIH) – https://www.nia.nih.gov
-
-Topics You Should Handle Well
-Early vs late symptoms of Alzheimer’s
-Dementia stages and progression
-Daily care routines
-Communication techniques
-Managing aggression, confusion, wandering
-Sleep issues and sundowning
-Nutrition and hydration for elderly patients
-Caregiver stress, burnout, and emotional support
-Safety at home for dementia patients
-
-Goal
-Leave the user feeling:
-Heard
-Supported
-Better informed
-Less alone in their caregiving journey`,
-                }
-            ],
+            systemInstruction: [{ text: SYSTEM_PROMPT + contextBlock }],
         };
 
         const model = 'gemini-3-flash-preview';
-
-        const contents = [
-            {
-                role: 'user',
-                parts: [
-                    {
-                        text: query,
-                    },
-                ],
-            },
-        ];
+        const contents = buildContents(history, query);
 
         const result = await ai.models.generateContent({
-            model: model,
+            model,
             config: aiConfig,
             contents,
         });
@@ -186,11 +139,9 @@ Less alone in their caregiving journey`,
         }
 
     } catch (error) {
-        // console.error("Error in Smriti AI:", error); // Handled by global error handler
+        console.error("Smriti structured error:", error.message);
         next(error);
     }
 }
 
-export default {
-    smriti
-};
+export default { smriti };
