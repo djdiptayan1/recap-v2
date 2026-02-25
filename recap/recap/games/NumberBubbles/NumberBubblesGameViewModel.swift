@@ -41,16 +41,17 @@ class NumberBubblesGameViewModel: ObservableObject {
 
     private var timer: Timer?
 
+    // Colors drawn from the app's palette: accent teal, coral, lime, indigo, orange, sky-blue, mint, rose, sage
     private let bubbleColors: [Color] = [
-        Color(red: 1.0,  green: 0.30, blue: 0.30),  // Red
-        Color(red: 1.0,  green: 0.60, blue: 0.10),  // Orange
-        Color(red: 1.0,  green: 0.82, blue: 0.00),  // Yellow
-        Color(red: 0.18, green: 0.80, blue: 0.44),  // Green
-        Color(red: 0.20, green: 0.55, blue: 0.95),  // Blue
-        Color(red: 0.60, green: 0.18, blue: 0.92),  // Purple
-        Color(red: 1.0,  green: 0.25, blue: 0.60),  // Pink
-        Color(red: 0.05, green: 0.75, blue: 0.75),  // Teal
-        Color(red: 0.65, green: 0.88, blue: 0.10),  // Lime
+        Color(hex: "8DD3BB"),  // Accent teal
+        Color(hex: "E86C6C"),  // Alert coral
+        Color(hex: "A8E063"),  // Success lime
+        Color(hex: "7B8FD9"),  // Indigo (muted)
+        Color(hex: "F4956A"),  // Warm orange
+        Color(hex: "2CBFCE"),  // Sky teal
+        Color(hex: "3DBA7A"),  // Emerald green
+        Color(hex: "C97BE8"),  // Soft purple
+        Color(hex: "F4C06A"),  // Warm amber
     ]
 
     // 9 pre-defined positions spread across the canvas (normalized 0–1)
@@ -72,15 +73,22 @@ class NumberBubblesGameViewModel: ObservableObject {
     }
 
     func startLevel() {
-        nextTarget = 1
         timeRemaining = totalTime
+        // Pick bubbleCount random distinct numbers from a range scaled to the level,
+        // then sort them so the player taps smallest → largest.
+        let rangeMax = bubbleCount * (3 + level)
+        var pool = Array(1...rangeMax)
+        pool.shuffle()
+        let chosen = Array(pool.prefix(bubbleCount)).sorted()
+        nextTarget = chosen[0]
+
         let shuffledPositions = positions.shuffled()
         let shuffledColors = bubbleColors.shuffled()
-        bubbles = (1...bubbleCount).map { i in
-            let pos = shuffledPositions[i - 1]
+        bubbles = chosen.enumerated().map { i, number in
+            let pos = shuffledPositions[i]
             return Bubble(
-                number: i,
-                color: shuffledColors[(i - 1) % shuffledColors.count],
+                number: number,
+                color: shuffledColors[i % shuffledColors.count],
                 posX: pos.0,
                 posY: pos.1
             )
@@ -100,10 +108,15 @@ class NumberBubblesGameViewModel: ObservableObject {
                 }
             }
             score += 10 * level
-            nextTarget += 1
-            if nextTarget > bubbleCount {
+            // Find the next smallest un-popped bubble number
+            let remaining = bubbles.filter { !$0.isPopped && $0.number != bubble.number }
+                                   .map { $0.number }.sorted()
+            if let next = remaining.first {
+                nextTarget = next
+            } else {
+                // All popped
                 timer?.invalidate()
-                score += timeRemaining * level  // Time bonus
+                score += timeRemaining * level
                 withAnimation { phase = .levelComplete }
             }
         } else {

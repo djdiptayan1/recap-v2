@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-private let bubblesAccent = Color(hex: "3D8EE8")
+private let bubblesAccent = AppConfig.Colors.accent
 
 struct NumberBubblesGameView: View {
     @StateObject private var viewModel = NumberBubblesGameViewModel()
@@ -15,13 +15,9 @@ struct NumberBubblesGameView: View {
 
     var body: some View {
         ZStack {
-            // Cheerful background gradient
-            LinearGradient(
-                colors: [Color(hex: "EBF4FF"), Color(hex: "F3E8FF")],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            // Cheerful background — app palette
+            AppConfig.Colors.background
+                .ignoresSafeArea()
 
             switch viewModel.phase {
             case .instruction:
@@ -52,10 +48,10 @@ struct NumberBubblesGameView: View {
                 // Timer
                 HStack(spacing: 6) {
                     Image(systemName: "timer")
-                        .foregroundColor(viewModel.timeRemaining <= 5 ? .red : bubblesAccent)
+                        .foregroundColor(viewModel.timeRemaining <= 5 ? AppConfig.Colors.alert : bubblesAccent)
                     Text("\(viewModel.timeRemaining)s")
                         .font(.system(size: 18, weight: .bold, design: .monospaced))
-                        .foregroundColor(viewModel.timeRemaining <= 5 ? .red : AppConfig.Colors.textPrimary)
+                        .foregroundColor(viewModel.timeRemaining <= 5 ? AppConfig.Colors.alert : AppConfig.Colors.textPrimary)
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 14)
@@ -97,10 +93,9 @@ struct NumberBubblesGameView: View {
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textSecondary)
 
-                if viewModel.nextTarget <= viewModel.bubbleCount,
-                   let nextBubble = viewModel.bubbles.first(where: {
-                       $0.number == viewModel.nextTarget && !$0.isPopped
-                   }) {
+                if let nextBubble = viewModel.bubbles.first(where: {
+                    $0.number == viewModel.nextTarget && !$0.isPopped
+                }) {
                     ZStack {
                         Circle()
                             .fill(nextBubble.color)
@@ -110,7 +105,6 @@ struct NumberBubblesGameView: View {
                             .font(.system(size: 20, weight: .black, design: .rounded))
                             .foregroundColor(.white)
                     }
-                    .scaleEffect(1.0)
                     .animation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true), value: viewModel.nextTarget)
                 }
             }
@@ -230,8 +224,8 @@ private struct BubbleView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            isWrong ? Color.red.opacity(0.9) : bubble.color.opacity(0.85),
-                            isWrong ? Color.red : bubble.color,
+                            isWrong ? AppConfig.Colors.alert.opacity(0.9) : bubble.color.opacity(0.85),
+                            isWrong ? AppConfig.Colors.alert : bubble.color,
                         ],
                         center: .topLeading,
                         startRadius: 0,
@@ -240,7 +234,7 @@ private struct BubbleView: View {
                 )
                 .frame(width: 74, height: 74)
                 .shadow(
-                    color: (isWrong ? Color.red : bubble.color).opacity(0.5),
+                    color: (isWrong ? AppConfig.Colors.alert : bubble.color).opacity(0.5),
                     radius: 8, x: 0, y: 4
                 )
                 // Gloss highlight
@@ -269,7 +263,7 @@ private struct NumberBubblesInstructionView: View {
             Text("🔢")
                 .font(.system(size: 80))
                 .padding(28)
-                .background(Circle().fill(Color(hex: "EBF4FF")))
+                .background(Circle().fill(AppConfig.Colors.accent.opacity(0.15)))
 
             Text("Number Bubbles")
                 .font(AppConfig.Fonts.titleLarge)
@@ -277,7 +271,7 @@ private struct NumberBubblesInstructionView: View {
 
             VStack(alignment: .leading, spacing: 14) {
                 NBBullet(icon: "1.circle.fill",        text: "Colourful numbered bubbles appear on screen.")
-                NBBullet(icon: "2.circle.fill",        text: "Tap them in order — 1, then 2, then 3…")
+                NBBullet(icon: "2.circle.fill",        text: "Tap them in order — smallest first!")
                 NBBullet(icon: "timer",                text: "Beat the clock before time runs out!")
                 NBBullet(icon: "arrow.up.circle.fill", text: "Each level adds more bubbles. How far can you go?")
             }
