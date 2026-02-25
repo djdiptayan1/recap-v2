@@ -166,11 +166,15 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
         if (cacheSnap.exists()) {
             const cached = cacheSnap.data();
-            return res.status(200).json({
-                success: true,
-                data: cached.data,
-                cached: true
-            });
+            const cachedAt = cached.cachedAt || 0;
+            const ttlMs = (config.analyticsCacheTTL || 300) * 1000;
+            if (now.getTime() - cachedAt < ttlMs) {
+                return res.status(200).json({
+                    success: true,
+                    data: cached.data,
+                    cached: true
+                });
+            }
         }
 
         // --- Compute analytics (cache miss or stale) ---
@@ -341,6 +345,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
         try {
             await setDoc(cacheDocRef, {
                 data: responseData,
+                cachedAt: now.getTime(),
                 date: today
             });
         } catch (cacheErr) {

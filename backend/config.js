@@ -51,6 +51,8 @@ export default {
 
     timezone: 'Asia/Kolkata',
 
+    analyticsCacheTTL: 300, // seconds (default 5 minutes)
+
     question_category: {
         immediate: 'immediateMemory',
         recent: 'recentMemory',
