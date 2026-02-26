@@ -18,16 +18,16 @@ struct ArticleDetailView: View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    ZStack(alignment: .topLeading) {
+                    GeometryReader { geometry in
                         WebImage(url: URL(string: article.image))
                             .resizable()
                             .indicator(.activity)
                             .transition(.fade(duration: 0.5))
                             .scaledToFill()
+                            .frame(width: geometry.size.width, height: 300)
+                            .clipped()
                     }
-                    .frame(maxWidth: .infinity)   // ← fills entire screen width
-                    .frame(height: 300)           // ← a fixed height stabilizes the UI
-                    .clipped()
+                    .frame(height: 300)
                     VStack(alignment: .leading, spacing: 20) {
                         // Title Header
                         VStack(alignment: .leading, spacing: 8) {

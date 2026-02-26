@@ -15,6 +15,7 @@ router.post('/', [
     body('category').isIn(['Medicine', 'Daily Chore', 'Appointment', 'Exercise', 'Meal', 'Hydration', 'Other']).withMessage('Invalid category'),
     body('frequency').isIn(['once', 'hourly', 'daily', 'weekdays', 'weekends', 'weekly', 'biweekly', 'monthly', 'yearly']).withMessage('Invalid frequency'),
     body('time').notEmpty().withMessage('Time is required'),
+    body('categoryDetails').optional().isObject().withMessage('Category details must be an object'),
 ], addReminder);
 
 router.delete('/', [
