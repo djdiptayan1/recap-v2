@@ -87,3 +87,4 @@ SupabaseConfig.swift
 **/Config.swift
 **/*Config.swift
 **/*.xcuserstate
+**/GoogleService-Info.plist
