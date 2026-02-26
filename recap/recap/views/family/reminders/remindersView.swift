@@ -277,6 +277,12 @@ struct ReminderCard: View {
                     .foregroundColor(AppConfig.Colors.textSecondary)
                 }
 
+                // Category-Specific Details
+                if let details = reminder.categoryDetails, !details.isEmpty {
+                    CategoryDetailsView(category: reminder.category, details: details)
+                        .padding(.top, 4)
+                }
+
                 if let notes = reminder.notes, !notes.isEmpty {
                     Text(notes)
                         .font(AppConfig.Fonts.small)
@@ -297,6 +303,76 @@ struct ReminderCard: View {
             x: 0,
             y: AppConfig.UI.cardShadowOffsetY
         )
+    }
+}
+
+/// Displays category-specific detail chips/labels for a reminder card
+struct CategoryDetailsView: View {
+    let category: ReminderCategory
+    let details: [String: String]
+
+    var body: some View {
+        let fields = category.detailFields.filter { details[$0.key] != nil && !details[$0.key]!.isEmpty }
+        if !fields.isEmpty {
+            FlowLayout(spacing: 6) {
+                ForEach(fields) { field in
+                    if let value = details[field.key], !value.isEmpty {
+                        HStack(spacing: 4) {
+                            Image(systemName: field.icon)
+                                .font(.system(size: 10))
+                            Text("\(field.label): \(value)")
+                                .font(.system(size: 12))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(category.color.opacity(0.1))
+                        .foregroundColor(category.color)
+                        .cornerRadius(8)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// A simple horizontal flow layout that wraps items to the next line
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = computeLayout(proposal: proposal, subviews: subviews)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = computeLayout(proposal: proposal, subviews: subviews)
+        for (index, position) in result.positions.enumerated() {
+            subviews[index].place(at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y), proposal: .unspecified)
+        }
+    }
+
+    private func computeLayout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+        let maxWidth = proposal.width ?? .infinity
+        var positions: [CGPoint] = []
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > maxWidth, currentX > 0 {
+                currentX = 0
+                currentY += lineHeight + spacing
+                lineHeight = 0
+            }
+            positions.append(CGPoint(x: currentX, y: currentY))
+            lineHeight = max(lineHeight, size.height)
+            currentX += size.width + spacing
+            totalWidth = max(totalWidth, currentX - spacing)
+        }
+
+        return (CGSize(width: totalWidth, height: currentY + lineHeight), positions)
     }
 }
 

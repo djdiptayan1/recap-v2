@@ -24,7 +24,7 @@ export async function addReminder(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { patientId, title, category, frequency, time, notes } = req.body;
+        const { patientId, title, category, frequency, time, notes, categoryDetails } = req.body;
 
         const reminderData = {
             title,
@@ -34,6 +34,7 @@ export async function addReminder(req, res, next) {
             // If time comes as string, Firestore might save it as string or map. If we want server timestamp, we use serverTimestamp().
             // Requirements said "time" (user provided).
             ...(notes && { notes }),
+            ...(categoryDetails && typeof categoryDetails === 'object' && Object.keys(categoryDetails).length > 0 && { categoryDetails }),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };
@@ -61,7 +62,7 @@ export async function editReminder(req, res, next) {
         // Let's support body for now as per plan implies validation of inputs.
 
         // Allowed updates
-        const allowedUpdates = ['title', 'category', 'frequency', 'time', 'notes'];
+        const allowedUpdates = ['title', 'category', 'frequency', 'time', 'notes', 'categoryDetails'];
         const updateData = {};
 
         allowedUpdates.forEach(field => {
