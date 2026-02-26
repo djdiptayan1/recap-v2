@@ -18,7 +18,7 @@ struct RecallPhaseView: View {
     var body: some View {
         VStack(spacing: 20) {
 
-            Text("Which items did you see?")
+            Text("Which items did you see? 🔍")
                 .font(AppConfig.Fonts.titleMedium)
                 .foregroundColor(AppConfig.Colors.textPrimary)
                 .padding(.top, 20)
@@ -46,12 +46,19 @@ struct RecallPhaseView: View {
                 HapticManager.shared.trigger(.selection)
                 onSubmit()
             }) {
-                Text("Submit Answers")
+                Text("Submit Answers ✅")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(selectedIDs.isEmpty ? Color.gray : AppConfig.Colors.accent)
+                    .background(
+                        selectedIDs.isEmpty
+                            ? AnyShapeStyle(Color.gray)
+                            : AnyShapeStyle(LinearGradient(
+                                colors: [Color(hex: "43C57A"), Color(hex: "1DBBAA")],
+                                startPoint: .leading, endPoint: .trailing
+                            ))
+                    )
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
             .disabled(selectedIDs.isEmpty)

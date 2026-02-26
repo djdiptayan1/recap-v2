@@ -19,28 +19,33 @@ struct MemorizePhaseView: View {
             
             // Instruction
             VStack(spacing: 10) {
-                Text("Memorize these items")
+                Text("Memorize these items! 🧠")
                     .font(AppConfig.Fonts.titleMedium)
                     .foregroundColor(AppConfig.Colors.textPrimary)
-                
-                // Gentle Progress Bar
+
+                // Progress Bar
                 HStack {
                     Image(systemName: "clock")
-                        .foregroundColor(AppConfig.Colors.accent)
-                    
+                        .foregroundColor(Color(hex: "43C57A"))
+
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(AppConfig.Colors.stroke)
                             Capsule()
-                                .fill(AppConfig.Colors.accent)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: "43C57A"), Color(hex: "1DBBAA")],
+                                        startPoint: .leading, endPoint: .trailing
+                                    )
+                                )
                                 .frame(width: geo.size.width * timeProgress)
                         }
                     }
-                    .frame(height: 8)
-                    
+                    .frame(height: 10)
+
                     Text(timeString)
                         .font(.system(size: 16, weight: .bold, design: .monospaced))
-                        .foregroundColor(AppConfig.Colors.accent)
+                        .foregroundColor(Color(hex: "43C57A"))
                 }
                 .frame(maxWidth: 250)
             }
@@ -58,12 +63,18 @@ struct MemorizePhaseView: View {
             
             // "I'm Ready" Button (Allows user to control pace)
             Button(action: onReady) {
-                Text("I'm Ready")
+                Text("I'm Ready! ✅")
                     .font(AppConfig.Fonts.headline)
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(AppConfig.Colors.accent)
+                    .background(
+                        LinearGradient(
+                            colors: [Color(hex: "43C57A"), Color(hex: "1DBBAA")],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
             .padding(.horizontal, 40)

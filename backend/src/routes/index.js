@@ -9,6 +9,8 @@ import patientRouter from './patient.routes.js';
 import questionsRouter from './questions.routes.js';
 import smritiRouter from './smriti.routes.js';
 import remindersRouter from './reminders.route.js';
+import journalRouter from './journal.routes.js';
+import analyticsRouter from './analytics.routes.js';
 
 const router = express.Router();
 
@@ -22,5 +24,7 @@ router.use('/auth', authRouter);
 router.use('/questions', questionsRouter);
 router.use('/smriti', smritiRouter);
 router.use('/reminders', remindersRouter);
+router.use('/journal', journalRouter);
+router.use('/analytics', analyticsRouter);
 
 export default router;

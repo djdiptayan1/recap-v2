@@ -5,6 +5,7 @@
 //  Created by Diptayan Jash on 03/12/25.
 //
 
+import AuthenticationServices
 import SwiftUI
 
 struct PatientLoginView: View {
@@ -58,7 +59,8 @@ struct PatientLoginView: View {
 
                             Button("Forgot Password?") {
                                 HapticManager.shared.trigger(.selection)
-                                // Action
+                                viewModel.forgotPasswordEmail = viewModel.email
+                                viewModel.showForgotPassword = true
                             }
                             .font(AppConfig.Fonts.small)
                             .foregroundColor(AppConfig.Colors.textSecondary)
@@ -125,6 +127,18 @@ struct PatientLoginView: View {
                         }
                         .frame(height: 56)
                         .cornerRadius(AppConfig.UI.cornerRadius)
+
+                        // Apple
+                        SignInWithAppleButton(.signIn) { request in
+                            let nonce = AuthService.shared.generateNonce()
+                            request.requestedScopes = [.email, .fullName]
+                            request.nonce = AuthService.shared.sha256(nonce)
+                        } onCompletion: { result in
+                            handleAppleSignInResult(result)
+                        }
+                        .signInWithAppleButtonStyle(.black)
+                        .frame(height: 56)
+                        .cornerRadius(AppConfig.UI.cornerRadius)
                     }
                     .padding(.horizontal, AppConfig.UI.screenPadding)
 
@@ -154,6 +168,22 @@ struct PatientLoginView: View {
             Button("OK") {}
         } message: {
             Text(viewModel.alertMessage)
+        }
+        .alert("Reset Password", isPresented: $viewModel.showForgotPassword) {
+            TextField("Email address", text: $viewModel.forgotPasswordEmail)
+                .textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+            Button("Send Reset Link") {
+                Task { await viewModel.sendPasswordReset() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Enter your email address and we'll send you a link to reset your password.")
+        }
+        .alert("Email Sent", isPresented: $viewModel.showForgotPasswordSuccess) {
+            Button("OK") {}
+        } message: {
+            Text(viewModel.forgotPasswordMessage)
         }
         .onChange(of: viewModel.showAlert) { newValue in
             if newValue {
@@ -194,13 +224,37 @@ struct PatientLoginView: View {
         }
     }
 
-    private func handleAppleSignInCompletion() {
-    }
-
-    private func fetchOrCreateUserProfile(userId: String, email: String) {
-    }
-
-    private func generateAndCreateProfile(userId: String, email: String) {
+    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let appleIDToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: appleIDToken, encoding: .utf8),
+                  let nonce = AuthService.shared.getCurrentNonce()
+            else {
+                viewModel.alertMessage = "Unable to process Apple Sign-In."
+                viewModel.showAlert = true
+                return
+            }
+            Task {
+                do {
+                    let user = try await AuthService.shared.signInWithApple(
+                        idTokenString: idTokenString, nonce: nonce)
+                    await MainActor.run {
+                        HapticManager.shared.trigger(.success)
+                        appState.currentUser = user
+                    }
+                } catch {
+                    await MainActor.run {
+                        viewModel.alertMessage = error.localizedDescription
+                        viewModel.showAlert = true
+                    }
+                }
+            }
+        case .failure(let error):
+            viewModel.alertMessage = error.localizedDescription
+            viewModel.showAlert = true
+        }
     }
 
     private func hideKeyboard() {

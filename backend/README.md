@@ -1,6 +1,6 @@
 # Recap Backend API
 
-A Node.js/Express backend API for a memory care application designed to help Alzheimer's patients and their families manage daily cognitive exercises, track progress, and maintain health records.
+A Node.js/Express backend API for a memory care application designed to help Alzheimer's patients and their families manage daily cognitive exercises, track progress, maintain health records, and interact with an AI care companion.
 
 ## 📋 Table of Contents
 
@@ -15,7 +15,11 @@ A Node.js/Express backend API for a memory care application designed to help Alz
 - [Running the Application](#running-the-application)
 - [Docker Support](#docker-support)
 - [Data Models](#data-models)
-- [Contributing](#contributing)
+- [Configuration](#-configuration)
+- [Security Features](#security-features)
+- [Error Handling](#-error-handling)
+- [Logging](#logging)
+- [Additional Information](#-additional-information)
 
 ## Overview
 
@@ -23,10 +27,16 @@ Recap Backend is a RESTful API service that powers a memory care application for
 
 - Patient and family member registration and authentication
 - Daily cognitive exercise questions tailored to memory types (immediate, recent, remote)
-- Memory quiz assessments
+- Question answering with patient/family role distinction
+- Family-managed personalized questions (add, edit, delete)
+- Memory quiz assessments with historical reports
 - Activity streak tracking to encourage consistent engagement
+- AI-powered care companion (Smriti) with structured and real-time streaming responses
+- Journal and memory entries with photo and audio support
+- Reminder management (medicine, appointments, chores, etc.)
+- Dashboard analytics with daily, weekly, and monthly statistics
 - Educational articles and citations management
-- Secure image storage via Cloudinary
+- Secure image and audio storage via Cloudinary
 
 ## Features
 
@@ -34,8 +44,18 @@ Recap Backend is a RESTful API service that powers a memory care application for
 
 - Patient signup with unique 6-character patient ID generation
 - Family member registration and verification
-- Profile management with image upload support
+- Profile management with image upload support (Cloudinary)
 - UID-based authentication system
+- Account deletion
+
+### Smriti AI Companion
+
+- **Structured endpoint**: Returns JSON with answer, care strategies, sources, medical disclaimer, and follow-up prompts
+- **Streaming endpoint**: Real-time Server-Sent Events (SSE) for live chat experience
+- Powered by Google Gemini (`gemini-3-flash-preview`) via `@google/genai` SDK
+- Patient context-aware: references name, family members, stage, activities, and reminders
+- Reminiscence therapy mode for memory lane conversations
+- Conversation history support (last 20 messages)
 
 ### Cognitive Assessment
 
@@ -43,9 +63,33 @@ Recap Backend is a RESTful API service that powers a memory care application for
   - **Immediate Memory**: 4 questions per day
   - **Recent Memory**: 2 questions per day
   - **Remote Memory**: 1 question per day
+- Answer submission with patient/family role distinction
+- Family-managed personalized questions (CRUD)
 - Memory quiz with 15-point scoring system
-- Question categorization and difficulty tracking
-- Adaptive question selection
+- Memory quiz report history
+- Automatic streak updates on patient answers
+
+### Journal & Memory Entries
+
+- Create, read, update, delete journal entries per patient
+- Support for text, voice recordings (audio upload to Cloudinary), and photos (multiple per entry)
+- Mood tagging: happy, sad, neutral, anxious, calm, grateful
+- Entry types: journal (text/voice) and memory (photo-focused)
+- People, place, and event tagging
+- Pagination support
+
+### Reminders
+
+- CRUD operations for patient reminders
+- Categories: Medicine, Daily Chore, Appointment, Exercise, Meal, Hydration, Other
+- Frequencies: once, hourly, daily, weekdays, weekends, weekly, biweekly, monthly, yearly
+
+### Dashboard Analytics
+
+- Daily, weekly, and monthly question accuracy statistics
+- Per-category breakdowns (immediate, recent, remote)
+- Cognitive decline trend alerts
+- Analytics caching with configurable TTL (default 5 minutes)
 
 ### Progress Tracking
 
@@ -66,24 +110,28 @@ Recap Backend is a RESTful API service that powers a memory care application for
 - Family member profiles
 - Multi-user support per patient
 - Relationship tracking
+- Family member deletion
 - Collaborative care management
 
 ## Tech Stack
 
 - **Runtime**: Node.js (ES Modules)
 - **Framework**: Express.js v5.1.0
-- **Database**: Firebase Firestore & Realtime Database
-- **File Storage**: Cloudinary
+- **Database**: Firebase Firestore
+- **AI/ML**: Google Gemini via `@google/genai` v1.35.0
+- **File Storage**: Cloudinary v2.8.0
 - **Validation**: express-validator v7.3.0
+- **MIME Detection**: mime v4.1.0
 - **Logging**: Morgan
 - **Environment**: dotenv
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
-- npm or yarn
-- Firebase project with Firestore and Realtime Database enabled
-- Cloudinary account for image storage
+- Node.js (v18 or higher)
+- npm
+- Firebase project with Firestore enabled
+- Cloudinary account for image/audio storage
+- Google Gemini API key (for Smriti AI)
 
 ## Installation
 
@@ -93,18 +141,29 @@ Recap Backend is a RESTful API service that powers a memory care application for
    git clone https://github.com/djdiptayan1/recap-v2.git
    cd recap/backend
    ```
+
 2. **Install dependencies**
 
    ```bash
    npm install
    ```
+
 3. **Set up environment variables**
 
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
-4. **Verify Firebase connection**
+
+4. **Set up Firebase Service Account Key (required for Firebase Admin operations)**
+
+   - Go to [Firebase Console](https://console.firebase.google.com) → **Project Settings** → **Service accounts**
+   - Click **"Generate new private key"** → Download the JSON file
+   - Save it as `serviceAccountKey.json` in the `backend/` root directory
+
+   > ⚠️ **Never commit this file to git.** It is already in `.gitignore`.
+
+5. **Verify Firebase connection**
    The application automatically checks Firebase connectivity on startup.
 
 5. **Start the dev server**
@@ -132,12 +191,17 @@ FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 FIREBASE_APP_ID=your_app_id
 FIREBASE_MEASUREMENT_ID=your_measurement_id
 
+# Firebase Admin (Docker/Production only - base64-encoded service account JSON)
+# FIREBASE_SERVICE_ACCOUNT=your_base64_encoded_service_account_key
+
 # Cloudinary Configuration
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-```
 
+# Gemini AI Configuration
+GEMINI_API_KEY=your_gemini_api_key
+```
 
 ## Running the Application
 
@@ -175,34 +239,53 @@ Expected response:
 
 ## Docker Support
 
-A Dockerfile is included in the project root for containerized deployment.
+A Dockerfile and deployment script are included for containerized deployment.
 
 ### Build Docker Image and Push to Docker Hub
 
 ```bash
-docker buildx build --platform linux/amd64 -t username/recap-backend:latest --push .
+docker buildx build --platform linux/amd64,linux/arm64 -t username/recap-backend:latest --push .
 ```
 
 ### Run Container
 
+For Docker, pass the service account key as a **base64-encoded environment variable** instead of copying the file into the image:
+
 ```bash
+# Step 1: Generate the base64 string (run once locally)
+base64 -i serviceAccountKey.json
+
+# Step 2: Run with the base64 key
 docker run --platform linux/amd64 \
 --name recappp \
 --env-file recapEnv.env \
+-e FIREBASE_SERVICE_ACCOUNT="<paste_base64_string_here>" \
 -p 3000:3000 \
 username/recap-backend
+```
+
+> 💡 Alternatively, add `FIREBASE_SERVICE_ACCOUNT=<base64_string>` to your `recapEnv.env` file.
+
+### Auto-Restart Script
+
+A convenience script `restart-recap.sh` is provided to pull the latest image and restart the container:
+
+```bash
+./restart-recap.sh
 ```
 
 ## Project Structure
 
 ```
 backend/
-├── config.js                 # Application configuration
+├── config.js                 # Application configuration (Firebase, Gemini, Firestore collections, questions, timezone)
 ├── index.js                  # Application entry point
 ├── Dockerfile               # Docker configuration
+├── restart-recap.sh         # Docker restart convenience script
 ├── package.json             # Dependencies and scripts
+├── .env.example             # Environment variable template
 ├── src/
-│   ├── app.js              # Express app setup
+│   ├── app.js              # Express app setup (middleware, routes, error handling)
 │   ├── auth/               # Authentication controllers
 │   │   ├── deleteAccount.controller.js
 │   │   ├── familySignup.controller.js
@@ -210,47 +293,71 @@ backend/
 │   │   ├── verifyFamilyMember.controller.js
 │   │   └── verifyUID.controller.js
 │   ├── controller/         # Business logic controllers
+│   │   ├── analytics/
+│   │   │   └── dashboardAnalytics.controller.js
 │   │   ├── articles.controler.js
 │   │   ├── citations.controller.js
 │   │   ├── family_member/
+│   │   │   ├── deleteFamily.controller.js
 │   │   │   └── fetchFamily.controller.js
+│   │   ├── journal/
+│   │   │   └── journal.controller.js
 │   │   ├── memoryQuiz/
 │   │   │   ├── getQuizQuestions.controller.js
+│   │   │   ├── memoryReport.controller.js
 │   │   │   └── submitQuiz.controller.js
 │   │   ├── patient/
 │   │   │   └── fetch.controller.js
 │   │   ├── questions/
+│   │   │   ├── answerDailyQuestion.controller.js
 │   │   │   ├── fetch.controller.js
 │   │   │   ├── getDailyQuestions.controller.js
-│   │   │   └── admin/
-│   │   │       ├── addQuestions.controller.js
-│   │   │       └── editQuestions.controller.js
+│   │   │   ├── admin/
+│   │   │   │   ├── addQuestion.controller.js
+│   │   │   │   ├── deleteQuestion.controller.js
+│   │   │   │   └── editQuestions.controller.js
+│   │   │   └── family/
+│   │   │       └── fetchFamilyQuestions.controller.js
+│   │   ├── reminders/
+│   │   │   ├── getReminders.controller.js
+│   │   │   └── setReminders.controller.js
+│   │   ├── smriti/
+│   │   │   ├── smriti.controller.js
+│   │   │   └── smriti.stream.controller.js
 │   │   └── streaks/
 │   │       ├── fetchStreak.controller.js
 │   │       └── updateStreak.controller.js
 │   ├── middleware/         # Custom middleware
 │   │   └── dbCheck.js      # Firebase connection middleware
-│   ├── models/             # Data models
+│   ├── models/             # Data models / schemas
 │   │   ├── articles.model.js
 │   │   ├── citations.model.js
 │   │   ├── familyMember.model.js
+│   │   ├── journal.model.js
 │   │   ├── memoryQuiz.model.js
 │   │   ├── patient.model.js
 │   │   ├── questions.model.js
+│   │   ├── reminder.model.js
 │   │   └── streaks.model.js
 │   ├── routes/             # API route definitions
-│   │   ├── index.js        # Main router
+│   │   ├── index.js        # Main router (mounts all sub-routers)
+│   │   ├── analytics.routes.js
 │   │   ├── articles.routes.js
 │   │   ├── auth.route.js
 │   │   ├── citations.routes.js
 │   │   ├── familyMember.routes.js
+│   │   ├── journal.routes.js
 │   │   ├── memoryQuiz.routes.js
 │   │   ├── patient.routes.js
 │   │   ├── questions.routes.js
+│   │   ├── reminders.route.js
+│   │   ├── smriti.routes.js
 │   │   └── streaks.routes.js
 │   └── utils/              # Utility functions
-│       ├── cloudinary.js   # Image upload/management
-│       ├── db.js           # Firebase initialization
+│       ├── cloudinary.js   # Image/audio upload & deletion
+│       ├── dateUtils.js    # Timezone-aware date formatting
+│       ├── db.js           # Firebase client initialization
+│       ├── firebaseAdmin.js # Firebase Admin SDK initialization
 │       ├── generateUniquePatientID.js
 │       └── streakCalculator.js
 ```
@@ -416,6 +523,68 @@ GET /api/questions/dailyquestions
 }
 ```
 
+#### 3. Answer a Daily Question
+
+```http
+POST /api/questions/answer
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "questionId": "question_id",
+  "answer": "Toast",
+  "answeredBy": "patient",
+  "date": "2026-01-01",
+  "category": "immediateMemory"
+}
+```
+
+- `answeredBy`: `"patient"` stores in `answers` field and updates streak; `"family"` stores in `correctAnswers` field.
+
+#### 4. Get Family Questions
+
+```http
+GET /api/questions/family/:patient_documentId
+```
+
+#### 5. Add Family Question
+
+```http
+POST /api/questions/family/:patient_documentId/add
+Content-Type: application/json
+
+{
+  "text": "What is your favorite childhood memory?",
+  "category": "remoteMemory",
+  "subcategory": "childhood",
+  "questionType": "multiple-choice",
+  "answerOptions": ["Playing outdoors", "Family dinners", "School trips", "Festivals"],
+  "correctAnswers": ["Playing outdoors"],
+  "askInterval": 7,
+  "timeFrame": { "from": "1960-01-01", "to": "1975-12-31" },
+  "tag": "childhood"
+}
+```
+
+#### 6. Edit Family Question
+
+```http
+PUT /api/questions/family/:patient_documentId/edit/:questionId
+Content-Type: application/json
+
+{
+  "text": "Updated question text",
+  "answerOptions": ["Option A", "Option B"],
+  "correctAnswers": ["Option A"]
+}
+```
+
+#### 7. Delete Family Question
+
+```http
+DELETE /api/questions/family/:patient_documentId/delete/:questionId
+```
+
 ---
 
 ### Memory Quiz Endpoints
@@ -438,6 +607,253 @@ Content-Type: application/json
 ```
 
 **Score Range**: 0-15
+
+#### 3. Get Memory Quiz Reports
+
+```http
+GET /api/memoryquiz/reports/:patientId
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "report_id",
+      "score": 12,
+      "date": "2026-01-01T00:00:00.000Z",
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### Smriti AI Endpoints
+
+#### 1. Structured Response
+
+```http
+POST /api/smriti
+Content-Type: application/json
+
+{
+  "query": "What activities help with memory?",
+  "context": {
+    "patientName": "John",
+    "stage": "Early",
+    "dob": "1950-01-01",
+    "familyMembers": [
+      { "name": "Jane", "relation": "Daughter" }
+    ],
+    "recentActivities": {
+      "streakDays": 5,
+      "reminders": ["Take medicine", "Morning walk"]
+    },
+    "mode": "memoryLane"
+  },
+  "history": [
+    { "role": "user", "text": "Hi Smriti" },
+    { "role": "model", "text": "Hello! How are you today?" }
+  ]
+}
+```
+
+**Response:**
+
+```json
+{
+  "answer": "Memory-boosting activities include...",
+  "followup_prompt": "Do you remember playing any games with Jane when she was little?",
+  "care_strategies": ["Try daily crossword puzzles", "Take regular walks"],
+  "medical_disclaimer": "Please consult your doctor for personalized advice.",
+  "sources": [
+    { "name": "Alzheimer's Association", "url": "https://alz.org" }
+  ],
+  "supportive_note": "You're doing great by staying engaged!"
+}
+```
+
+#### 2. Streaming Response (SSE)
+
+```http
+POST /api/smriti/stream
+Content-Type: application/json
+
+{
+  "query": "Tell me about managing sundowning",
+  "context": { ... },
+  "history": [ ... ]
+}
+```
+
+**Response**: Server-Sent Events stream
+
+```
+data: {"text":"Sundowning is a common..."}
+data: {"text":" pattern in Alzheimer's..."}
+data: [DONE]
+```
+
+---
+
+### Journal Endpoints
+
+#### 1. List Journal Entries
+
+```http
+GET /api/journal?patientId=doc_id&limit=10&after=last_doc_id
+```
+
+#### 2. Get Journal Entry by ID
+
+```http
+GET /api/journal/:id?patientId=doc_id
+```
+
+#### 3. Create Journal Entry
+
+```http
+POST /api/journal
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "title": "A beautiful morning",
+  "content": "Today I remembered...",
+  "mood": "happy",
+  "createdBy": "patient",
+  "entryType": "journal",
+  "people": "Jane, Ravi",
+  "place": "Home garden",
+  "eventTag": "daily",
+  "audioBase64": "data:audio/m4a;base64,...",
+  "audioDuration": 45,
+  "photoBase64s": [
+    {
+      "imageBase64": "data:image/jpeg;base64,...",
+      "caption": "Morning flowers"
+    }
+  ]
+}
+```
+
+**Mood values**: `happy`, `sad`, `neutral`, `anxious`, `calm`, `grateful`
+
+**Entry types**: `journal`, `memory`
+
+#### 4. Update Journal Entry
+
+```http
+PUT /api/journal/:id
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "title": "Updated title",
+  "content": "Updated content",
+  "mood": "calm"
+}
+```
+
+#### 5. Delete Journal Entry
+
+```http
+DELETE /api/journal/:id?patientId=doc_id
+```
+
+---
+
+### Reminders Endpoints
+
+#### 1. Get Reminders
+
+```http
+GET /api/reminders?patientId=doc_id
+```
+
+#### 2. Add Reminder
+
+```http
+POST /api/reminders
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "title": "Take morning medicine",
+  "category": "Medicine",
+  "frequency": "daily",
+  "time": "2026-01-01T08:00:00.000Z",
+  "notes": "With breakfast"
+}
+```
+
+**Categories**: `Medicine`, `Daily Chore`, `Appointment`, `Exercise`, `Meal`, `Hydration`, `Other`
+
+**Frequencies**: `once`, `hourly`, `daily`, `weekdays`, `weekends`, `weekly`, `biweekly`, `monthly`, `yearly`
+
+#### 3. Edit Reminder
+
+```http
+PUT /api/reminders
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "reminderId": "reminder_doc_id",
+  "title": "Take evening medicine",
+  "time": "2026-01-01T20:00:00.000Z"
+}
+```
+
+#### 4. Delete Reminder
+
+```http
+DELETE /api/reminders
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "reminderId": "reminder_doc_id"
+}
+```
+
+---
+
+### Analytics Endpoints
+
+#### Get Dashboard Analytics
+
+```http
+GET /api/analytics/dashboard/:patientId
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "today": {
+      "total": 7,
+      "answered": 5,
+      "correct": 4,
+      "accuracyPercent": 80,
+      "categories": {
+        "immediate": { "total": 4, "correct": 3 },
+        "recent": { "total": 2, "correct": 1 },
+        "remote": { "total": 1, "correct": 0 }
+      }
+    },
+    "weekly": [ ... ],
+    "monthly": [ ... ],
+    "declineAlerts": [ ... ]
+  }
+}
+```
 
 ---
 
@@ -490,7 +906,7 @@ GET /api/streaks/year/:documentId?year=2026
 
 ### Family Members Endpoints
 
-#### Get Family Members
+#### 1. Get Family Members
 
 ```http
 GET /api/familymembers/:documentId
@@ -503,6 +919,7 @@ GET /api/familymembers/:documentId
   "success": true,
   "data": [
     {
+      "id": "member_doc_id",
       "email": "family@example.com",
       "name": "Jane Doe",
       "relation": "Daughter",
@@ -511,6 +928,12 @@ GET /api/familymembers/:documentId
     }
   ]
 }
+```
+
+#### 2. Delete Family Member
+
+```http
+DELETE /api/familymembers/:documentId/:memberId
 ```
 
 ---
@@ -634,7 +1057,9 @@ DELETE /api/citations/:id
   subcategory: "optional",
   questionType: "multiple-choice",
   answerOptions: ["Option 1", "Option 2"],
-  correctAnswers: ["Option 1"],
+  correctAnswers: ["Option 1"],  // Multiple correct answers supported
+  answers: ["Patient Answer"],   // Patient-submitted answers
+  patientAnswer: "Latest answer",
   hint: "Optional hint",
   image: "https://...",
   audio: "https://...",
@@ -642,16 +1067,56 @@ DELETE /api/citations/:id
   hardness: "easy",
   confidence: 0.85,
   askInterval: 7,                // Days between asks
-  timeFrame: "immediate",
+  timeFrame: { from: "date", to: "date" },
   tag: "daily-routine",
   isActive: true,
   isAnswered: false,
   timesAsked: 0,
   timesAnsweredCorrectly: 0,
   lastAsked: Timestamp,
+  lastAnsweredDate: "ISO string",
   lastAnsweredCorrectly: Timestamp,
   addedAt: Timestamp,
-  createdAt: Timestamp
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+
+### Journal Entry Schema
+
+```javascript
+{
+  patientId: "firebase_doc_id",
+  title: "Entry title",
+  content: "Text content",
+  mood: "happy",                 // happy, sad, neutral, anxious, calm, grateful
+  audioURL: "https://...",       // Cloudinary URL for voice recording
+  audioPublicId: "public_id",   // For Cloudinary deletion
+  audioDuration: 45,             // Seconds
+  createdBy: "patient",          // patient or family
+  entryType: "journal",          // journal or memory
+  people: "Jane, Ravi",          // Comma-separated names
+  place: "Home garden",
+  eventTag: "birthday",          // birthday, holiday, family, daily, etc.
+  photos: [                      // Built from photoBase64s during upload
+    { url: "https://...", publicId: "id", caption: "Description" }
+  ],
+  createdAt: Timestamp,
+  updatedAt: Timestamp
+}
+```
+
+### Reminder Schema
+
+```javascript
+{
+  title: "Take medicine",
+  category: "Medicine",          // Medicine, Daily Chore, Appointment, Exercise, Meal, Hydration, Other
+  frequency: "daily",            // once, hourly, daily, weekdays, weekends, weekly, biweekly, monthly, yearly
+  time: "2026-01-01T08:00:00Z",
+  notes: "Optional notes",
+  createdAt: Timestamp,
+  updatedAt: Timestamp
 }
 ```
 
@@ -681,6 +1146,16 @@ DELETE /api/citations/:id
   phone: "+1234567890",
   profileImageURL: "https://...",
   patient_documentId: "firebase_doc_id",
+  createdAt: Timestamp
+}
+```
+
+### Memory Quiz Report Schema
+
+```javascript
+{
+  score: 12,                     // 0-15
+  date: Timestamp,
   createdAt: Timestamp
 }
 ```
@@ -721,6 +1196,13 @@ DELETE /api/citations/:id
 
 The application uses a centralized configuration file (`config.js`):
 
+### Firebase & Gemini
+
+```javascript
+firebase: { /* Firebase config from env vars */ },
+gemini: { apiKey: process.env.GEMINI_API_KEY }
+```
+
 ### Question Configuration
 
 ```javascript
@@ -732,9 +1214,36 @@ questions: {
 }
 ```
 
-### Collection Names
+### Firestore Collection Names
 
-All Firestore collection names are defined in `config.js` under `firestoreNames`.
+All Firestore collection and subcollection names are defined in `config.js` under `firestoreNames`:
+
+| Key | Collection Name | Type |
+|-----|----------------|------|
+| `usersCollection` | `users` | Collection |
+| `articlesCollection` | `Articles` | Collection |
+| `citationsCollection` | `Citations` | Collection |
+| `memoryQuizCollection` | `MemoryQuiz` | Collection |
+| `questionsCollection` | `Questions` | Collection |
+| `streaks_SubCollection` | `streaks` | Subcollection |
+| `familyMembers_SubCollection` | `family_members` | Subcollection |
+| `memoryCheckReports_SubCollection` | `memoryCheckReports` | Subcollection |
+| `personalQuestions_SubCollection` | `questions` | Subcollection |
+| `reminders_SubCollection` | `reminders` | Subcollection |
+| `journalEntries_SubCollection` | `journal_entries` | Subcollection |
+| `analyticsCache_SubCollection` | `analyticsCache` | Subcollection |
+
+### Additional Config
+
+```javascript
+timezone: 'Asia/Kolkata',
+analyticsCacheTTL: 300,  // seconds (default 5 minutes)
+question_category: {
+  immediate: 'immediateMemory',
+  recent: 'recentMemory',
+  remote: 'remoteMemory'
+}
+```
 
 ## Security Features
 
@@ -742,9 +1251,10 @@ All Firestore collection names are defined in `config.js` under `firestoreNames`
 - Firebase authentication integration
 - Environment variable protection
 - CORS support (configurable)
-- Request size limiting (50MB max)
+- Request size limiting (50MB max for base64 payloads)
 - Error handling middleware
-- Database connection verification
+- Database connection verification on startup
+- 404 handler for undefined routes
 
 ## 🚨 Error Handling
 
@@ -765,6 +1275,8 @@ HTTP Status Codes:
 - `404`: Not Found
 - `409`: Conflict (duplicate resource)
 - `500`: Internal Server Error
+
+Development mode includes stack traces in error responses.
 
 ## Logging
 
@@ -803,6 +1315,6 @@ Gaps of more than 24 hours reset the current streak but are recorded for max str
 
 ---
 
-**Version**: 1.5.0
-**Last Updated**: January 6, 2026
+**Version**: 2.0.0
+**Last Updated**: February 26, 2026
 **Maintainer**: Recap Development Team

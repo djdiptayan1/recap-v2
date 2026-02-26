@@ -8,6 +8,7 @@ import {
 } from 'firebase/firestore';
 import { firestore } from '../../../utils/db.js';
 import config from '../../../../config.js';
+import { getLocalToday } from '../../../utils/dateUtils.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const QUESTIONS_SUBCOLLECTION = config.firestoreNames.personalQuestions_SubCollection;
@@ -27,7 +28,7 @@ export const getFamilyQuestions = async (req, res, next) => {
         // Normalize sort order
         const sortOrder = order === 'asc' ? 'asc' : 'desc';
 
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalToday();
         // The daily questions are stored under: users/{pid}/questions/{today}
         const dailyDocRef = doc(firestore, USERS_COLLECTION, patient_documentId, QUESTIONS_SUBCOLLECTION, today);
         const dailyDocSnap = await getDoc(dailyDocRef);

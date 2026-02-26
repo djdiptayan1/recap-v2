@@ -1,6 +1,7 @@
 import { firestore } from '../../utils/db.js';
 import { collection, getDocs, query, where, doc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import config from '../../../config.js';
+import { getLocalToday } from '../../utils/dateUtils.js';
 
 const getRandomItems = (arr, count) => {
     const shuffled = [...arr].sort(() => 0.5 - Math.random());
@@ -24,8 +25,8 @@ export const getDailyQuestions = async (req, res, next) => {
             });
         }
 
-        // Get today's date string (YYYY-MM-DD)
-        const today = new Date().toISOString().split('T')[0];
+        // Get today's date string (YYYY-MM-DD) in configured timezone
+        const today = getLocalToday();
 
         // Base reference: users/{patientId}/questions/{today}
         const dailyDocRef = doc(firestore, USERS_COLLECTION, patientId, USER_QUESTIONS_COLLECTION, today);

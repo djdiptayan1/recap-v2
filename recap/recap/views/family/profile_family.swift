@@ -14,6 +14,8 @@ struct ProfileFamilyView: View {
 
     @StateObject private var quizViewModel = MemoryQuizViewModel()
     @State private var showLogoutAlert = false
+    @State private var showDeleteAlert = false
+    @State private var isDeleting = false
 
     var body: some View {
         let documentID =
@@ -93,20 +95,20 @@ struct ProfileFamilyView: View {
                                         icon: "number", title: "Patient UID",
                                         value: patient.patientUID, iconColor: .blue)
 
-                                    if let latestReport = quizViewModel.reports.first {
-                                        NavigationLink(
-                                            destination: MemoryQuizHistoryListView(
-                                                reports: quizViewModel.reports)
-                                        ) {
-                                            InfoTile(
-                                                icon: latestReport.safeIcon,
-                                                title: "Latest Check",
-                                                value: latestReport.safeStatus,
-                                                iconColor: latestReport.swiftColor
-                                            )
-                                        }
-                                        .buttonStyle(PlainButtonStyle())
-                                    }
+                                    // if let latestReport = quizViewModel.reports.first {
+                                    //     NavigationLink(
+                                    //         destination: MemoryQuizHistoryListView(
+                                    //             reports: quizViewModel.reports)
+                                    //     ) {
+                                    //         InfoTile(
+                                    //             icon: latestReport.safeIcon,
+                                    //             title: "Latest Check",
+                                    //             value: latestReport.safeStatus,
+                                    //             iconColor: latestReport.swiftColor
+                                    //         )
+                                    //     }
+                                    //     .buttonStyle(PlainButtonStyle())
+                                    // }
                                 }
                             }
                             .padding(.horizontal, AppConfig.UI.screenPadding - 10)
@@ -170,6 +172,7 @@ struct ProfileFamilyView: View {
 
                                 Button(action: {
                                     HapticManager.shared.trigger(.warning)
+                                    showDeleteAlert = true
                                 }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
@@ -220,10 +223,37 @@ struct ProfileFamilyView: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
                     try? AuthService.shared.signOut()
-                    appState.isLoggedIn = false
+                    appState.currentUser = nil
                 }
             } message: {
                 Text("Are you sure you want to log out?")
+            }
+            .alert("Delete Account", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("This action is permanent and cannot be undone. All your data will be deleted.")
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        let documentId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+        guard !documentId.isEmpty else { return }
+        isDeleting = true
+        Task {
+            do {
+                try await AuthService.shared.deleteAccount(documentId: documentId)
+                await MainActor.run {
+                    isDeleting = false
+                    appState.currentUser = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isDeleting = false
+                }
             }
         }
     }

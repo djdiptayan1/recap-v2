@@ -11,6 +11,8 @@ enum AuthEndpoint: Endpoint {
     case verifyUID(uid: String)
     case verifyFamilyMember(email: String, documentId: String)
     case createFamilyUser(uid: String, email: String, name: String, photoURL: String?)
+    case forgotPassword(email: String)
+    case deleteAccount(documentId: String)
     
     var path: String {
         switch self {
@@ -20,12 +22,16 @@ enum AuthEndpoint: Endpoint {
             return AppConfig.ApiEndpoints.verifyFamilyMember
         case .createFamilyUser:
             return AppConfig.ApiEndpoints.createFamilyUser
+        case .forgotPassword:
+            return AppConfig.ApiEndpoints.forgotPassword
+        case .deleteAccount:
+            return AppConfig.ApiEndpoints.deleteAccount
         }
     }
     
     var method: HTTPMethod {
         switch self {
-        case .verifyUID, .verifyFamilyMember, .createFamilyUser:
+        case .verifyUID, .verifyFamilyMember, .createFamilyUser, .forgotPassword, .deleteAccount:
             return .post
         }
     }
@@ -46,6 +52,10 @@ enum AuthEndpoint: Endpoint {
                 "name": name,
                 "photoURL": photoURL
             ]
+        case .forgotPassword(let email):
+            return ["email": email]
+        case .deleteAccount(let documentId):
+            return ["documentId": documentId]
         }
     }
 }
@@ -74,6 +84,16 @@ struct CreateFamilyUserResponse: Codable {
     let success: Bool
     let message: String
     let user: patientModel?
+}
+
+struct ForgotPasswordResponse: Codable {
+    let success: Bool
+    let message: String
+}
+
+struct DeleteAccountResponse: Codable {
+    let success: Bool
+    let message: String
 }
 
 class FamilyAuthService {

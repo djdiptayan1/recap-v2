@@ -143,4 +143,8 @@ class FamilyLoginViewModel: ObservableObject {
         
         return familyUser
     }
+
+    func finalizeAppleLogin(response: VerifyFamilyMemberResponse, email: String) async throws -> patientModel {
+        return try await finalizeLogin(response: response, email: email)
+    }
 }

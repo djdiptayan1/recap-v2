@@ -4,6 +4,8 @@ import { verifyUID } from '../auth/verifyUID.controller.js';
 import { verifyFamilyMember } from '../auth/verifyFamilyMember.controller.js';
 import { patientSignup } from '../auth/patientSignup.controller.js';
 import { familySignup } from '../auth/familySignup.controller.js';
+import { forgotPassword } from '../auth/forgotPassword.controller.js';
+import { deleteAccount } from '../auth/deleteAccount.controller.js';
 
 const router = express.Router();
 
@@ -46,6 +48,18 @@ router.post(
     body('phone').isString().notEmpty().withMessage('Phone number is required'),
     body('relation').isString().notEmpty().withMessage('Relation is required'),
     familySignup
+);
+
+router.post(
+    '/forgot-password',
+    body('email').isEmail().withMessage('Valid email is required'),
+    forgotPassword
+);
+
+router.post(
+    '/delete-account',
+    body('documentId').isString().notEmpty().withMessage('documentId is required'),
+    deleteAccount
 );
 
 export default router;

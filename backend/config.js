@@ -33,6 +33,12 @@ export default {
 
         //reminders
         reminders_SubCollection: 'reminders',
+
+        //journal
+        journalEntries_SubCollection: 'journal_entries',
+
+        //analytics cache
+        analyticsCache_SubCollection: 'analyticsCache',
     },
 
     questions: {
@@ -42,6 +48,10 @@ export default {
         number_of_remote_questions: 1,
 
     },
+
+    timezone: 'Asia/Kolkata',
+
+    analyticsCacheTTL: 300, // seconds (default 5 minutes)
 
     question_category: {
         immediate: 'immediateMemory',

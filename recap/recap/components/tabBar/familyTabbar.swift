@@ -20,14 +20,19 @@ struct familyTabbar: View {
                     ArticlesView()
                 }
             }
+            Tab("Journal", systemImage: "book.fill") {
+                NavigationStack {
+                    JournalView()
+                }
+            }
             Tab("Smriti", systemImage: "apple.intelligence") {
                 SmritiView()
             }
-            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
-                NavigationStack {
-                    remindersView(viewModel: reminderViewModel)
-                }
-            }
+//            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
+//                NavigationStack {
+//                    remindersView(viewModel: reminderViewModel)
+//                }
+//            }
         }
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)

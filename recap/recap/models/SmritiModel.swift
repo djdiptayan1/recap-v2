@@ -10,9 +10,35 @@ import Foundation
 // MARK: - API Request
 struct SmritiRequest: Codable {
     let query: String
+    let context: SmritiContext?
+    let history: [SmritiHistoryMessage]?
 }
 
-// MARK: - API Response
+struct SmritiContext: Codable {
+    let patientName: String?
+    let stage: String?
+    let dob: String?
+    let familyMembers: [SmritiFamilyMember]?
+    let recentActivities: SmritiActivities?
+    let mode: String?  // "care" or "memoryLane"
+}
+
+struct SmritiActivities: Codable {
+    let streakDays: Int?
+    let reminders: [String]?
+}
+
+struct SmritiFamilyMember: Codable {
+    let name: String
+    let relation: String
+}
+
+struct SmritiHistoryMessage: Codable {
+    let role: String
+    let text: String
+}
+
+// MARK: - API Response (structured endpoint)
 struct SmritiResponse: Codable {
     let summary: String?
     let answer: String
@@ -20,6 +46,7 @@ struct SmritiResponse: Codable {
     let medical_disclaimer: String?
     let sources: [SmritiSource]?
     let supportive_note: String?
+    let followup_prompt: String?
 }
 
 struct SmritiSource: Codable, Hashable {
