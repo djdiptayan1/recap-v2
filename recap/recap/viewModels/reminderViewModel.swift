@@ -53,7 +53,7 @@ class ReminderViewModel: ObservableObject {
 
     func addReminder(
         patientId: String, title: String, category: ReminderCategory, frequency: ReminderFrequency,
-        time: Date, notes: String, completion: @escaping (Bool) -> Void
+        time: Date, notes: String, categoryDetails: [String: String]? = nil, completion: @escaping (Bool) -> Void
     ) {
         guard let url = URL(string: "\(baseURL)\(AppConfig.ApiEndpoints.reminders)") else {
             return
@@ -70,7 +70,8 @@ class ReminderViewModel: ObservableObject {
 
         let newReminder = AddReminderRequest(
             patientId: patientId, title: title, category: category.rawValue,
-            frequency: frequency.rawValue, time: time, notes: notes)
+            frequency: frequency.rawValue, time: time, notes: notes,
+            categoryDetails: categoryDetails)
 
         do {
             let encoder = JSONEncoder()
@@ -183,6 +184,7 @@ class ReminderViewModel: ObservableObject {
     func editReminder(
         patientId: String, reminderId: String, title: String, category: ReminderCategory,
         frequency: ReminderFrequency, time: Date, notes: String,
+        categoryDetails: [String: String]? = nil,
         completion: @escaping (Bool) -> Void
     ) {
         guard let url = URL(string: "\(baseURL)\(AppConfig.ApiEndpoints.reminders)") else { return }
@@ -193,7 +195,8 @@ class ReminderViewModel: ObservableObject {
 
         let updatedReminder = EditReminderRequest(
             patientId: patientId, reminderId: reminderId, title: title, category: category.rawValue,
-            frequency: frequency.rawValue, time: time, notes: notes)
+            frequency: frequency.rawValue, time: time, notes: notes,
+            categoryDetails: categoryDetails)
 
         do {
             let encoder = JSONEncoder()
@@ -247,6 +250,7 @@ struct EditReminderRequest: Codable {
     let frequency: String
     let time: Date
     let notes: String
+    let categoryDetails: [String: String]?
 }
 
 // MARK: - Helper Structs
@@ -267,4 +271,5 @@ struct AddReminderRequest: Codable {
     let frequency: String
     let time: Date
     let notes: String
+    let categoryDetails: [String: String]?
 }

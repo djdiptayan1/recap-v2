@@ -15,12 +15,13 @@ struct Reminder: Codable, Identifiable, Equatable {
     var frequency: ReminderFrequency
     var time: Date
     var notes: String?
+    var categoryDetails: [String: String]?
     var isCompleted: Bool?
     var createdAt: Date?
     var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, category, frequency, time, notes, isCompleted, createdAt, updatedAt
+        case id, title, category, frequency, time, notes, categoryDetails, isCompleted, createdAt, updatedAt
     }
 
     init(from decoder: Decoder) throws {
@@ -30,6 +31,7 @@ struct Reminder: Codable, Identifiable, Equatable {
         category = try container.decode(ReminderCategory.self, forKey: .category)
         frequency = try container.decode(ReminderFrequency.self, forKey: .frequency)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        categoryDetails = try container.decodeIfPresent([String: String].self, forKey: .categoryDetails)
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted)
 
         // Custom Date Decoding Helper
@@ -100,6 +102,51 @@ enum ReminderCategory: String, Codable, CaseIterable, Identifiable {
         case .other: return .gray
         }
     }
+
+    /// Returns the category-specific detail fields with their display labels
+    var detailFields: [CategoryDetailField] {
+        switch self {
+        case .medicine:
+            return [
+                CategoryDetailField(key: "medicineName", label: "Medicine Name", icon: "pill.fill", placeholder: "e.g. Aspirin"),
+                CategoryDetailField(key: "dosage", label: "Dosage", icon: "number", placeholder: "e.g. 500"),
+                CategoryDetailField(key: "dosageUnit", label: "Dosage Unit", icon: "scalemass", placeholder: "Select", pickerOptions: ["mg", "ml", "tablets", "capsules", "drops"]),
+                CategoryDetailField(key: "mealRelation", label: "Meal Relation", icon: "fork.knife", placeholder: "Select", pickerOptions: ["Before Meal", "After Meal", "With Meal", "No Preference"]),
+            ]
+        case .appointment:
+            return [
+                CategoryDetailField(key: "doctorName", label: "Doctor / Person", icon: "person.fill", placeholder: "e.g. Dr. Smith"),
+                CategoryDetailField(key: "location", label: "Location", icon: "mappin.and.ellipse", placeholder: "e.g. City Hospital"),
+            ]
+        case .exercise:
+            return [
+                CategoryDetailField(key: "exerciseType", label: "Exercise Type", icon: "figure.walk", placeholder: "Select", pickerOptions: ["Walking", "Stretching", "Yoga", "Light Jogging", "Chair Exercises", "Balance Training", "Breathing Exercises", "Tai Chi"]),
+                CategoryDetailField(key: "duration", label: "Duration", icon: "timer", placeholder: "Select", pickerOptions: ["5 min", "10 min", "15 min", "20 min", "30 min", "45 min", "60 min", "90 min"]),
+            ]
+        case .meal:
+            return [
+                CategoryDetailField(key: "mealType", label: "Meal Type", icon: "fork.knife", placeholder: "Select", pickerOptions: ["Breakfast", "Lunch", "Dinner", "Snack"]),
+            ]
+        case .hydration:
+            return [
+                CategoryDetailField(key: "amount", label: "Amount", icon: "drop.fill", placeholder: "e.g. 250"),
+                CategoryDetailField(key: "unit", label: "Unit", icon: "scalemass", placeholder: "Select", pickerOptions: ["ml", "oz", "cups", "glasses", "litres"]),
+            ]
+        case .dailyChore, .other:
+            return []
+        }
+    }
+}
+
+/// Describes a category-specific detail field for reminder forms
+struct CategoryDetailField: Identifiable {
+    let key: String
+    let label: String
+    let icon: String
+    let placeholder: String
+    var pickerOptions: [String]? = nil
+
+    var id: String { key }
 }
 
 enum ReminderFrequency: String, Codable, CaseIterable, Identifiable {

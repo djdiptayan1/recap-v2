@@ -18,6 +18,7 @@ struct AddReminderSheet: View {
     @State private var selectedFrequency: ReminderFrequency = .daily
     @State private var time = Date()
     @State private var notes = ""
+    @State private var categoryDetailsValues: [String: String] = [:]
 
     var body: some View {
         NavigationView {
@@ -39,8 +40,39 @@ struct AddReminderSheet: View {
                     }
                 }
 
-                Section(header: Text("Time")) {
-                    DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+                // Category-Specific Details Section
+                if !selectedCategory.detailFields.isEmpty {
+                    Section(header: Label("\(selectedCategory.rawValue) Details", systemImage: selectedCategory.icon)) {
+                        ForEach(selectedCategory.detailFields) { field in
+                            if let options = field.pickerOptions {
+                                Picker(selection: Binding(
+                                    get: { categoryDetailsValues[field.key] ?? "" },
+                                    set: { categoryDetailsValues[field.key] = $0 }
+                                )) {
+                                    Text(field.placeholder).tag("")
+                                    ForEach(options, id: \.self) { option in
+                                        Text(option).tag(option)
+                                    }
+                                } label: {
+                                    Label(field.label, systemImage: field.icon)
+                                }
+                            } else {
+                                HStack {
+                                    Label(field.label, systemImage: field.icon)
+                                        .foregroundColor(AppConfig.Colors.textSecondary)
+                                    TextField(field.placeholder, text: Binding(
+                                        get: { categoryDetailsValues[field.key] ?? "" },
+                                        set: { categoryDetailsValues[field.key] = $0 }
+                                    ))
+                                    .multilineTextAlignment(.trailing)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Section(header: Text("When to Remind")) {
+                    DatePicker("Reminder Time", selection: $time, displayedComponents: .hourAndMinute)
                 }
 
                 Section(header: Text("Notes (optional)")) {
@@ -52,6 +84,7 @@ struct AddReminderSheet: View {
             .navigationBarItems(
                 leading: Button("Cancel") { dismiss() },
                 trailing: Button("Save") {
+                    let details = buildCategoryDetails()
                     if let reminder = reminderToEdit {
                         viewModel.editReminder(
                             patientId: patientId,
@@ -60,7 +93,8 @@ struct AddReminderSheet: View {
                             category: selectedCategory,
                             frequency: selectedFrequency,
                             time: time,
-                            notes: notes
+                            notes: notes,
+                            categoryDetails: details
                         ) { success in
                             if success { dismiss() }
                         }
@@ -71,7 +105,8 @@ struct AddReminderSheet: View {
                             category: selectedCategory,
                             frequency: selectedFrequency,
                             time: time,
-                            notes: notes
+                            notes: notes,
+                            categoryDetails: details
                         ) { success in
                             if success { dismiss() }
                         }
@@ -86,8 +121,18 @@ struct AddReminderSheet: View {
                     selectedFrequency = reminder.frequency
                     time = reminder.time
                     notes = reminder.notes ?? ""
+                    categoryDetailsValues = reminder.categoryDetails ?? [:]
                 }
             }
+            .onChange(of: selectedCategory) { _ in
+                categoryDetailsValues = [:]
+            }
         }
+    }
+
+    /// Filters out empty values and returns nil if no details are present
+    private func buildCategoryDetails() -> [String: String]? {
+        let filtered = categoryDetailsValues.filter { !$0.value.isEmpty }
+        return filtered.isEmpty ? nil : filtered
     }
 }
