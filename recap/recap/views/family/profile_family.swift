@@ -17,6 +17,7 @@ struct ProfileFamilyView: View {
     @State private var showDeleteAlert = false
     @State private var showDeleteConfirmation = false
     @State private var deleteConfirmationText = ""
+    @State private var showDeleteError = false
     @State private var isDeleting = false
 
     var body: some View {
@@ -246,11 +247,20 @@ struct ProfileFamilyView: View {
                 Button("Delete Account", role: .destructive) {
                     if deleteConfirmationText == "DELETE" {
                         deleteAccount()
+                    } else {
+                        showDeleteError = true
                     }
                     deleteConfirmationText = ""
                 }
             } message: {
                 Text("Please type DELETE to permanently delete your account.")
+            }
+            .alert("Incorrect Confirmation", isPresented: $showDeleteError) {
+                Button("Try Again", role: .cancel) {
+                    showDeleteConfirmation = true
+                }
+            } message: {
+                Text("You must type DELETE exactly to confirm account deletion.")
             }
         }
     }
