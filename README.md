@@ -100,20 +100,42 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ---
 
-## Backend Setup (Docker)
+## Backend Setup
 
 > Requires `.env` file with Firebase + Gemini credentials
 
-### ▶ Quick Start
+### 🔐 Firebase Service Account Key
+
+A **service account key** is required for Firebase Admin operations (e.g., account deletion from Firebase Auth).
+
+1. Go to [Firebase Console](https://console.firebase.google.com) → **Project Settings** → **Service accounts**
+2. Click **"Generate new private key"** → Download the JSON file
+3. Save it as `serviceAccountKey.json` in the `backend/` directory
+
+> ⚠️ **Never commit this file to git.** It is already in `.gitignore`.
+
+### ▶ Quick Start (Docker)
 
 ```bash
-docker pull djdiptayan/hackrecap-backend:latest
+# Generate the base64 string from your service account key
+base64 -i backend/serviceAccountKey.json
 
+# Run the container with the base64-encoded key
 docker run -d \
   --name recappp \
   --env-file recapEnv.env \
+  -e FIREBASE_SERVICE_ACCOUNT="<paste_base64_string_here>" \
   -p 3000:3000 \
   djdiptayan/hackrecap-backend:latest
+```
+
+### ▶ Quick Start (Local)
+
+```bash
+cd backend
+npm install
+# Place your serviceAccountKey.json in the backend/ directory
+npm run dev
 ```
 
 ### 🔁 Dev Auto-Restart

@@ -1,5 +1,6 @@
 import { collection, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { firestore } from '../utils/db.js';
+import { authAdmin } from '../utils/firebaseAdmin.js';
 import config from '../../config.js';
 
 const deleteSubcollection = async (docRef, subcollectionName) => {
@@ -20,6 +21,22 @@ export const deleteAccount = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        // Delete the user from Firebase Authentication first
+        try {
+            await authAdmin.deleteUser(documentId);
+            console.log(`Successfully deleted user ${documentId} from Firebase Auth`);
+        } catch (authError) {
+            if (authError.code === 'auth/user-not-found') {
+                console.log(`User ${documentId} not found in Firebase Auth, proceeding to clean up DB.`);
+            } else {
+                console.error(`Failed to delete user ${documentId} from Firebase Auth. Aborting DB cleanup:`, authError);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to delete user authentication record. Please try again.'
+                });
+            }
+        }
+
         // Delete known subcollections
         const subcollections = [
             config.firestoreNames.streaks_SubCollection,
@@ -33,6 +50,7 @@ export const deleteAccount = async (req, res) => {
 
         await Promise.all(subcollections.map(sub => deleteSubcollection(userDocRef, sub)));
 
+        // Delete from Firestore
         await deleteDoc(userDocRef);
         res.status(200).json({ success: true, message: 'Account deleted successfully' });
     } catch (error) {

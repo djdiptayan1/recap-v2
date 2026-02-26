@@ -155,7 +155,15 @@ Recap Backend is a RESTful API service that powers a memory care application for
    # Edit .env with your configuration
    ```
 
-4. **Verify Firebase connection**
+4. **Set up Firebase Service Account Key (required for Firebase Admin operations)**
+
+   - Go to [Firebase Console](https://console.firebase.google.com) → **Project Settings** → **Service accounts**
+   - Click **"Generate new private key"** → Download the JSON file
+   - Save it as `serviceAccountKey.json` in the `backend/` root directory
+
+   > ⚠️ **Never commit this file to git.** It is already in `.gitignore`.
+
+5. **Verify Firebase connection**
    The application automatically checks Firebase connectivity on startup.
 
 5. **Start the dev server**
@@ -182,6 +190,9 @@ FIREBASE_STORAGE_BUCKET=your_project.appspot.com
 FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 FIREBASE_APP_ID=your_app_id
 FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Firebase Admin (Docker/Production only - base64-encoded service account JSON)
+# FIREBASE_SERVICE_ACCOUNT=your_base64_encoded_service_account_key
 
 # Cloudinary Configuration
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -238,13 +249,22 @@ docker buildx build --platform linux/amd64,linux/arm64 -t username/recap-backend
 
 ### Run Container
 
+For Docker, pass the service account key as a **base64-encoded environment variable** instead of copying the file into the image:
+
 ```bash
+# Step 1: Generate the base64 string (run once locally)
+base64 -i serviceAccountKey.json
+
+# Step 2: Run with the base64 key
 docker run --platform linux/amd64 \
 --name recappp \
 --env-file recapEnv.env \
+-e FIREBASE_SERVICE_ACCOUNT="<paste_base64_string_here>" \
 -p 3000:3000 \
 username/recap-backend
 ```
+
+> 💡 Alternatively, add `FIREBASE_SERVICE_ACCOUNT=<base64_string>` to your `recapEnv.env` file.
 
 ### Auto-Restart Script
 
@@ -336,7 +356,8 @@ backend/
 │   └── utils/              # Utility functions
 │       ├── cloudinary.js   # Image/audio upload & deletion
 │       ├── dateUtils.js    # Timezone-aware date formatting
-│       ├── db.js           # Firebase initialization
+│       ├── db.js           # Firebase client initialization
+│       ├── firebaseAdmin.js # Firebase Admin SDK initialization
 │       ├── generateUniquePatientID.js
 │       └── streakCalculator.js
 ```
