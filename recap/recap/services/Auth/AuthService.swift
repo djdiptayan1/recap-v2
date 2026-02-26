@@ -5,6 +5,8 @@
 //  Created by Diptayan Jash on 04/12/25.
 //
 
+import AuthenticationServices
+import CryptoKit
 import FirebaseAuth
 import FirebaseCore
 import FirebaseFirestore
@@ -14,6 +16,9 @@ import GoogleSignIn
 class AuthService {
     static let shared = AuthService()
     private let db = Firestore.firestore()
+
+    // Store the nonce for Apple Sign-In verification
+    private var currentNonce: String?
 
     private init() {}
 
@@ -125,6 +130,84 @@ class AuthService {
         return user
     }
 
+    // MARK: - Apple Sign-In Helpers
+    func generateNonce() -> String {
+        let nonce = randomNonceString()
+        currentNonce = nonce
+        return nonce
+    }
+
+    func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.compactMap { String(format: "%02x", $0) }.joined()
+    }
+
+    // MARK: - Apple Sign-In (Patient)
+    @MainActor
+    func signInWithApple(idTokenString: String, nonce: String) async throws -> patientModel {
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: nonce,
+            fullName: nil
+        )
+        let authResult = try await Auth.auth().signIn(with: credential)
+
+        guard let email = authResult.user.email else {
+            throw NSError(
+                domain: "AuthService", code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "No email found in Apple auth result"])
+        }
+
+        let userModel = try await fetchUser(email: email)
+
+        if let id = userModel.id {
+            try? KeychainManager.shared.save(key: .documentID, value: id)
+            try? KeychainManager.shared.save(key: .patientDocumentID, value: id)
+        }
+        if !userModel.patientUID.isEmpty {
+            try? KeychainManager.shared.save(key: .patientUID, value: userModel.patientUID)
+        }
+        try? KeychainManager.shared.save(key: .userType, value: "patient")
+
+        return userModel
+    }
+
+    // MARK: - Apple Sign-In (Generic - returns user and email)
+    @MainActor
+    func performAppleSignIn(idTokenString: String, nonce: String) async throws -> (user: User, email: String) {
+        let credential = OAuthProvider.appleCredential(
+            withIDToken: idTokenString,
+            rawNonce: nonce,
+            fullName: nil
+        )
+        let authResult = try await Auth.auth().signIn(with: credential)
+
+        guard let email = authResult.user.email else {
+            throw NSError(
+                domain: "AuthService", code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "No email found in Apple auth result"])
+        }
+
+        return (authResult.user, email)
+    }
+
+    func getCurrentNonce() -> String? {
+        return currentNonce
+    }
+
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        var randomBytes = [UInt8](repeating: 0, count: length)
+        let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
+        if errorCode != errSecSuccess {
+            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        }
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        return String(randomBytes.map { byte in charset[Int(byte) % charset.count] })
+    }
+
+    // MARK: - Sign Out
     func signOut() throws {
         try Auth.auth().signOut()
         try? KeychainManager.shared.delete(key: .documentID)
@@ -132,5 +215,20 @@ class AuthService {
         try? KeychainManager.shared.delete(key: .familyDocumentID)
         try? KeychainManager.shared.delete(key: .userType)
         try? KeychainManager.shared.delete(key: .patientDocumentID)
+    }
+
+    // MARK: - Forgot Password
+    func sendPasswordReset(email: String) async throws {
+        let _: ForgotPasswordResponse = try await NetworkManager.shared.request(
+            endpoint: AuthEndpoint.forgotPassword(email: email)
+        )
+    }
+
+    // MARK: - Delete Account
+    func deleteAccount(uid: String) async throws {
+        let _: DeleteAccountResponse = try await NetworkManager.shared.request(
+            endpoint: AuthEndpoint.deleteAccount(uid: uid)
+        )
+        try signOut()
     }
 }

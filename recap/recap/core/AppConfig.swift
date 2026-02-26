@@ -77,6 +77,8 @@ struct AppConfig {
         static let verifyFamilyMember = "auth/verify-familymember"
         static let patientSignupCompletion = "auth/patientsignup"
         static let familySignupCompletion = "auth/familysignup"
+        static let forgotPassword = "auth/forgot-password"
+        static let deleteAccount = "auth/delete-account"
 
         // questions
         static let getAllQuestions = "questions"

@@ -14,6 +14,8 @@ struct ProfileFamilyView: View {
 
     @StateObject private var quizViewModel = MemoryQuizViewModel()
     @State private var showLogoutAlert = false
+    @State private var showDeleteAlert = false
+    @State private var isDeleting = false
 
     var body: some View {
         let documentID =
@@ -170,6 +172,7 @@ struct ProfileFamilyView: View {
 
                                 Button(action: {
                                     HapticManager.shared.trigger(.warning)
+                                    showDeleteAlert = true
                                 }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
@@ -220,10 +223,36 @@ struct ProfileFamilyView: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
                     try? AuthService.shared.signOut()
-                    appState.isLoggedIn = false
+                    appState.currentUser = nil
                 }
             } message: {
                 Text("Are you sure you want to log out?")
+            }
+            .alert("Delete Account", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("This action is permanent and cannot be undone. All your data will be deleted.")
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        guard let uid = appState.currentUser?.patientUID, !uid.isEmpty else { return }
+        isDeleting = true
+        Task {
+            do {
+                try await AuthService.shared.deleteAccount(uid: uid)
+                await MainActor.run {
+                    isDeleting = false
+                    appState.currentUser = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isDeleting = false
+                }
             }
         }
     }
