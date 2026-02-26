@@ -16,6 +16,8 @@ struct ProfileView: View {
 
     @State private var showLogoutAlert = false
     @State private var showCopyAlert = false
+    @State private var showDeleteAlert = false
+    @State private var isDeleting = false
 
     private var lastCheckSubtitle: String {
         guard let latest = quizViewModel.reports.first else {
@@ -238,6 +240,7 @@ struct ProfileView: View {
 
                                 Button(action: {
                                     HapticManager.shared.trigger(.warning)
+                                    showDeleteAlert = true
                                 }) {
                                     HStack(spacing: 16) {
                                         Image(systemName: "trash.fill")
@@ -304,16 +307,43 @@ struct ProfileView: View {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
                     try? AuthService.shared.signOut()
-                    appState.isLoggedIn = false
+                    appState.currentUser = nil
                 }
             } message: {
                 Text("Are you sure you want to log out?")
+            }
+            .alert("Delete Account", isPresented: $showDeleteAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    deleteAccount()
+                }
+            } message: {
+                Text("This action is permanent and cannot be undone. All your data will be deleted.")
             }
             .sheet(isPresented: $showMemoryCheck) {
                 if let patient = appState.currentUser, let id = patient.id {
                     MemoryQuizView()
                         .presentationDetents([.large])
                         .presentationDragIndicator(.visible)
+                }
+            }
+        }
+    }
+
+    private func deleteAccount() {
+        let documentId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+        guard !documentId.isEmpty else { return }
+        isDeleting = true
+        Task {
+            do {
+                try await AuthService.shared.deleteAccount(documentId: documentId)
+                await MainActor.run {
+                    isDeleting = false
+                    appState.currentUser = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isDeleting = false
                 }
             }
         }

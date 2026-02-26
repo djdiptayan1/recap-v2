@@ -5,8 +5,10 @@
 //  Created by Diptayan Jash on 03/12/25.
 //
 
+import AuthenticationServices
 import CryptoKit
 import SwiftUI
+import FirebaseAuth
 
 struct FamilyLoginView: View {
     @EnvironmentObject var appState: AppState
@@ -157,12 +159,17 @@ struct FamilyLoginView: View {
                                     .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                                 }
 
-                                // Apple Button placeholder (Ensure you have the import for this)
-//                                Rectangle()
-//                                    .fill(Color.black)
-//                                    .frame(height: 56)
-//                                    .cornerRadius(AppConfig.UI.cornerRadius)
-//                                    .overlay(Text("Sign in with Apple").foregroundColor(.white).bold())
+                                // Apple Sign-In
+                                SignInWithAppleButton(.signIn) { request in
+                                    let nonce = AuthService.shared.generateNonce()
+                                    request.requestedScopes = [.email, .fullName]
+                                    request.nonce = AuthService.shared.sha256(nonce)
+                                } onCompletion: { result in
+                                    handleAppleSignInResult(result)
+                                }
+                                .signInWithAppleButtonStyle(.black)
+                                .frame(height: 56)
+                                .cornerRadius(AppConfig.UI.cornerRadius)
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
@@ -223,7 +230,68 @@ struct FamilyLoginView: View {
             }
         }
     }
-    private func handleAppleSignInCompletion() {}
+    private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let appleIDToken = appleIDCredential.identityToken,
+                  let idTokenString = String(data: appleIDToken, encoding: .utf8),
+                  let nonce = AuthService.shared.getCurrentNonce()
+            else {
+                viewModel.alertMessage = "Unable to process Apple Sign-In."
+                viewModel.showAlert = true
+                return
+            }
+            Task {
+                do {
+                    let (user, email) = try await AuthService.shared.performAppleSignIn(
+                        idTokenString: idTokenString, nonce: nonce)
+
+                    // Verify family member link
+                    let response = try await FamilyAuthService.shared.verifyFamilyMember(
+                        email: email, documentId: viewModel.patientDocumentId)
+
+                    if response.success {
+                        if let familyUser = try? await viewModel.finalizeAppleLogin(
+                            response: response, email: email) {
+                            await MainActor.run {
+                                HapticManager.shared.trigger(.success)
+                                appState.currentUser = familyUser
+                            }
+                        }
+                    } else {
+                        await MainActor.run {
+                            viewModel.pendingGoogleUser = GoogleUserData(
+                                email: email,
+                                name: user.displayName ?? "",
+                                profileImageURL: user.photoURL?.absoluteString
+                            )
+                            viewModel.showSignupSheet = true
+                        }
+                    }
+                } catch let error as NetworkError {
+                    if case .httpError(let statusCode) = error, statusCode == 404 {
+                        await MainActor.run {
+                            viewModel.showSignupSheet = true
+                        }
+                    } else {
+                        await MainActor.run {
+                            viewModel.alertMessage = error.localizedDescription
+                            viewModel.showAlert = true
+                        }
+                    }
+                } catch {
+                    await MainActor.run {
+                        viewModel.alertMessage = error.localizedDescription
+                        viewModel.showAlert = true
+                    }
+                }
+            }
+        case .failure(let error):
+            viewModel.alertMessage = error.localizedDescription
+            viewModel.showAlert = true
+        }
+    }
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(
