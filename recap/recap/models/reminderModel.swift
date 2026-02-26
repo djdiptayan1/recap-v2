@@ -110,7 +110,7 @@ enum ReminderCategory: String, Codable, CaseIterable, Identifiable {
             return [
                 CategoryDetailField(key: "medicineName", label: "Medicine Name", icon: "pill.fill", placeholder: "e.g. Aspirin"),
                 CategoryDetailField(key: "dosage", label: "Dosage", icon: "number", placeholder: "e.g. 500"),
-                CategoryDetailField(key: "dosageUnit", label: "Dosage Unit", icon: "scalemass", placeholder: "mg", pickerOptions: ["mg", "ml", "tablets", "capsules", "drops"]),
+                CategoryDetailField(key: "dosageUnit", label: "Dosage Unit", icon: "scalemass", placeholder: "Select", pickerOptions: ["mg", "ml", "tablets", "capsules", "drops"]),
                 CategoryDetailField(key: "mealRelation", label: "Meal Relation", icon: "fork.knife", placeholder: "Select", pickerOptions: ["Before Meal", "After Meal", "With Meal", "No Preference"]),
             ]
         case .appointment:
@@ -120,8 +120,8 @@ enum ReminderCategory: String, Codable, CaseIterable, Identifiable {
             ]
         case .exercise:
             return [
-                CategoryDetailField(key: "exerciseType", label: "Exercise Type", icon: "figure.walk", placeholder: "e.g. Walking"),
-                CategoryDetailField(key: "duration", label: "Duration (minutes)", icon: "timer", placeholder: "e.g. 30"),
+                CategoryDetailField(key: "exerciseType", label: "Exercise Type", icon: "figure.walk", placeholder: "Select", pickerOptions: ["Walking", "Stretching", "Yoga", "Light Jogging", "Chair Exercises", "Balance Training", "Breathing Exercises", "Tai Chi"]),
+                CategoryDetailField(key: "duration", label: "Duration", icon: "timer", placeholder: "Select", pickerOptions: ["5 min", "10 min", "15 min", "20 min", "30 min", "45 min", "60 min", "90 min"]),
             ]
         case .meal:
             return [

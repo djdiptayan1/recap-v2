@@ -71,8 +71,8 @@ struct AddReminderSheet: View {
                     }
                 }
 
-                Section(header: Text("Time")) {
-                    DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+                Section(header: Text("When to Remind")) {
+                    DatePicker("Reminder Time", selection: $time, displayedComponents: .hourAndMinute)
                 }
 
                 Section(header: Text("Notes (optional)")) {
