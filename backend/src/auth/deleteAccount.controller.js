@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { firestore } from '../utils/db.js';
 import config from '../../config.js';
 
@@ -11,14 +11,14 @@ const deleteSubcollection = async (docRef, subcollectionName) => {
 
 export const deleteAccount = async (req, res) => {
     try {
-        const { uid } = req.body;
-        const userRef = collection(firestore, config.firestoreNames.usersCollection);
-        const q = query(userRef, where('uid', '==', uid));
-        const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
+        const { documentId } = req.body;
+        console.log('Delete account request for documentId:', documentId);
+        const userDocRef = doc(firestore, config.firestoreNames.usersCollection, documentId);
+        const userDoc = await getDoc(userDocRef);
+        if (!userDoc.exists()) {
+            console.log('User not found for documentId:', documentId);
             return res.status(404).json({ success: false, message: 'User not found' });
         }
-        const userDoc = querySnapshot.docs[0];
 
         // Delete known subcollections
         const subcollections = [
@@ -31,9 +31,9 @@ export const deleteAccount = async (req, res) => {
             config.firestoreNames.analyticsCache_SubCollection,
         ];
 
-        await Promise.all(subcollections.map(sub => deleteSubcollection(userDoc.ref, sub)));
+        await Promise.all(subcollections.map(sub => deleteSubcollection(userDocRef, sub)));
 
-        await deleteDoc(userDoc.ref);
+        await deleteDoc(userDocRef);
         res.status(200).json({ success: true, message: 'Account deleted successfully' });
     } catch (error) {
         console.error('Error deleting user:', error);

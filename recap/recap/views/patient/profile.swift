@@ -331,11 +331,12 @@ struct ProfileView: View {
     }
 
     private func deleteAccount() {
-        guard let uid = appState.currentUser?.patientUID, !uid.isEmpty else { return }
+        let documentId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+        guard !documentId.isEmpty else { return }
         isDeleting = true
         Task {
             do {
-                try await AuthService.shared.deleteAccount(uid: uid)
+                try await AuthService.shared.deleteAccount(documentId: documentId)
                 await MainActor.run {
                     isDeleting = false
                     appState.currentUser = nil

@@ -225,9 +225,10 @@ class AuthService {
     }
 
     // MARK: - Delete Account
-    func deleteAccount(uid: String) async throws {
+    func deleteAccount(documentId: String) async throws {
+        print("Deleting account for documentId: \(documentId)")
         let _: DeleteAccountResponse = try await NetworkManager.shared.request(
-            endpoint: AuthEndpoint.deleteAccount(uid: uid)
+            endpoint: AuthEndpoint.deleteAccount(documentId: documentId)
         )
         try signOut()
     }

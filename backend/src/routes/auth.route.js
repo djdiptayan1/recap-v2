@@ -58,7 +58,7 @@ router.post(
 
 router.post(
     '/delete-account',
-    body('uid').isString().notEmpty().withMessage('uid is required'),
+    body('documentId').isString().notEmpty().withMessage('documentId is required'),
     deleteAccount
 );
 

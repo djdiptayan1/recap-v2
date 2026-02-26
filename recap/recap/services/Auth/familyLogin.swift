@@ -12,7 +12,7 @@ enum AuthEndpoint: Endpoint {
     case verifyFamilyMember(email: String, documentId: String)
     case createFamilyUser(uid: String, email: String, name: String, photoURL: String?)
     case forgotPassword(email: String)
-    case deleteAccount(uid: String)
+    case deleteAccount(documentId: String)
     
     var path: String {
         switch self {
@@ -54,8 +54,8 @@ enum AuthEndpoint: Endpoint {
             ]
         case .forgotPassword(let email):
             return ["email": email]
-        case .deleteAccount(let uid):
-            return ["uid": uid]
+        case .deleteAccount(let documentId):
+            return ["documentId": documentId]
         }
     }
 }
