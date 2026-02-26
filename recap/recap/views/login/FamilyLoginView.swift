@@ -8,6 +8,7 @@
 import AuthenticationServices
 import CryptoKit
 import SwiftUI
+import FirebaseAuth
 
 struct FamilyLoginView: View {
     @EnvironmentObject var appState: AppState
