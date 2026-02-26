@@ -16,6 +16,7 @@ echo "Starting new container..."
 docker run -d \
   --name $CONTAINER_NAME \
   --env-file recapEnv.env \
+  -e FIREBASE_SERVICE_ACCOUNT="<paste_base64_string_here>" \
   -p 3000:3000 \
   $IMAGE
 
