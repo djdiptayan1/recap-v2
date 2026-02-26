@@ -34,7 +34,7 @@ export async function addReminder(req, res, next) {
             // If time comes as string, Firestore might save it as string or map. If we want server timestamp, we use serverTimestamp().
             // Requirements said "time" (user provided).
             ...(notes && { notes }),
-            ...(categoryDetails && typeof categoryDetails === 'object' && Object.keys(categoryDetails).length > 0 && { categoryDetails }),
+            ...(categoryDetails && typeof categoryDetails === 'object' && !Array.isArray(categoryDetails) && Object.keys(categoryDetails).length > 0 && { categoryDetails }),
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
         };

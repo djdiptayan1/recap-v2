@@ -125,9 +125,7 @@ struct AddReminderSheet: View {
                 }
             }
             .onChange(of: selectedCategory) { _ in
-                if reminderToEdit == nil {
-                    categoryDetailsValues = [:]
-                }
+                categoryDetailsValues = [:]
             }
         }
     }

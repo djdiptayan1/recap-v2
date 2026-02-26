@@ -110,7 +110,7 @@ enum ReminderCategory: String, Codable, CaseIterable, Identifiable {
             return [
                 CategoryDetailField(key: "medicineName", label: "Medicine Name", icon: "pill.fill", placeholder: "e.g. Aspirin"),
                 CategoryDetailField(key: "dosage", label: "Dosage", icon: "number", placeholder: "e.g. 500"),
-                CategoryDetailField(key: "dosageUnit", label: "Dosage Unit", icon: "scalemass", placeholder: "mg", pickerOptions: ["mg", "ml", "tablet(s)", "capsule(s)", "drop(s)"]),
+                CategoryDetailField(key: "dosageUnit", label: "Dosage Unit", icon: "scalemass", placeholder: "mg", pickerOptions: ["mg", "ml", "tablets", "capsules", "drops"]),
                 CategoryDetailField(key: "mealRelation", label: "Meal Relation", icon: "fork.knife", placeholder: "Select", pickerOptions: ["Before Meal", "After Meal", "With Meal", "No Preference"]),
             ]
         case .appointment:
@@ -130,7 +130,7 @@ enum ReminderCategory: String, Codable, CaseIterable, Identifiable {
         case .hydration:
             return [
                 CategoryDetailField(key: "amount", label: "Amount", icon: "drop.fill", placeholder: "e.g. 250"),
-                CategoryDetailField(key: "unit", label: "Unit", icon: "scalemass", placeholder: "Select", pickerOptions: ["ml", "oz", "cup(s)", "glass(es)", "litre(s)"]),
+                CategoryDetailField(key: "unit", label: "Unit", icon: "scalemass", placeholder: "Select", pickerOptions: ["ml", "oz", "cups", "glasses", "litres"]),
             ]
         case .dailyChore, .other:
             return []
