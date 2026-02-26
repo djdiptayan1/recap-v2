@@ -15,6 +15,8 @@ struct ProfileFamilyView: View {
     @StateObject private var quizViewModel = MemoryQuizViewModel()
     @State private var showLogoutAlert = false
     @State private var showDeleteAlert = false
+    @State private var showDeleteConfirmation = false
+    @State private var deleteConfirmationText = ""
     @State private var isDeleting = false
 
     var body: some View {
@@ -230,11 +232,25 @@ struct ProfileFamilyView: View {
             }
             .alert("Delete Account", isPresented: $showDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
-                Button("Delete", role: .destructive) {
-                    deleteAccount()
+                Button("Continue", role: .destructive) {
+                    showDeleteConfirmation = true
                 }
             } message: {
                 Text("This action is permanent and cannot be undone. All your data will be deleted.")
+            }
+            .alert("Confirm Deletion", isPresented: $showDeleteConfirmation) {
+                TextField("Type DELETE to confirm", text: $deleteConfirmationText)
+                Button("Cancel", role: .cancel) {
+                    deleteConfirmationText = ""
+                }
+                Button("Delete Account", role: .destructive) {
+                    if deleteConfirmationText == "DELETE" {
+                        deleteAccount()
+                    }
+                    deleteConfirmationText = ""
+                }
+            } message: {
+                Text("Please type DELETE to permanently delete your account.")
             }
         }
     }
