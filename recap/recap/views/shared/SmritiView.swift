@@ -13,6 +13,7 @@ struct SmritiView: View {
     @State private var textInput: String = ""
     @State private var showCamera: Bool = false
     @State private var familyMembers: [FamilyMember]? = nil
+    @State private var isMemoryLaneMode: Bool = false
 
     // Endpoint for fetching family members
     private enum FamilyAPI: Endpoint {
@@ -109,8 +110,22 @@ struct SmritiView: View {
                         .disabled(viewModel.isLoading)
                 }
             }
-            .navigationTitle("Smriti")
+            .navigationTitle(isMemoryLaneMode ? "Memory Lane" : "Smriti")
             .standardBackground()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Toggle(isOn: $isMemoryLaneMode) {
+                        Label("Memory Lane", systemImage: "brain.head.profile.fill")
+                    }
+                    .toggleStyle(.switch)
+                    .tint(.orange)
+                    .onChange(of: isMemoryLaneMode) { newValue in
+                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                        generator.impactOccurred()
+                        viewModel.setMemoryLaneMode(newValue)
+                    }
+                }
+            }
             .task {
                 await loadContext()
             }
