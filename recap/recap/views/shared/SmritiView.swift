@@ -114,16 +114,18 @@ struct SmritiView: View {
             .standardBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Toggle(isOn: $isMemoryLaneMode) {
-                        Label("Memory Lane", systemImage: "brain.head.profile.fill")
-                    }
-                    .toggleStyle(.switch)
-                    .tint(.orange)
-                    .onChange(of: isMemoryLaneMode) { newValue in
+                    Button {
+                        isMemoryLaneMode.toggle()
                         let generator = UIImpactFeedbackGenerator(style: .medium)
                         generator.impactOccurred()
-                        viewModel.setMemoryLaneMode(newValue)
+                        viewModel.setMemoryLaneMode(isMemoryLaneMode)
+                    } label: {
+                        Image(systemName: isMemoryLaneMode ? "brain.head.profile.fill" : "brain.head.profile")
+                            .font(.system(size: 17, weight: .semibold))
+                            .contentTransition(.symbolEffect(.replace))
                     }
+                    .glassEffect(.interactive, in: .circle)
+                    .tint(isMemoryLaneMode ? .orange : .primary)
                 }
             }
             .task {
