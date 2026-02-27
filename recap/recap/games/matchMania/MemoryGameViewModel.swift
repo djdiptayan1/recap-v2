@@ -5,10 +5,10 @@
 //  Created by Diptayan Jash on 04/12/25.
 //
 
-import Foundation
-import SwiftUI
 import AVFoundation
 import Combine
+import Foundation
+import SwiftUI
 
 // MARK: - Models
 
@@ -17,7 +17,7 @@ struct MemoryCard: Identifiable, Equatable {
     let contentIcon: String
     var isFlipped = false
     var isMatched = false
-    var rotation: Double = 0 // For animation
+    var rotation: Double = 0  // For animation
 }
 
 // MARK: - ViewModel
@@ -34,27 +34,27 @@ class MemoryGameViewModel: ObservableObject {
     @Published var timeElapsed: Int = 0
     @Published var matches: Int = 0
     @Published var gameState: MatchManiaGameState = .instruction
-    
+
     // Internal State
-    private var flippedCardIndex: Int? // Tracks the first card flipped
+    private var flippedCardIndex: Int?  // Tracks the first card flipped
     private var timer: Timer?
-    private var isProcessing = false // Prevents flipping more than 2 cards
-    
+    private var isProcessing = false  // Prevents flipping more than 2 cards
+
     // Game Config
     private let icons = [
         "leaf.fill", "house.fill", "star.fill", "heart.fill",
-        "moon.fill", "sun.max.fill", "car.fill", "bell.fill"
+        "moon.fill", "sun.max.fill", "car.fill", "bell.fill",
     ]
-    
+
     init() {
         // Initial setup, but game starts in instruction mode
     }
-    
+
     func startGame() {
         gameState = .playing
         startNewGame()
     }
-    
+
     func startNewGame() {
         // 1. Reset Stats
         moves = 0
@@ -63,7 +63,7 @@ class MemoryGameViewModel: ObservableObject {
         flippedCardIndex = nil
         isProcessing = false
         timer?.invalidate()
-        
+
         // 2. Create Pairs
         var newCards: [MemoryCard] = []
         for icon in icons {
@@ -72,40 +72,39 @@ class MemoryGameViewModel: ObservableObject {
             newCards.append(card1)
             newCards.append(card2)
         }
-        
+
         // 3. Shuffle and Assign
         cards = newCards.shuffled()
-        
+
         // 4. Start Timer
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.timeElapsed += 1
         }
     }
-    
+
     func selectCard(_ card: MemoryCard) {
         // Block input if processing 2 cards
         if isProcessing { return }
-        
+
         guard let index = cards.firstIndex(where: { $0.id == card.id }) else { return }
-        
+
         // Ignore if already matched or already flipped
         if cards[index].isMatched || cards[index].isFlipped { return }
-        
+
         // 1. Flip the card
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
             cards[index].isFlipped = true
             cards[index].rotation += 180
         }
-        
+
         // Haptic Feedback
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        
+        HapticManager.shared.trigger(.light)
+
         // 2. Game Logic
         if let potentialMatchIndex = flippedCardIndex {
             // Second card flipped
             moves += 1
-            isProcessing = true // Lock input
+            isProcessing = true  // Lock input
             checkForMatch(index1: potentialMatchIndex, index2: index)
             flippedCardIndex = nil
         } else {
@@ -113,7 +112,7 @@ class MemoryGameViewModel: ObservableObject {
             flippedCardIndex = index
         }
     }
-    
+
     private func checkForMatch(index1: Int, index2: Int) {
         if cards[index1].contentIcon == cards[index2].contentIcon {
             // MATCH!
@@ -124,12 +123,11 @@ class MemoryGameViewModel: ObservableObject {
                     self.cards[index2].isMatched = true
                     self.matches += 1
                 }
-                
+
                 // Success Haptic
-                let generator = UINotificationFeedbackGenerator()
-                generator.notificationOccurred(.success)
-                
-                self.isProcessing = false // Unlock input
+                HapticManager.shared.trigger(.success)
+
+                self.isProcessing = false  // Unlock input
                 self.checkForWin()
             }
         } else {
@@ -142,11 +140,11 @@ class MemoryGameViewModel: ObservableObject {
                     self.cards[index1].rotation -= 180
                     self.cards[index2].rotation -= 180
                 }
-                self.isProcessing = false // Unlock input
+                self.isProcessing = false  // Unlock input
             }
         }
     }
-    
+
     private func checkForWin() {
         if cards.allSatisfy({ $0.isMatched }) {
             timer?.invalidate()

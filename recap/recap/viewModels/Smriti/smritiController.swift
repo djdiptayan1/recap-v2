@@ -56,11 +56,11 @@ class SmritiViewModel: ObservableObject {
 
     func configure(
         patient: patientModel?, familyMembers: [FamilyMember]?, streakDays: Int? = nil,
-        reminderTitles: [String]? = nil
+        reminderTitles: [String]? = nil, isMemoryLane: Bool = false
     ) {
         guard let patient = patient else {
             patientContext = nil
-            setupGreeting(name: nil)
+            setupGreeting(name: nil, memoryLane: isMemoryLane)
             return
         }
 
@@ -79,23 +79,45 @@ class SmritiViewModel: ObservableObject {
             dob: patient.dateOfBirth.isEmpty ? nil : patient.dateOfBirth,
             familyMembers: familyContext,
             recentActivities: (streakDays != nil || reminderTitles != nil) ? activities : nil,
-            mode: nil
+            mode: isMemoryLane ? "memoryLane" : nil
         )
 
-        setupGreeting(name: patient.firstName)
+        setupGreeting(name: patient.firstName, memoryLane: isMemoryLane)
     }
 
-    private func setupGreeting(name: String?) {
+    func setMemoryLaneMode(_ enabled: Bool) {
+        guard let ctx = patientContext else {
+            patientContext = SmritiContext(
+                patientName: nil, stage: nil, dob: nil,
+                familyMembers: nil, recentActivities: nil,
+                mode: enabled ? "memoryLane" : nil
+            )
+            setupGreeting(name: nil, memoryLane: enabled)
+            return
+        }
+        patientContext = SmritiContext(
+            patientName: ctx.patientName,
+            stage: ctx.stage,
+            dob: ctx.dob,
+            familyMembers: ctx.familyMembers,
+            recentActivities: ctx.recentActivities,
+            mode: enabled ? "memoryLane" : nil
+        )
+        setupGreeting(name: ctx.patientName, memoryLane: enabled)
+    }
+
+    private func setupGreeting(name: String?, memoryLane: Bool = false) {
         let greeting =
             name != nil
             ? "Namaste, \(name!)! I am Smriti."
             : "Namaste! I am Smriti."
+        let subtitle =
+            memoryLane
+            ? "Let's take a walk down memory lane together. Share your favorite memories, and I'll be right here to listen. 💛"
+            : "I am here to help you navigate Alzheimer's care. You can ask me about symptoms, daily care, or share your memories with me. 💛"
         messages = [
             ChatMessage(text: greeting, isUser: false),
-            ChatMessage(
-                text:
-                    "I am here to help you navigate Alzheimer's care. You can ask me about symptoms, daily care, or share your memories with me. 💛",
-                isUser: false),
+            ChatMessage(text: subtitle, isUser: false),
         ]
         followupPrompt = nil
     }

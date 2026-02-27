@@ -141,13 +141,13 @@ private let displayCornerRadius: CGFloat = 24
 
 struct ImagePicker: View {
     @Binding var selectedImage: UIImage?
-    
+
     // UI State
     @State private var showConfirmation = false
     @State private var showCamera = false
     @State private var showPhotosPicker = false
     @State private var isProcessing = false
-    
+
     // Selection State
     @State private var selectedItem: PhotosPickerItem?
     @State private var imageToCrop: UIImage?
@@ -157,7 +157,7 @@ struct ImagePicker: View {
             // Main Avatar Button
             avatarButton
                 .disabled(isProcessing)
-            
+
             // Loading Overlay
             if isProcessing {
                 ZStack {
@@ -174,7 +174,7 @@ struct ImagePicker: View {
                 if isCameraAccessible { showCamera = true }
             }
             Button("Choose from Library") { showPhotosPicker = true }
-            
+
             if selectedImage != nil {
                 Button("Remove Current Photo", role: .destructive) {
                     withAnimation { selectedImage = nil }
@@ -202,9 +202,9 @@ struct ImagePicker: View {
             }
         }
     }
-    
+
     // MARK: - Subviews
-    
+
     private var avatarButton: some View {
         Button {
             showConfirmation = true
@@ -228,7 +228,7 @@ struct ImagePicker: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: displayCornerRadius, style: .continuous)
                             .fill(Color(uiColor: .systemGray6))
-                        
+
                         Image(systemName: "camera.fill")
                             .resizable()
                             .scaledToFit()
@@ -242,7 +242,7 @@ struct ImagePicker: View {
                             .foregroundColor(.gray.opacity(0.5))
                     )
                 }
-                
+
                 // The Edit Badge
                 Circle()
                     .fill(AppConfig.Colors.accent)
@@ -258,14 +258,14 @@ struct ImagePicker: View {
             }
         }
     }
-    
+
     // MARK: - Logic
-    
+
     private var isCameraAccessible: Bool {
         AVCaptureDevice.authorizationStatus(for: .video) == .authorized ||
         AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined
     }
-    
+
     private func processSelectedPhoto(_ item: PhotosPickerItem?) {
         guard let item else { return }
         isProcessing = true
@@ -281,7 +281,7 @@ struct ImagePicker: View {
             }
         }
     }
-    
+
     private func finalizeImage(_ image: UIImage) {
         withAnimation {
             self.selectedImage = image
@@ -297,19 +297,19 @@ struct SquareImageCropper: View {
     let image: UIImage
     let onCropped: (UIImage) -> Void
     @Environment(\.dismiss) private var dismiss
-    
+
     // Gesture State
     @State private var scale: CGFloat = 1
     @State private var lastScale: CGFloat = 1
     @State private var offset: CGSize = .zero
     @State private var lastOffset: CGSize = .zero
-    
+
     private let cropSize: CGFloat = 300
-    
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            
+
             // 1. The Manipulatable Image
             VStack {
                 ZStack {
@@ -323,7 +323,7 @@ struct SquareImageCropper: View {
                                 DragGesture()
                                     .onChanged { value in
                                         offset = CGSize(width: lastOffset.width + value.translation.width,
-                                                        height: lastOffset.height + value.translation.height)
+                                            height: lastOffset.height + value.translation.height)
                                     }
                                     .onEnded { _ in lastOffset = offset },
                                 MagnificationGesture()
@@ -339,7 +339,7 @@ struct SquareImageCropper: View {
                 .clipped()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            
+
             // 2. The Dark Overlay with a Square Hole
             Rectangle()
                 .fill(Color.black.opacity(0.6))
@@ -355,7 +355,7 @@ struct SquareImageCropper: View {
                 )
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
-            
+
             // 3. Grid Lines & Border (Square)
             Rectangle()
                 .stroke(Color.white, lineWidth: 2)
@@ -370,7 +370,7 @@ struct SquareImageCropper: View {
                     }
                 )
                 .allowsHitTesting(false)
-            
+
             // 4. Instructions
             VStack {
                 Text("Move and Scale")
@@ -379,7 +379,7 @@ struct SquareImageCropper: View {
                     .padding(.top, 60)
                 Spacer()
             }
-            
+
             // 5. Floating Controls
             VStack {
                 Spacer()
@@ -394,11 +394,10 @@ struct SquareImageCropper: View {
                         }
                         .foregroundColor(.white)
                     }
-                    
+
                     Button {
-                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                        generator.impactOccurred()
-                        
+                        HapticManager.shared.trigger(.medium)
+
                         // Crop Logic
                         let cropped = image.croppedImage(
                             size: cropSize,
@@ -419,7 +418,7 @@ struct SquareImageCropper: View {
                     }
                     .shadow(radius: 10)
                     .offset(y: -10)
-                    
+
                     Button {
                         withAnimation {
                             scale = 1
@@ -467,13 +466,13 @@ extension UIImage {
     // FIXED: Correct aspect ratio math to prevent distortion
     func croppedImage(size: CGFloat, scale: CGFloat, offset: CGSize) -> UIImage {
         let renderer = UIGraphicsImageRenderer(size: CGSize(width: size, height: size))
-        
+
         return renderer.image { _ in
             // 1. Calculate the base dimensions (fitting the crop box like scaledToFill)
             let aspectRatio = self.size.width / self.size.height
             var drawWidth: CGFloat
             var drawHeight: CGFloat
-            
+
             if aspectRatio > 1 {
                 // Landscape: Height matches box, Width scales
                 drawHeight = size
@@ -483,18 +482,18 @@ extension UIImage {
                 drawWidth = size
                 drawHeight = size / aspectRatio
             }
-            
+
             // 2. Apply User Zoom
             let scaledWidth = drawWidth * scale
             let scaledHeight = drawHeight * scale
-            
+
             // 3. Center the image in the context
             // Start at center of context (size/2)
             // Move back by half of image size (-scaledWidth/2)
             // Add user offset
             let x = (size - scaledWidth) / 2 + offset.width
             let y = (size - scaledHeight) / 2 + offset.height
-            
+
             // 4. Draw image (No clipping path = Rectangle)
             draw(in: CGRect(x: x, y: y, width: scaledWidth, height: scaledHeight))
         }

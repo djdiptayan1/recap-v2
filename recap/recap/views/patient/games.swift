@@ -16,12 +16,14 @@ struct games: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(gamesDemo) { game in
-                        NavigationLink(destination: destinationView(for: game)) {
-                            GamesCard(game: game)
+                GlassEffectContainer {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(gamesDemo) { game in
+                            NavigationLink(destination: destinationView(for: game)) {
+                                GamesCard(game: game)
+                            }
+                            .buttonStyle(ScaleButtonStyle())
                         }
-                        .buttonStyle(ScaleButtonStyle())
                     }
                 }
                 .padding(AppConfig.UI.screenPadding - 10)
