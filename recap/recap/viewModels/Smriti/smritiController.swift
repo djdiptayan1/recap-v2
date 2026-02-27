@@ -56,11 +56,11 @@ class SmritiViewModel: ObservableObject {
 
     func configure(
         patient: patientModel?, familyMembers: [FamilyMember]?, streakDays: Int? = nil,
-        reminderTitles: [String]? = nil
+        reminderTitles: [String]? = nil, isMemoryLane: Bool = false
     ) {
         guard let patient = patient else {
             patientContext = nil
-            setupGreeting(name: nil)
+            setupGreeting(name: nil, memoryLane: isMemoryLane)
             return
         }
 
@@ -79,10 +79,10 @@ class SmritiViewModel: ObservableObject {
             dob: patient.dateOfBirth.isEmpty ? nil : patient.dateOfBirth,
             familyMembers: familyContext,
             recentActivities: (streakDays != nil || reminderTitles != nil) ? activities : nil,
-            mode: nil
+            mode: isMemoryLane ? "memoryLane" : nil
         )
 
-        setupGreeting(name: patient.firstName)
+        setupGreeting(name: patient.firstName, memoryLane: isMemoryLane)
     }
 
     func setMemoryLaneMode(_ enabled: Bool) {
@@ -111,7 +111,8 @@ class SmritiViewModel: ObservableObject {
             name != nil
             ? "Namaste, \(name!)! I am Smriti."
             : "Namaste! I am Smriti."
-        let subtitle = memoryLane
+        let subtitle =
+            memoryLane
             ? "Let's take a walk down memory lane together. Share your favorite memories, and I'll be right here to listen. 💛"
             : "I am here to help you navigate Alzheimer's care. You can ask me about symptoms, daily care, or share your memories with me. 💛"
         messages = [

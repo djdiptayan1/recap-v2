@@ -20,7 +20,7 @@ struct SmritiView: View {
         case fetch(documentID: String)
         var path: String {
             switch self {
-            case let .fetch(documentID):
+            case .fetch(let documentID):
                 return AppConfig.ApiEndpoints.familyMembers + "/\(documentID)"
             }
         }
@@ -110,22 +110,19 @@ struct SmritiView: View {
                         .disabled(viewModel.isLoading)
                 }
             }
-            .navigationTitle(isMemoryLaneMode ? "Memory Lane" : "Smriti")
+            .navigationTitle(isMemoryLaneMode ? "Smriti" : "Care Assistant")
             .standardBackground()
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
+                    Button(
+                        isMemoryLaneMode ? "Care Assistant" : "Smriti",
+                        systemImage: isMemoryLaneMode ? "sparkles" : "brain.head.profile"
+                    ) {
                         isMemoryLaneMode.toggle()
-                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                        generator.impactOccurred()
+                        HapticManager.shared.trigger(.medium)
                         viewModel.setMemoryLaneMode(isMemoryLaneMode)
-                    } label: {
-                        Image(systemName: isMemoryLaneMode ? "brain.head.profile.fill" : "brain.head.profile")
-                            .font(.system(size: 17, weight: .semibold))
-                            .contentTransition(.symbolEffect(.replace))
                     }
-                    .glassEffect(.interactive, in: .circle)
-                    .tint(isMemoryLaneMode ? .orange : .primary)
+                    .tint(isMemoryLaneMode ? .primary : .orange)
                 }
             }
             .task {
@@ -144,6 +141,13 @@ struct SmritiView: View {
 
     private func loadContext() async {
         let patient = appState.currentUser
+        let isPatient = patient?.type == "patient"
+
+        // Use animation strictly to set the initial mode cleanly without visual jump if possible
+        withAnimation {
+            isMemoryLaneMode = isPatient
+        }
+
         let docId = KeychainManager.shared.getString(key: .patientDocumentID) ?? patient?.id ?? ""
         var members: [FamilyMember]?
         if !docId.isEmpty {
@@ -162,14 +166,14 @@ struct SmritiView: View {
             patient: patient,
             familyMembers: members,
             streakDays: streakDays,
-            reminderTitles: nil
+            reminderTitles: nil,
+            isMemoryLane: isPatient
         )
     }
 
     func sendMessage() {
         guard !textInput.isEmpty else { return }
-        let generator = UIImpactFeedbackGenerator(style: .medium)
-        generator.impactOccurred()
+        HapticManager.shared.trigger(.medium)
 
         let textToSend = textInput
         textInput = ""
@@ -225,7 +229,7 @@ struct ThinkingDots: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            ForEach(0 ..< 3) { i in
+            ForEach(0..<3) { i in
                 Circle()
                     .fill(Color.blue.opacity(0.6))
                     .frame(width: 8, height: 8)
@@ -255,17 +259,17 @@ struct InputBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-//            Button(action: { showCamera.toggle() }) {
-//                Image(systemName: "camera.fill")
-//                    .font(.system(size: 18, weight: .semibold))
-//                    .foregroundStyle(.white.opacity(0.9))
-//                    .frame(width: 44, height: 44)
-//                    .background(
-//                        ConcentricRectangle(corners: .concentric)
-//                            .foregroundStyle(.ultraThinMaterial)
-//                    )
-//                    .containerShape(Circle())
-//            }
+            //            Button(action: { showCamera.toggle() }) {
+            //                Image(systemName: "camera.fill")
+            //                    .font(.system(size: 18, weight: .semibold))
+            //                    .foregroundStyle(.white.opacity(0.9))
+            //                    .frame(width: 44, height: 44)
+            //                    .background(
+            //                        ConcentricRectangle(corners: .concentric)
+            //                            .foregroundStyle(.ultraThinMaterial)
+            //                    )
+            //                    .containerShape(Circle())
+            //            }
 
             HStack {
                 TextField("Ask Smriti...", text: $text)
