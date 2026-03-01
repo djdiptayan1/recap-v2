@@ -17,6 +17,14 @@ class ReminderViewModel: ObservableObject {
     private let baseURL = AppConfig.ApiEndpoints.baseURL
 
     func fetchReminders(patientId: String) {
+        guard reminders.isEmpty else { return }
+
+        // Use prefetched data if available
+        if let cached = DataPrefetchManager.shared.reminders {
+            self.reminders = cached
+            return
+        }
+
         guard
             let url = URL(
                 string: "\(baseURL)\(AppConfig.ApiEndpoints.reminders)?patientId=\(patientId)")

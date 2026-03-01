@@ -310,6 +310,7 @@ struct ProfileView: View {
             .alert("Log Out", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
+                    DataPrefetchManager.shared.invalidateAll()
                     try? AuthService.shared.signOut()
                     appState.currentUser = nil
                 }
@@ -365,6 +366,7 @@ struct ProfileView: View {
             do {
                 try await AuthService.shared.deleteAccount(documentId: documentId)
                 await MainActor.run {
+                    DataPrefetchManager.shared.invalidateAll()
                     isDeleting = false
                     appState.currentUser = nil
                 }
