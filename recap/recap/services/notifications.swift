@@ -74,6 +74,17 @@ final class NotificationManager: NSObject {
         }
     }
 
+    /// Registers the "reminder" notification category.
+    func registerReminderCategories() {
+        let reminderCategory = UNNotificationCategory(
+            identifier: "reminder",
+            actions: [],
+            intentIdentifiers: [],
+            options: []
+        )
+        registerCategories([reminderCategory])
+    }
+
     // MARK: - Scheduling
 
     /// Schedules a notification to be delivered immediately (after a short 1-second delay).
@@ -122,27 +133,29 @@ final class NotificationManager: NSObject {
     /// Schedules a notification at a specific date.
     @discardableResult
     func schedule(
-        on date: Date, title: String, body: String, repeats: Bool = false,
+        on date: Date, title: String, body: String, subtitle: String? = nil, repeats: Bool = false,
         calendar: Calendar = .current, categoryIdentifier: String? = nil,
         userInfo: [AnyHashable: Any] = [:], sound: UNNotificationSound? = .default
     ) -> String {
         let components = calendar.dateComponents(
             [.year, .month, .day, .hour, .minute, .second], from: date)
         return schedule(
-            on: components, title: title, body: body, repeats: repeats,
+            on: components, title: title, body: body, subtitle: subtitle, repeats: repeats,
             categoryIdentifier: categoryIdentifier, userInfo: userInfo, sound: sound)
     }
 
     /// Schedules a notification using date components (e.g., every day at 9:00).
     @discardableResult
     func schedule(
-        on components: DateComponents, title: String, body: String, repeats: Bool = false,
+        on components: DateComponents, title: String, body: String, subtitle: String? = nil,
+        repeats: Bool = false,
         categoryIdentifier: String? = nil, userInfo: [AnyHashable: Any] = [:],
         sound: UNNotificationSound? = .default
     ) -> String {
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body
+        if let subtitle { content.subtitle = subtitle }
         content.userInfo = userInfo
         if let categoryIdentifier { content.categoryIdentifier = categoryIdentifier }
         content.sound = sound
@@ -246,11 +259,30 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
+        let userInfo = response.notification.request.content.userInfo
         if isDebugLoggingEnabled {
             print(
                 "[NotificationManager] didReceive response for id=\(response.notification.request.identifier), action=\(response.actionIdentifier)"
             )
         }
+
+        switch response.actionIdentifier {
+        case UNNotificationDefaultActionIdentifier:
+            // User tapped the notification — navigate to reminders
+            NotificationCenter.default.post(
+                name: .reminderTapped,
+                object: nil,
+                userInfo: userInfo
+            )
+        default:
+            break
+        }
+
         completionHandler()
     }
+}
+
+// MARK: - Notification Names for Reminder Actions
+extension Notification.Name {
+    static let reminderTapped = Notification.Name("reminderTapped")
 }
