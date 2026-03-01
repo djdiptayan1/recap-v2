@@ -100,6 +100,7 @@ class ReminderViewModel: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         guard let bodyData = try? encoder.encode(request) else {
             self.errorMessage = "Failed to encode reminder"
+            print("Error encoding add reminder request")
             return false
         }
 
@@ -165,6 +166,7 @@ class ReminderViewModel: ObservableObject {
         encoder.dateEncodingStrategy = .iso8601
         guard let bodyData = try? encoder.encode(request) else {
             self.errorMessage = "Failed to encode reminder"
+            print("Error encoding edit reminder request")
             return false
         }
 
