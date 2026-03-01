@@ -130,8 +130,9 @@ class DailyQuestionsViewModel: ObservableObject {
     func submitAnswer(_ answer: [String], answeredBy: String) {
         guard let question = currentQuestion else { return }
 
-        // Invalidate cached questions since answers change the data
+        // Invalidate cached questions and streak stats since answers change the data
         DataPrefetchManager.shared.invalidateDailyQuestions()
+        DataPrefetchManager.shared.invalidateStreakStats()
 
         let request = AnswerRequest(
             patientId: patientId,

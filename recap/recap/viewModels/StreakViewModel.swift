@@ -18,7 +18,6 @@ class StreakViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     private var documentID: String
-    private var hasFetchedStats = false
     
     init(documentID: String) {
         self.documentID = documentID
@@ -65,14 +64,12 @@ class StreakViewModel: ObservableObject {
     @MainActor
     func fetchStreakStats() async {
         guard !documentID.isEmpty else { return }
-        guard !hasFetchedStats else { return }
 
-        // Use prefetched data if available
+        // Use prefetched/cached data if available
         if let cached = DataPrefetchManager.shared.streakStats {
             self.maxStreak = cached.maxStreak
             self.currentStreak = cached.currentStreak
             self.activeDays = cached.activeDays
-            hasFetchedStats = true
             return
         }
 
@@ -85,13 +82,14 @@ class StreakViewModel: ObservableObject {
                 self.maxStreak = response.data.maxStreak
                 self.currentStreak = response.data.currentStreak
                 self.activeDays = response.data.activeDays
+                // Repopulate cache so subsequent calls use cached data
+                DataPrefetchManager.shared.streakStats = response.data
             }
         } catch {
             self.errorMessage = error.localizedDescription
             print("Error fetching streak stats: \(error)")
         }
         
-        hasFetchedStats = true
         isLoading = false
     }
     
