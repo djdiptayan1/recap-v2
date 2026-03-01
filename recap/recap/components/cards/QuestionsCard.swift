@@ -70,38 +70,21 @@ struct QuestionsCard: View {
                         .foregroundColor(AppConfig.Colors.textSecondary)
                         .lineLimit(2)
                         .lineSpacing(4)
-
-                    //                    HStack(spacing: 6) {
-                    //                        Text("Open Library")
-                    //                            .font(.system(size: 12, weight: .bold))
-                    //                        Image(systemName: "arrow.right")
-                    //                            .font(.system(size: 10, weight: .bold))
-                    //                    }
-                    //                    .padding(.vertical, 8)
-                    //                    .padding(.horizontal, 12)
-                    //                    .background(AppConfig.Colors.accent.opacity(0.1))
-                    //                    .foregroundColor(AppConfig.Colors.accent)
-                    //                    .cornerRadius(20)
-                    //                    .padding(.top, 4)
                 }
-                //                        Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 Image("oldMan")
                     .resizable()
                     .scaledToFill()
                     .frame(width: 80, height: 80)
-                    //                            .clipShape(Circle())
-                    //                            .overlay(
-                    //                                Circle()
-                    //                                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-                    //                            )
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
-                //                            .padding(.horizontal, 20)
             }
-            .padding(20)
+            .padding(.horizontal, AppConfig.UI.padding)
+            .padding(.vertical, 14)
         }
         //        .background(Color.white)
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-//        .cornerRadius(AppConfig.UI.cornerRadius)
+        //        .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(
             color: Color.black.opacity(0.05),
             radius: AppConfig.UI.cardShadowRadius,
