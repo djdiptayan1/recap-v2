@@ -50,7 +50,7 @@ struct DailyObjectsGameView: View {
                 
                 Spacer()
             }
-            .standardBackground()
+//            .standardBackground()
             .navigationTitle("Daily Objects")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

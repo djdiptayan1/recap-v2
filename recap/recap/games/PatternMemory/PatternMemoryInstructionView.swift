@@ -45,7 +45,7 @@ struct PatternMemoryInstructionView: View {
             .padding(.top, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .standardBackground()
+//        .standardBackground()
     }
 }
 
