@@ -99,7 +99,7 @@ struct patientSignupView: View {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
-                                            .tint(.white)
+                                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                     } else {
                                         if viewModel.currentStep == .credentials {
                                             Text("Create Account")

@@ -111,7 +111,7 @@ struct familySignupView: View {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
-                                            .tint(.white)
+                                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                     } else {
                                         Text(buttonTitle)
                                             .font(AppConfig.Fonts.headline)

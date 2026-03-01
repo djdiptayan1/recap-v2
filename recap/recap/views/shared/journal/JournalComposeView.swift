@@ -64,6 +64,7 @@ struct JournalComposeView: View {
                         .ignoresSafeArea()
                     VStack(spacing: 14) {
                         ProgressView()
+                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(1.4)
                         Text("Saving…")

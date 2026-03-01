@@ -201,7 +201,8 @@ struct JournalDetailView: View {
                     .resizable()
                     .scaledToFit()
             } placeholder: {
-                ProgressView().tint(.white)
+                ProgressView()
+                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
             }
         }
         .overlay(alignment: .topTrailing) {

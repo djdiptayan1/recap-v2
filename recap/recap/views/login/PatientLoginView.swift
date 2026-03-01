@@ -73,7 +73,7 @@ struct PatientLoginView: View {
                             HStack {
                                 if viewModel.isLoading {
                                     ProgressView()
-                                        .tint(.white)
+                                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                         .padding(.trailing, 5)
                                 }
                                 Text("Log In")

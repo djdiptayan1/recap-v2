@@ -129,11 +129,12 @@ struct MemoryAnalyticsCard: View {
             }
             .padding(.bottom, 20)
         }
-        .background(Color.white)
-        .cornerRadius(24)
-        .shadow(color: Color.black.opacity(0.08), radius: 15, x: 0, y: 5)
+//        .background(Color.white)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(AppConfig.UI.cornerRadius)
+//        .shadow(color: Color.black.opacity(0.08), radius: 15, x: 0, y: 5)
         .overlay(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
                 .stroke(AppConfig.Colors.stroke, lineWidth: 1)
         )
         .navigationDestination(isPresented: $navigateToDetail) {

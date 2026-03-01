@@ -20,6 +20,7 @@ struct editQuestionsView: View {
             ZStack {
                 if viewModel.isLoading && viewModel.questions.isEmpty {
                     ProgressView()
+                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                 } else if viewModel.questions.isEmpty {
                     VStack {
                         Image(systemName: "tray")
