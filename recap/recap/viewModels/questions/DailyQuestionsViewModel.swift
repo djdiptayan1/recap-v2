@@ -94,7 +94,6 @@ class DailyQuestionsViewModel: ObservableObject {
                     self.isCompleted = true
                 }
                 self.isLoading = false
-                DataPrefetchManager.shared.invalidateDailyQuestions()
                 return
             }
 

@@ -171,7 +171,9 @@ class DataPrefetchManager: ObservableObject {
                 endpoint: PrefetchAPI.dailyQuestions(patientId: patientId),
                 keyDecodingStrategy: .useDefaultKeys
             )
-            self.dailyQuestions = response
+            if response.success {
+                self.dailyQuestions = response
+            }
         } catch {
             print("[Prefetch] Daily questions failed: \(error)")
         }
