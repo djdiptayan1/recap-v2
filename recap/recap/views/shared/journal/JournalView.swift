@@ -14,6 +14,7 @@ struct JournalView: View {
         ZStack {
             if viewModel.isLoading && viewModel.entries.isEmpty {
                 ProgressView()
+                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     .scaleEffect(1.5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.entries.isEmpty {
@@ -59,6 +60,7 @@ struct JournalView: View {
                 if viewModel.isLoading {
                     VStack {
                         ProgressView()
+                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                             .progressViewStyle(CircularProgressViewStyle(tint: AppConfig.Colors.accent))
                             .padding(.top, 8)
                         Spacer()

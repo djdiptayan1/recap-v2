@@ -81,6 +81,7 @@ struct remindersView: View {
                 if viewModel.isLoading {
                     Spacer()
                     ProgressView()
+                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     Spacer()
                 } else if filteredReminders.isEmpty {
                     VStack(spacing: 20) {

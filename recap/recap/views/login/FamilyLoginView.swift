@@ -58,7 +58,8 @@ struct FamilyLoginView: View {
                                 }) {
                                     HStack {
                                         if viewModel.isLoading {
-                                            ProgressView().tint(.white)
+                                            ProgressView()
+                                                .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                         }
                                         Text("Verify ID")
                                             .font(AppConfig.Fonts.headline)

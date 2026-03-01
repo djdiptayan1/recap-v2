@@ -16,6 +16,7 @@ struct MemoryQuizView: View {
             VStack(spacing: 0) {
                 if viewModel.isLoading {
                     ProgressView("Loading questions...")
+                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                 } else if let errorMessage = viewModel.errorMessage {
                     VStack {
                         Text("Error")
@@ -34,6 +35,7 @@ struct MemoryQuizView: View {
                 } else if !viewModel.questions.isEmpty {
                     if viewModel.isSubmitting {
                         ProgressView("Submitting results...")
+                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     } else if !viewModel.isCompleted {
                         VStack(spacing: 8) {
                             HStack {

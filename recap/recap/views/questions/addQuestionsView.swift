@@ -55,7 +55,8 @@ struct addQuestionsView: View {
                         }) {
                             HStack {
                                 if viewModel.isLoading {
-                                    ProgressView().tint(.white)
+                                    ProgressView()
+                                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                 } else {
                                     Text("Save Question")
                                         .font(AppConfig.Fonts.headline)

@@ -15,6 +15,7 @@ struct ArticlesView: View {
         ScrollView {
             if viewModel.isLoading {
                 ProgressView()
+                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     .padding()
             } else if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)

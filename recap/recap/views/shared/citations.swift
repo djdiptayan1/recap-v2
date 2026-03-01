@@ -14,6 +14,7 @@ struct CitationsView: View {
         Group {
             if viewModel.isLoading {
                 ProgressView()
+                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
             } else if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)

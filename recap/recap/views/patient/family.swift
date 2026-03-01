@@ -29,6 +29,7 @@ struct familyView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if viewModel.isLoading {
                         ProgressView()
+                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.top, 50)
                     } else if let error = viewModel.errorMessage {

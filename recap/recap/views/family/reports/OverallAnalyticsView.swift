@@ -5,8 +5,8 @@
 //  Created by Copilot on 25/02/26.
 //
 
-import SwiftUI
 import Charts
+import SwiftUI
 
 struct OverallAnalyticsView: View {
     @ObservedObject var viewModel: AnalyticsViewModel
@@ -152,8 +152,9 @@ struct OverallAnalyticsView: View {
         }
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
-        .cornerRadius(20)
+//        .background(Color.white)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
@@ -196,7 +197,7 @@ struct OverallAnalyticsView: View {
         }
         .padding(20)
         .background(AppConfig.Colors.alert)
-        .cornerRadius(20)
+        .cornerRadius(AppConfig.UI.cornerRadius)
         .padding(.horizontal)
     }
 
@@ -211,15 +212,24 @@ struct OverallAnalyticsView: View {
                     .frame(height: 180)
                     .padding(.horizontal, 8)
 
-                let correct = viewModel.dailyData.first(where: { $0.label == "Correct" })?.value ?? 0
-                let incorrect = viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
+                let correct =
+                    viewModel.dailyData.first(where: { $0.label == "Correct" })?.value ?? 0
+                let incorrect =
+                    viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
                 let total = correct + incorrect
                 let pct = total > 0 ? Int((correct / total) * 100) : 0
 
                 HStack(spacing: 12) {
-                    MiniStat(label: "Correct", value: "\(Int(correct))", color: AppConfig.Colors.success)
-                    MiniStat(label: "Incorrect", value: "\(Int(incorrect))", color: AppConfig.Colors.alert)
-                    MiniStat(label: "Accuracy", value: "\(pct)%", color: pct >= 70 ? AppConfig.Colors.success : (pct >= 40 ? .orange : AppConfig.Colors.alert))
+                    MiniStat(
+                        label: "Correct", value: "\(Int(correct))", color: AppConfig.Colors.success)
+                    MiniStat(
+                        label: "Incorrect", value: "\(Int(incorrect))",
+                        color: AppConfig.Colors.alert)
+                    MiniStat(
+                        label: "Accuracy", value: "\(pct)%",
+                        color: pct >= 70
+                            ? AppConfig.Colors.success
+                            : (pct >= 40 ? .orange : AppConfig.Colors.alert))
                 }
                 .padding(.horizontal, 8)
             }
@@ -241,7 +251,10 @@ struct OverallAnalyticsView: View {
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [AppConfig.Colors.accent.opacity(0.4), AppConfig.Colors.accent.opacity(0.0)],
+                            colors: [
+                                AppConfig.Colors.accent.opacity(0.4),
+                                AppConfig.Colors.accent.opacity(0.0),
+                            ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
@@ -296,7 +309,9 @@ struct OverallAnalyticsView: View {
                     )
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6)],
+                            colors: [
+                                AppConfig.Colors.accent, AppConfig.Colors.accent.opacity(0.6),
+                            ],
                             startPoint: .bottom,
                             endPoint: .top
                         )
@@ -332,7 +347,9 @@ struct OverallAnalyticsView: View {
                             .overlay(
                                 Text(dayNumber(from: day.date))
                                     .font(.system(size: 9, weight: .medium))
-                                    .foregroundColor(day.questionsAnswered > 0 ? .white : AppConfig.Colors.textSecondary.opacity(0.6))
+                                    .foregroundColor(
+                                        day.questionsAnswered > 0
+                                            ? .white : AppConfig.Colors.textSecondary.opacity(0.6))
                             )
                     }
                 }
@@ -378,7 +395,9 @@ struct OverallAnalyticsView: View {
                                     .frame(height: 10)
                                 Capsule()
                                     .fill(barColor(for: cat.score).gradient)
-                                    .frame(width: geo.size.width * min(cat.score / 100, 1.0), height: 10)
+                                    .frame(
+                                        width: geo.size.width * min(cat.score / 100, 1.0),
+                                        height: 10)
                             }
                         }
                         .frame(height: 10)
@@ -454,7 +473,8 @@ struct OverallAnalyticsView: View {
                                         .frame(height: 8)
                                     Capsule()
                                         .fill(latest.swiftColor.gradient)
-                                        .frame(width: geo.size.width * min(pct / 100, 1.0), height: 8)
+                                        .frame(
+                                            width: geo.size.width * min(pct / 100, 1.0), height: 8)
                                 }
                             }
                             .frame(height: 8)
@@ -468,7 +488,10 @@ struct OverallAnalyticsView: View {
                 // History list (show up to 5 recent)
                 if viewModel.memoryReports.count > 1 {
                     VStack(spacing: 0) {
-                        ForEach(Array(viewModel.memoryReports.prefix(5).dropFirst().enumerated()), id: \.element.id) { index, report in
+                        ForEach(
+                            Array(viewModel.memoryReports.prefix(5).dropFirst().enumerated()),
+                            id: \.element.id
+                        ) { index, report in
                             if index > 0 {
                                 Divider().padding(.leading, 50)
                             }
@@ -500,7 +523,9 @@ struct OverallAnalyticsView: View {
                 }
 
                 if viewModel.memoryReports.count > 5 {
-                    NavigationLink(destination: MemoryQuizHistoryListView(reports: viewModel.memoryReports)) {
+                    NavigationLink(
+                        destination: MemoryQuizHistoryListView(reports: viewModel.memoryReports)
+                    ) {
                         HStack {
                             Text("View All Reports")
                                 .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -518,7 +543,9 @@ struct OverallAnalyticsView: View {
 
     // MARK: - Reusable Section Card
 
-    private func sectionCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+    private func sectionCard<Content: View>(
+        title: String, icon: String, @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
@@ -533,8 +560,8 @@ struct OverallAnalyticsView: View {
             content()
         }
         .padding(20)
-        .background(Color.white)
-        .cornerRadius(20)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
@@ -581,11 +608,16 @@ struct OverallAnalyticsView: View {
 
     private func scoreGradient(for score: Double) -> LinearGradient {
         if score >= 70 {
-            return LinearGradient(colors: [AppConfig.Colors.success, AppConfig.Colors.accent], startPoint: .leading, endPoint: .trailing)
+            return LinearGradient(
+                colors: [AppConfig.Colors.success, AppConfig.Colors.accent], startPoint: .leading,
+                endPoint: .trailing)
         } else if score >= 40 {
-            return LinearGradient(colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
+            return LinearGradient(
+                colors: [.orange, .yellow], startPoint: .leading, endPoint: .trailing)
         } else {
-            return LinearGradient(colors: [AppConfig.Colors.alert, .orange], startPoint: .leading, endPoint: .trailing)
+            return LinearGradient(
+                colors: [AppConfig.Colors.alert, .orange], startPoint: .leading, endPoint: .trailing
+            )
         }
     }
 
@@ -660,12 +692,13 @@ class PDFReportRenderer {
         let pdfMetaData = [
             kCGPDFContextCreator: "Recap",
             kCGPDFContextAuthor: "Recap App",
-            kCGPDFContextTitle: "Cognitive Analytics Report"
+            kCGPDFContextTitle: "Cognitive Analytics Report",
         ]
         let format = UIGraphicsPDFRendererFormat()
         format.documentInfo = pdfMetaData as [String: Any]
 
-        let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight), format: format)
+        let renderer = UIGraphicsPDFRenderer(
+            bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight), format: format)
 
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "d MMM yyyy"
@@ -678,7 +711,7 @@ class PDFReportRenderer {
             // Title
             let titleAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 24, weight: .bold),
-                .foregroundColor: UIColor.label
+                .foregroundColor: UIColor.label,
             ]
             let title = "Cognitive Analytics Report"
             title.draw(at: CGPoint(x: margin, y: yPos), withAttributes: titleAttr)
@@ -687,7 +720,7 @@ class PDFReportRenderer {
             // Date
             let dateAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 14, weight: .regular),
-                .foregroundColor: UIColor.secondaryLabel
+                .foregroundColor: UIColor.secondaryLabel,
             ]
             "Generated: \(dateStr)".draw(at: CGPoint(x: margin, y: yPos), withAttributes: dateAttr)
             yPos += 30
@@ -704,15 +737,15 @@ class PDFReportRenderer {
             // Helper closures
             let sectionTitleAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 18, weight: .semibold),
-                .foregroundColor: UIColor.label
+                .foregroundColor: UIColor.label,
             ]
             let bodyAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 13, weight: .regular),
-                .foregroundColor: UIColor.label
+                .foregroundColor: UIColor.label,
             ]
             let boldBodyAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 13, weight: .bold),
-                .foregroundColor: UIColor.label
+                .foregroundColor: UIColor.label,
             ]
 
             func checkPage(_ needed: CGFloat) {
@@ -725,49 +758,61 @@ class PDFReportRenderer {
             // Overall Summary
             if let summary = viewModel.overallSummary {
                 checkPage(80)
-                "Overall Summary (Last 30 Days)".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+                "Overall Summary (Last 30 Days)".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
                 yPos += 28
-                "Overall Score: \(Int(summary.score))%".draw(at: CGPoint(x: margin, y: yPos), withAttributes: boldBodyAttr)
+                "Overall Score: \(Int(summary.score))%".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: boldBodyAttr)
                 yPos += 20
-                "Total Correct: \(summary.totalCorrect)  |  Total Questions: \(summary.totalQuestions)".draw(at: CGPoint(x: margin, y: yPos), withAttributes: bodyAttr)
+                "Total Correct: \(summary.totalCorrect)  |  Total Questions: \(summary.totalQuestions)"
+                    .draw(at: CGPoint(x: margin, y: yPos), withAttributes: bodyAttr)
                 yPos += 20
-                "Active Days (7d): \(summary.activeDaysLast7)/7  |  Active Days (30d): \(summary.activeDaysLast30)/30".draw(at: CGPoint(x: margin, y: yPos), withAttributes: bodyAttr)
+                "Active Days (7d): \(summary.activeDaysLast7)/7  |  Active Days (30d): \(summary.activeDaysLast30)/30"
+                    .draw(at: CGPoint(x: margin, y: yPos), withAttributes: bodyAttr)
                 yPos += 30
             }
 
             // Decline Alert
             if let alert = viewModel.declineAlert, alert.detected {
                 checkPage(60)
-                "⚠️ Decline Alert".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+                "⚠️ Decline Alert".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
                 yPos += 28
                 let alertStr = NSString(string: alert.message)
                 let alertRect = CGRect(x: margin, y: yPos, width: contentWidth, height: 60)
                 alertStr.draw(in: alertRect, withAttributes: bodyAttr)
                 yPos += 50
-                let scoresStr = alert.weeklyScores.enumerated().map { "W\($0.offset + 1): \(Int($0.element))%" }.joined(separator: "  |  ")
+                let scoresStr = alert.weeklyScores.enumerated().map {
+                    "W\($0.offset + 1): \(Int($0.element))%"
+                }.joined(separator: "  |  ")
                 scoresStr.draw(at: CGPoint(x: margin, y: yPos), withAttributes: boldBodyAttr)
                 yPos += 30
             }
 
             // Daily
             checkPage(60)
-            "Today's Performance".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+            "Today's Performance".draw(
+                at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
             yPos += 28
             let correct = viewModel.dailyData.first(where: { $0.label == "Correct" })?.value ?? 0
-            let incorrect = viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
+            let incorrect =
+                viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
             let total = correct + incorrect
             let pct = total > 0 ? Int((correct / total) * 100) : 0
-            "Correct: \(Int(correct))  |  Incorrect: \(Int(incorrect))  |  Total: \(Int(total))  |  Accuracy: \(pct)%".draw(at: CGPoint(x: margin, y: yPos), withAttributes: bodyAttr)
+            "Correct: \(Int(correct))  |  Incorrect: \(Int(incorrect))  |  Total: \(Int(total))  |  Accuracy: \(pct)%"
+                .draw(at: CGPoint(x: margin, y: yPos), withAttributes: bodyAttr)
             yPos += 30
 
             // Weekly
             if !viewModel.weeklyData.isEmpty {
                 checkPage(60)
-                "Weekly Trend".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+                "Weekly Trend".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
                 yPos += 28
                 for item in viewModel.weeklyData {
                     checkPage(20)
-                    "\(item.label):  \(Int(item.value))%".draw(at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
+                    "\(item.label):  \(Int(item.value))%".draw(
+                        at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
                     yPos += 18
                 }
                 yPos += 12
@@ -776,11 +821,13 @@ class PDFReportRenderer {
             // Monthly
             if !viewModel.monthlyData.isEmpty {
                 checkPage(60)
-                "Monthly Overview".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+                "Monthly Overview".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
                 yPos += 28
                 for item in viewModel.monthlyData {
                     checkPage(20)
-                    "\(item.label):  \(Int(item.value))%".draw(at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
+                    "\(item.label):  \(Int(item.value))%".draw(
+                        at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
                     yPos += 18
                 }
                 yPos += 12
@@ -789,11 +836,13 @@ class PDFReportRenderer {
             // Category Breakdown
             if !viewModel.categoryBreakdown.isEmpty {
                 checkPage(60)
-                "Memory Category Breakdown".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+                "Memory Category Breakdown".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
                 yPos += 28
                 for cat in viewModel.categoryBreakdown {
                     checkPage(20)
-                    "\(cat.displayName):  \(Int(cat.score))%  (\(cat.correct) correct / \(cat.total) total)".draw(at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
+                    "\(cat.displayName):  \(Int(cat.score))%  (\(cat.correct) correct / \(cat.total) total)"
+                        .draw(at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
                     yPos += 18
                 }
                 yPos += 12
@@ -802,12 +851,16 @@ class PDFReportRenderer {
             // Memory Quiz Reports
             if !viewModel.memoryReports.isEmpty {
                 checkPage(60)
-                "Memory Quiz Reports".draw(at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
+                "Memory Quiz Reports".draw(
+                    at: CGPoint(x: margin, y: yPos), withAttributes: sectionTitleAttr)
                 yPos += 28
                 for report in viewModel.memoryReports.prefix(10) {
                     checkPage(22)
-                    let pctStr = report.overallPercentage != nil ? " (\(Int(report.overallPercentage!))%)" : ""
-                    "\(report.safeStatus) — \(report.safeTotalScore)/\(report.safeTotalQuestions)\(pctStr)  —  \(report.formattedDate)".draw(at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
+                    let pctStr =
+                        report.overallPercentage != nil
+                        ? " (\(Int(report.overallPercentage!))%)" : ""
+                    "\(report.safeStatus) — \(report.safeTotalScore)/\(report.safeTotalQuestions)\(pctStr)  —  \(report.formattedDate)"
+                        .draw(at: CGPoint(x: margin + 10, y: yPos), withAttributes: bodyAttr)
                     yPos += 20
                 }
                 yPos += 12
@@ -817,13 +870,15 @@ class PDFReportRenderer {
             checkPage(30)
             let footerAttr: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 11, weight: .regular),
-                .foregroundColor: UIColor.tertiaryLabel
+                .foregroundColor: UIColor.tertiaryLabel,
             ]
-            "Report generated by Recap App — \(dateStr)".draw(at: CGPoint(x: margin, y: pageHeight - margin), withAttributes: footerAttr)
+            "Report generated by Recap App — \(dateStr)".draw(
+                at: CGPoint(x: margin, y: pageHeight - margin), withAttributes: footerAttr)
         }
 
         // Save to temp file
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Recap_Analytics_Report_\(dateStr.replacingOccurrences(of: " ", with: "_")).pdf")
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
+            "Recap_Analytics_Report_\(dateStr.replacingOccurrences(of: " ", with: "_")).pdf")
         do {
             try data.write(to: tempURL)
             return tempURL

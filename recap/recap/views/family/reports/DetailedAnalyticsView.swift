@@ -5,50 +5,50 @@
 //  Created by Diptayan Jash on 12/12/25.
 //
 
-import SwiftUI
 import Charts
+import SwiftUI
 
 struct DetailedAnalyticsView: View {
     let timeFrame: TimeFrame
     @ObservedObject var viewModel: AnalyticsViewModel
     @Environment(\.dismiss) var dismiss
-    
+
     var body: some View {
         ZStack {
             AppConfig.Colors.background.ignoresSafeArea()
-            
+
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
-                    
+
                     // Header
-                    VStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(AppConfig.Colors.accent.opacity(0.1))
-                                .frame(width: 80, height: 80)
-                            
-                            Image(systemName: iconForType)
-                                .font(.system(size: 36))
-                                .foregroundColor(AppConfig.Colors.accent)
-                        }
-                        
-                        Text("\(timeFrame.rawValue) Report")
-                            .font(AppConfig.Fonts.titleMedium)
-                            .foregroundColor(AppConfig.Colors.textPrimary)
-                        
-                        Text("Detailed breakdown of cognitive performance")
-                            .font(AppConfig.Fonts.body)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal)
-                    }
-                    .padding(.top, 20)
-                    
+                    //                    VStack(spacing: 12) {
+                    // ZStack {
+                    //     Circle()
+                    //         .fill(AppConfig.Colors.accent.opacity(0.1))
+                    //         .frame(width: 80, height: 80)
+
+                    //     Image(systemName: iconForType)
+                    //         .font(.system(size: 36))
+                    //         .foregroundColor(AppConfig.Colors.accent)
+                    // }
+
+                    // Text("\(timeFrame.rawValue) Report")
+                    //     .font(AppConfig.Fonts.titleMedium)
+                    //     .foregroundColor(AppConfig.Colors.textPrimary)
+
+                    //                        Text("Detailed breakdown of cognitive performance")
+                    //                            .font(AppConfig.Fonts.body)
+                    //                            .foregroundColor(AppConfig.Colors.textSecondary)
+                    //                            .multilineTextAlignment(.center)
+                    //                            .padding(.horizontal)
+                    //                    }
+                    //                    .padding(.top, 20)
+
                     // Decline Alert
                     if let alert = viewModel.declineAlert, alert.detected {
                         declineAlertCard(alert: alert)
                     }
-                    
+
                     // Stats based on selected timeframe
                     switch timeFrame {
                     case .immediate:
@@ -58,15 +58,20 @@ struct DetailedAnalyticsView: View {
                     case .remote:
                         monthlyDetailSection
                     }
+
+                    // MARK: - About Section
+                    aboutAnalyticsSection
                 }
                 .padding(.bottom, 40)
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitle("\(timeFrame.rawValue) Report")
+        .navigationSubtitle("Detailed breakdown of cognitive performance")
+        //        .navigationBarTitleDisplayMode(.inline)
     }
-    
+
     // MARK: - Decline Alert Card
-    
+
     private func declineAlertCard(alert: DeclineAlert) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -78,12 +83,12 @@ struct DetailedAnalyticsView: View {
                     .foregroundColor(.white)
                 Spacer()
             }
-            
+
             Text(alert.message)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(.white.opacity(0.9))
                 .lineSpacing(4)
-            
+
             HStack(spacing: 8) {
                 ForEach(Array(alert.weeklyScores.enumerated()), id: \.offset) { index, score in
                     VStack(spacing: 4) {
@@ -106,9 +111,9 @@ struct DetailedAnalyticsView: View {
         .cornerRadius(20)
         .padding(.horizontal)
     }
-    
+
     // MARK: - Daily Detail
-    
+
     private var dailyDetailSection: some View {
         VStack(spacing: 20) {
             // Chart card
@@ -121,28 +126,41 @@ struct DetailedAnalyticsView: View {
             //             .padding(.horizontal, 8)
             //     }
             // }
-            
+
             // Stats
             if !viewModel.dailyData.isEmpty {
-                let correct = viewModel.dailyData.first(where: { $0.label == "Correct" })?.value ?? 0
-                let incorrect = viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
+                let correct =
+                    viewModel.dailyData.first(where: { $0.label == "Correct" })?.value ?? 0
+                let incorrect =
+                    viewModel.dailyData.first(where: { $0.label == "Incorrect" })?.value ?? 0
                 let total = correct + incorrect
                 let percentage = total > 0 ? Int((correct / total) * 100) : 0
-                
+
                 analyticsCard(title: "Key Metrics", icon: "chart.bar.fill") {
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        DetailStatTile(icon: "checkmark.circle.fill", title: "Correct", value: "\(Int(correct))", color: AppConfig.Colors.success)
-                        DetailStatTile(icon: "xmark.circle.fill", title: "Incorrect", value: "\(Int(incorrect))", color: AppConfig.Colors.alert)
-                        DetailStatTile(icon: "number.circle.fill", title: "Total", value: "\(Int(total))", color: AppConfig.Colors.accent)
-                        DetailStatTile(icon: "percent", title: "Accuracy", value: "\(percentage)%", color: percentage >= 70 ? AppConfig.Colors.success : (percentage >= 40 ? .orange : AppConfig.Colors.alert))
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12)
+                    {
+                        DetailStatTile(
+                            icon: "checkmark.circle.fill", title: "Correct",
+                            value: "\(Int(correct))", color: AppConfig.Colors.success)
+                        DetailStatTile(
+                            icon: "xmark.circle.fill", title: "Incorrect",
+                            value: "\(Int(incorrect))", color: AppConfig.Colors.alert)
+                        DetailStatTile(
+                            icon: "number.circle.fill", title: "Total", value: "\(Int(total))",
+                            color: AppConfig.Colors.accent)
+                        DetailStatTile(
+                            icon: "percent", title: "Accuracy", value: "\(percentage)%",
+                            color: percentage >= 70
+                                ? AppConfig.Colors.success
+                                : (percentage >= 40 ? .orange : AppConfig.Colors.alert))
                     }
                 }
             }
         }
     }
-    
+
     // MARK: - Weekly Detail
-    
+
     private var weeklyDetailSection: some View {
         VStack(spacing: 20) {
             // Chart card
@@ -163,7 +181,7 @@ struct DetailedAnalyticsView: View {
             //                     endPoint: .bottom
             //                 )
             //             )
-                        
+
             //             LineMark(
             //                 x: .value("Day", item.label),
             //                 y: .value("Score", item.value)
@@ -181,7 +199,7 @@ struct DetailedAnalyticsView: View {
             //         .padding(.horizontal, 8)
             //     }
             // }
-            
+
             // Day breakdown
             if !viewModel.weeklyData.isEmpty {
                 analyticsCard(title: "Daily Scores", icon: "list.bullet") {
@@ -192,20 +210,22 @@ struct DetailedAnalyticsView: View {
                                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                                     .foregroundColor(AppConfig.Colors.textPrimary)
                                     .frame(width: 40, alignment: .leading)
-                                
+
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         Capsule()
                                             .fill(Color.gray.opacity(0.12))
                                             .frame(height: 10)
-                                        
+
                                         Capsule()
                                             .fill(barColor(for: item.value).gradient)
-                                            .frame(width: max(geo.size.width * (item.value / 100), 0), height: 10)
+                                            .frame(
+                                                width: max(geo.size.width * (item.value / 100), 0),
+                                                height: 10)
                                     }
                                 }
                                 .frame(height: 10)
-                                
+
                                 Text("\(Int(item.value))%")
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
                                     .foregroundColor(barColor(for: item.value))
@@ -217,9 +237,9 @@ struct DetailedAnalyticsView: View {
             }
         }
     }
-    
+
     // MARK: - Monthly Detail
-    
+
     private var monthlyDetailSection: some View {
         VStack(spacing: 20) {
             // Chart card
@@ -251,7 +271,7 @@ struct DetailedAnalyticsView: View {
             //         .padding(.horizontal, 8)
             //     }
             // }
-            
+
             // Month breakdown
             if !viewModel.monthlyData.isEmpty {
                 analyticsCard(title: "Monthly Scores", icon: "list.bullet") {
@@ -262,20 +282,22 @@ struct DetailedAnalyticsView: View {
                                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                                     .foregroundColor(AppConfig.Colors.textPrimary)
                                     .frame(width: 40, alignment: .leading)
-                                
+
                                 GeometryReader { geo in
                                     ZStack(alignment: .leading) {
                                         Capsule()
                                             .fill(Color.gray.opacity(0.12))
                                             .frame(height: 10)
-                                        
+
                                         Capsule()
                                             .fill(barColor(for: item.value).gradient)
-                                            .frame(width: max(geo.size.width * (item.value / 100), 0), height: 10)
+                                            .frame(
+                                                width: max(geo.size.width * (item.value / 100), 0),
+                                                height: 10)
                                     }
                                 }
                                 .frame(height: 10)
-                                
+
                                 Text("\(Int(item.value))%")
                                     .font(.system(size: 14, weight: .bold, design: .rounded))
                                     .foregroundColor(barColor(for: item.value))
@@ -287,10 +309,12 @@ struct DetailedAnalyticsView: View {
             }
         }
     }
-    
+
     // MARK: - Reusable Card Wrapper
-    
-    private func analyticsCard<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+
+    private func analyticsCard<Content: View>(
+        title: String, icon: String, @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
@@ -301,18 +325,67 @@ struct DetailedAnalyticsView: View {
                     .foregroundColor(AppConfig.Colors.textPrimary)
                 Spacer()
             }
-            
+
             content()
         }
         .padding(20)
-        .background(Color.white)
-        .cornerRadius(20)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         .padding(.horizontal)
     }
-    
+
+    // MARK: - About Section
+
+    private var aboutAnalyticsSection: some View {
+        let info = MemoryTypeInfo.info(for: timeFrame)
+
+        return VStack(spacing: 16) {
+            // About card
+            AboutReportCard(
+                title: info.title,
+                description: info.aboutDescription
+            )
+
+            // Expandable science + tips cards
+            ExpandableScienceCard(
+                title: info.scienceTitle,
+                iconName: "atom",
+                content: info.scienceBody,
+                accentColor: info.accentColor
+            )
+
+            ExpandableScienceCard(
+                title: info.tipsTitle,
+                iconName: "lightbulb.fill",
+                content: info.tipsBody,
+                accentColor: info.accentColor
+            )
+
+            // Article cards
+            LearnMoreArticleCard(
+                title: info.articleTitle,
+                subtitle: info.articleSubtitle,
+                baseColor: info.accentColor,
+                iconName: info.iconName,
+                detailTitle: info.articleDetailTitle,
+                detailBody: info.articleDetailBody
+            )
+
+            LearnMoreArticleCard(
+                title: info.secondArticleTitle,
+                subtitle: info.secondArticleSubtitle,
+                baseColor: info.accentColor.opacity(0.85),
+                iconName: info.secondIconName,
+                detailTitle: info.secondArticleDetailTitle,
+                detailBody: info.secondArticleDetailBody
+            )
+        }
+        .padding(.horizontal)
+    }
+
     // MARK: - Helpers
-    
+
     private func emptyStateView(message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "chart.bar.xaxis")
@@ -325,13 +398,13 @@ struct DetailedAnalyticsView: View {
         .frame(maxWidth: .infinity)
         .padding(30)
     }
-    
+
     private func barColor(for value: Double) -> Color {
         if value >= 70 { return AppConfig.Colors.success }
         if value >= 40 { return .orange }
         return AppConfig.Colors.alert
     }
-    
+
     var iconForType: String {
         switch timeFrame {
         case .immediate: return "sun.max.fill"
@@ -348,17 +421,17 @@ struct DetailStatTile: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.system(size: 22))
                 .foregroundColor(color)
-            
+
             Text(value)
                 .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundColor(AppConfig.Colors.textPrimary)
-            
+
             Text(title)
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundColor(AppConfig.Colors.textSecondary)

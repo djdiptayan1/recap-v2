@@ -218,6 +218,7 @@ struct ProfileFamilyView: View {
                     }
                 } else {
                     ProgressView()
+                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                 }
             }
             .standardBackground()

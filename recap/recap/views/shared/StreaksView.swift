@@ -63,8 +63,8 @@ struct StreaksView: View {
                         .padding(16)
                     }
 //                    .background(Color.white)
-                    .glassEffect(.clear, in: .rect)
-                    .cornerRadius(20)
+                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//                    .cornerRadius(20)
                     .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
                     .padding(.horizontal, 16)
                     
@@ -166,8 +166,8 @@ struct UnifiedStatsCard: View {
         }
         .padding(.vertical, 24)
 //        .background(Color.white)
-        .glassEffect(.clear, in: .rect)
-        .cornerRadius(16)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
     }

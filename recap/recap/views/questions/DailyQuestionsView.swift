@@ -23,6 +23,7 @@ struct DailyQuestionsView: View {
             ZStack {
                 if viewModel.isLoading {
                     ProgressView("Loading Daily Check-in...")
+                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                 } else if let errorMessage = viewModel.errorMessage {
                     VStack(spacing: 16) {
                         Image(systemName: "exclamationmark.triangle")
@@ -189,8 +190,8 @@ struct QuestionDisplayCard: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white)
-        .cornerRadius(AppConfig.UI.cornerRadius)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 5)
         .overlay(
             RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
@@ -218,8 +219,8 @@ struct AnswerOptionButton: View {
         }
         .padding()
         .frame(height: 60)
-        .background(Color.white)
-        .cornerRadius(16)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(16)
         .shadow(
             color: isSelected ? AppConfig.Colors.accent.opacity(0.2) : Color.black.opacity(0.03),
             radius: 5, x: 0, y: 2
@@ -269,8 +270,8 @@ struct CompletionView: View {
             .padding(.top, 20)
         }
         .padding(40)
-        .background(Color.white)
-        .cornerRadius(30)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(30)
         .shadow(radius: 20)
         .padding(.horizontal, 20)
     }

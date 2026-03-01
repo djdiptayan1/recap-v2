@@ -100,8 +100,8 @@ struct QuestionsCard: View {
             .padding(20)
         }
         //        .background(Color.white)
-        .glassEffect(.clear, in: .rect)
-        .cornerRadius(AppConfig.UI.cornerRadius)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//        .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(
             color: Color.black.opacity(0.05),
             radius: AppConfig.UI.cardShadowRadius,
