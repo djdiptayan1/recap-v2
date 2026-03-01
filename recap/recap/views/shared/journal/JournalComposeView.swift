@@ -107,7 +107,6 @@ struct JournalComposeView: View {
                     }
                 }
             }
-            .standardBackground()
             .onChange(of: selectedPhotoItems) { items in
                 loadSelectedPhotos(from: items)
             }

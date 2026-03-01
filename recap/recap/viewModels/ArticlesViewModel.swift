@@ -16,6 +16,7 @@ class ArticlesViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     func fetchArticles() async {
+        guard articles.isEmpty else { return }
         isLoading = true
         errorMessage = nil
         

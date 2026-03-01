@@ -13,11 +13,7 @@ struct ArticlesView: View {
     
     var body: some View {
         ScrollView {
-            if viewModel.isLoading {
-                ProgressView()
-                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-                    .padding()
-            } else if let errorMessage = viewModel.errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .padding()
@@ -27,11 +23,16 @@ struct ArticlesView: View {
                         NavigationLink(destination: ArticleDetailView(article: article)) {
                             ArticleCard(article: article)
                         }
-                        .buttonStyle(PlainButtonStyle()) // Removes blue link color
+                        .buttonStyle(PlainButtonStyle())
                     }
                 }
                 .padding(AppConfig.UI.screenPadding - 10)
                 .padding(.top, 10)
+            }
+        }
+        .overlay {
+            if viewModel.isLoading {
+                ProgressView()
             }
         }
         .standardBackground()

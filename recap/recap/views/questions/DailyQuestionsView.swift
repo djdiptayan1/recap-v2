@@ -241,8 +241,7 @@ struct CompletionView: View {
         VStack(spacing: 24) {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 80))
-                .foregroundColor(AppConfig.Colors.success)  // Green
-                .shadow(color: AppConfig.Colors.success.opacity(0.3), radius: 10, x: 0, y: 5)
+                .foregroundColor(AppConfig.Colors.success)
 
             VStack(spacing: 8) {
                 Text("All Done!")
@@ -269,11 +268,11 @@ struct CompletionView: View {
             }
             .padding(.top, 20)
         }
-        .padding(40)
+        .frame(maxWidth: 320)
+        .padding(.vertical, 40)
+        .padding(.horizontal, 30)
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-//        .cornerRadius(30)
-        .shadow(radius: 20)
-        .padding(.horizontal, 20)
+        .cornerRadius(AppConfig.UI.cornerRadius)
     }
 }
 
