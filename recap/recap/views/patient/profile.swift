@@ -124,7 +124,7 @@ struct ProfileView: View {
                         }
                         .padding(20)
                         //                    .background(Color.white)
-                        .glassEffect(.clear, in: .rect)
+                        .glassEffect(.regular, in: .rect)
                         .cornerRadius(AppConfig.UI.cornerRadius)
                         .shadow(
                             color: AppConfig.Colors.accent.opacity(0.15), radius: 15, x: 0, y: 8
@@ -260,7 +260,7 @@ struct ProfileView: View {
                                 }
                             }
                             //                        .background(Color.white)
-                            .glassEffect(.clear, in: .rect)
+                            .glassEffect(.regular, in: .rect)
                             .cornerRadius(AppConfig.UI.cornerRadius)
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         }
@@ -276,7 +276,7 @@ struct ProfileView: View {
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 //                            .background(Color.white)
-                                .glassEffect(.clear, in: .rect)
+                                .glassEffect(.regular, in: .rect)
                                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
@@ -419,7 +419,7 @@ struct InfoTile: View {
         }
         .padding(AppConfig.UI.screenPadding - 10)
         //        .background(Color.white)
-        .glassEffect(.clear, in: .rect)
+        .glassEffect(.regular, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
     }

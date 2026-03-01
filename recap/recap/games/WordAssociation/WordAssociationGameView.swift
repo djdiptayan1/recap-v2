@@ -138,7 +138,7 @@ struct WordAssociationGameView: View {
                 .padding(.bottom, 24)
             }
         }
-        .standardBackground()
+//        .standardBackground()
     }
 }
 
