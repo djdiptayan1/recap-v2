@@ -35,7 +35,7 @@ router.post(
     body('bloodGroup').isString().notEmpty(),
     body('sex').isString().notEmpty(),
     body('stage').isString().notEmpty(),
-    body('profileImageBase64').isString().notEmpty(),
+    body('profileImageBase64').optional().isString(),
     patientSignup
 );
 
@@ -44,7 +44,7 @@ router.post(
     body('patient_documentId').isString().notEmpty().withMessage('patient_documentId is required'),
     body('email').isEmail().withMessage('Valid email is required'),
     body('name').isString().notEmpty().withMessage('Name is required'),
-    body('profileImageBase64').isString().notEmpty().withMessage('Image is required'),
+    body('profileImageBase64').optional().isString(),
     body('phone').isString().notEmpty().withMessage('Phone number is required'),
     body('relation').isString().notEmpty().withMessage('Relation is required'),
     familySignup

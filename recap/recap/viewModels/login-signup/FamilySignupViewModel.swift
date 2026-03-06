@@ -120,6 +120,7 @@ class FamilySignupViewModel: ObservableObject {
             email: email,
             name: fullName,
             profileImageBase64: profileImageBase64,
+            profileImageURL: profileImage == nil ? googleUser?.profileImageURL : nil,
             phone: phone,
             relation: relation
         )

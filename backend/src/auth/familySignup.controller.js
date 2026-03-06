@@ -11,6 +11,7 @@ export const familySignup = async (req, res, next) => {
             name,
             email,
             profileImageBase64,
+            profileImageURL: socialProfileImageURL,
             phone,
             relation
         } = req.body;
@@ -71,6 +72,9 @@ export const familySignup = async (req, res, next) => {
                     message: 'Failed to upload profile image'
                 });
             }
+        } else if (socialProfileImageURL) {
+            // Use the profile image URL from social login (Google/Apple) as fallback
+            imageURL = socialProfileImageURL;
         }
 
         const newFamilyMember = {

@@ -203,8 +203,6 @@ struct familySignupView: View {
                 text: $viewModel.email,
                 isPasswordVisible: .constant(false)
             )
-            .disabled(true)
-            .opacity(0.7)
 
             // Name (Pre-filled but editable)
             HStack(spacing: 12) {

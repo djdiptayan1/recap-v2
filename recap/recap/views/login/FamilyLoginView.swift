@@ -7,8 +7,8 @@
 
 import AuthenticationServices
 import CryptoKit
-import SwiftUI
 import FirebaseAuth
+import SwiftUI
 
 struct FamilyLoginView: View {
     @EnvironmentObject var appState: AppState
@@ -59,7 +59,10 @@ struct FamilyLoginView: View {
                                     HStack {
                                         if viewModel.isLoading {
                                             ProgressView()
-                                                .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+                                                .glassEffect(
+                                                    .regular,
+                                                    in: .rect(
+                                                        cornerRadius: AppConfig.UI.cornerRadius))
                                         }
                                         Text("Verify ID")
                                             .font(AppConfig.Fonts.headline)
@@ -234,10 +237,12 @@ struct FamilyLoginView: View {
     private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
-            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let appleIDToken = appleIDCredential.identityToken,
-                  let idTokenString = String(data: appleIDToken, encoding: .utf8),
-                  let nonce = AuthService.shared.getCurrentNonce()
+            guard
+                let appleIDCredential = authorization.credential
+                    as? ASAuthorizationAppleIDCredential,
+                let appleIDToken = appleIDCredential.identityToken,
+                let idTokenString = String(data: appleIDToken, encoding: .utf8),
+                let nonce = AuthService.shared.getCurrentNonce()
             else {
                 viewModel.alertMessage = "Unable to process Apple Sign-In."
                 viewModel.showAlert = true
@@ -254,7 +259,8 @@ struct FamilyLoginView: View {
 
                     if response.success {
                         if let familyUser = try? await viewModel.finalizeAppleLogin(
-                            response: response, email: email) {
+                            response: response, email: email)
+                        {
                             await MainActor.run {
                                 HapticManager.shared.trigger(.success)
                                 appState.currentUser = familyUser
@@ -273,6 +279,13 @@ struct FamilyLoginView: View {
                 } catch let error as NetworkError {
                     if case .httpError(let statusCode) = error, statusCode == 404 {
                         await MainActor.run {
+                            if let currentUser = Auth.auth().currentUser {
+                                viewModel.pendingGoogleUser = GoogleUserData(
+                                    email: currentUser.email ?? "",
+                                    name: currentUser.displayName ?? "",
+                                    profileImageURL: currentUser.photoURL?.absoluteString
+                                )
+                            }
                             viewModel.showSignupSheet = true
                         }
                     } else {
