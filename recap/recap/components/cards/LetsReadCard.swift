@@ -27,6 +27,7 @@ struct LetsReadCard: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                        .accessibilityHidden(true)
                 }
                 .padding(AppConfig.UI.padding)
 
@@ -36,11 +37,11 @@ struct LetsReadCard: View {
 
                 HStack(alignment: .top, spacing: 20) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Expand your mind")
+                        Text("Discover new stories")
                             .font(AppConfig.Fonts.bodyBold)
                             .foregroundColor(AppConfig.Colors.textPrimary)
 
-                        Text("Each word you read strengthens your journey. Keep exploring!")
+                        Text("Reading keeps the mind active and curious.")
                             .font(AppConfig.Fonts.small)
                             .foregroundColor(AppConfig.Colors.textSecondary)
                             .lineLimit(2)
@@ -48,11 +49,10 @@ struct LetsReadCard: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Image("BigShoesTorso")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 80, height: 80)
-                        .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    Image(systemName: "books.vertical.fill")
+                        .font(.system(size: 40))
+                        .foregroundColor(AppConfig.Colors.accent.opacity(0.3))
+                        .accessibilityHidden(true)
                 }
                 .padding(.horizontal, AppConfig.UI.padding)
                 .padding(.vertical, 14)
@@ -70,6 +70,10 @@ struct LetsReadCard: View {
             //                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
             //            )
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Let's Read")
+        .accessibilityHint("Discover new stories. Tap to browse articles.")
+        .accessibilityAddTraits(.isButton)
         .buttonStyle(PlainButtonStyle())
     }
 }

@@ -38,10 +38,6 @@ struct QuestionsCard: View {
         VStack(spacing: 0) {
             HStack {
                 HStack(spacing: 8) {
-                    //                    Image(systemName: "book.pages.fill")
-                    //                        .foregroundColor(AppConfig.Colors.accent)
-                    //                        .font(.system(size: 16))
-
                     Text("Daily Questions")
                         .font(AppConfig.Fonts.headline)
                         .foregroundColor(AppConfig.Colors.textPrimary)
@@ -52,6 +48,7 @@ struct QuestionsCard: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                    .accessibilityHidden(true)
             }
             .padding(AppConfig.UI.padding)
 
@@ -78,23 +75,22 @@ struct QuestionsCard: View {
                     .scaledToFill()
                     .frame(width: 80, height: 80)
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, AppConfig.UI.padding)
             .padding(.vertical, 14)
         }
-        //        .background(Color.white)
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-        //        .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(
             color: Color.black.opacity(0.05),
             radius: AppConfig.UI.cardShadowRadius,
             x: 0,
             y: AppConfig.UI.cardShadowOffsetY
         )
-        //            .overlay(
-        //                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-        //                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-        //            )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Daily Questions")
+        .accessibilityHint("Keep your memory sharp. Tap to start your daily check-in.")
+        .accessibilityAddTraits(.isButton)
     }
 
     @ViewBuilder

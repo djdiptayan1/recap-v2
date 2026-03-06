@@ -33,7 +33,9 @@ struct patientSignupView: View {
                                 .frame(width: 80, height: 80)
                                 .shadow(
                                     color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0,
-                                    y: 10)
+                                    y: 10
+                                )
+                                .accessibilityHidden(true)
 
                             VStack(spacing: 6) {
                                 Text(
@@ -244,7 +246,7 @@ struct patientSignupView: View {
                     .labelsHidden()
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(AppConfig.UI.cornerRadius)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                     .overlay(
@@ -273,7 +275,7 @@ struct patientSignupView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(AppConfig.UI.cornerRadius)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                     .overlay(
@@ -300,7 +302,7 @@ struct patientSignupView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(AppConfig.UI.cornerRadius)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                     .overlay(

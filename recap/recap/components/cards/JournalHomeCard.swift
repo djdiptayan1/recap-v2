@@ -11,15 +11,18 @@ struct JournalHomeCard: View {
         NavigationLink(destination: JournalView()) {
             VStack(spacing: 0) {
                 HStack {
-                    Text("My Journal")
-                        .font(AppConfig.Fonts.headline)
-                        .foregroundColor(AppConfig.Colors.textPrimary)
+                    HStack(spacing: 8) {
+                        Text("Journal")
+                            .font(AppConfig.Fonts.headline)
+                            .foregroundColor(AppConfig.Colors.textPrimary)
+                    }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                        .accessibilityHidden(true)
                 }
                 .padding(AppConfig.UI.padding)
 
@@ -27,34 +30,22 @@ struct JournalHomeCard: View {
                     .background(AppConfig.Colors.stroke)
                     .padding(.horizontal, AppConfig.UI.padding)
 
-                HStack(alignment: .top, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Capture your memories")
-                            .font(AppConfig.Fonts.bodyBold)
-                            .foregroundColor(AppConfig.Colors.textPrimary)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Capture your thoughts")
+                        .font(AppConfig.Fonts.bodyBold)
+                        .foregroundColor(AppConfig.Colors.textPrimary)
 
-                        Text("Write or record your thoughts and feelings every day.")
-                            .font(AppConfig.Fonts.small)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
-                            .lineLimit(2)
-                            .lineSpacing(4)
-                    }
-
-                    Spacer()
-
-                    ZStack {
-//                        Circle()
-//                            .fill(AppConfig.Colors.accent.opacity(0.15))
-//                            .frame(width: 64, height: 64)
-                        Image(systemName: "book.closed.fill")
-                            .font(.system(size: 28))
-                            .foregroundColor(AppConfig.Colors.accent)
-                    }
+                    Text("Writing helps preserve memories and track your journey.")
+                        .font(AppConfig.Fonts.small)
+                        .foregroundColor(AppConfig.Colors.textSecondary)
+                        .lineLimit(2)
+                        .lineSpacing(4)
                 }
-                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AppConfig.UI.padding)
+                .padding(.vertical, 14)
             }
             .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-            .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(
                 color: Color.black.opacity(0.05),
                 radius: AppConfig.UI.cardShadowRadius,
@@ -62,6 +53,10 @@ struct JournalHomeCard: View {
                 y: AppConfig.UI.cardShadowOffsetY
             )
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Journal")
+        .accessibilityHint("Capture your thoughts. Tap to open your journal.")
+        .accessibilityAddTraits(.isButton)
         .buttonStyle(PlainButtonStyle())
     }
 }

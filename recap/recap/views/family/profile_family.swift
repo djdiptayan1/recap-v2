@@ -31,7 +31,7 @@ struct ProfileFamilyView: View {
                         VStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white)
+                                    .fill(Color(UIColor.systemBackground))
                                     .frame(width: 110, height: 110)
                                     .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
 
@@ -239,7 +239,8 @@ struct ProfileFamilyView: View {
                     showDeleteConfirmation = true
                 }
             } message: {
-                Text("This action is permanent and cannot be undone. All your data will be deleted.")
+                Text(
+                    "This action is permanent and cannot be undone. All your data will be deleted.")
             }
             .alert("Confirm Deletion", isPresented: $showDeleteConfirmation) {
                 TextField("Type DELETE to confirm", text: $deleteConfirmationText)
@@ -268,7 +269,8 @@ struct ProfileFamilyView: View {
     }
 
     private func deleteAccount() {
-        let documentId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+        let documentId =
+            KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
         guard !documentId.isEmpty else { return }
         isDeleting = true
         Task {
@@ -327,9 +329,13 @@ struct QuizHistoryRow: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(report.safeStatus). Score: \(report.safeTotalScore) out of \(report.safeTotalQuestions). Date: \(formatDate(dateString: report.date))"
+        )
     }
 
     // Helper to try formatting the date string nicely

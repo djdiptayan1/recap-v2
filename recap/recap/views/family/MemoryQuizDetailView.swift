@@ -29,6 +29,7 @@ struct MemoryQuizDetailView: View {
                             .foregroundColor(report.swiftColor)
                     }
                     .shadow(color: report.swiftColor.opacity(0.2), radius: 10, x: 0, y: 5)
+                    .accessibilityHidden(true)
 
                     VStack(spacing: 4) {
                         Text(report.safeStatus)
@@ -41,6 +42,7 @@ struct MemoryQuizDetailView: View {
                     }
                 }
                 .padding(.top, 20)
+                .accessibilityElement(children: .combine)
 
                 // MARK: - 2. Key Stats Grid
                 HStack(spacing: 16) {
@@ -77,7 +79,7 @@ struct MemoryQuizDetailView: View {
                             }
                         }
                         .padding(20)
-                        .background(Color.white)
+                        .background(Color(UIColor.systemBackground))
                         .cornerRadius(20)
                         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
                     }
@@ -154,9 +156,11 @@ struct StatCard: View {
             }
         }
         .padding(16)
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title): \(value)")
     }
 }
 

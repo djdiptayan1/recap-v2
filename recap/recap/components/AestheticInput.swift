@@ -14,7 +14,7 @@ struct AestheticInput: View {
     var isSecure: Bool = false
     var showToggle: Bool = false
     @Binding var isPasswordVisible: Bool
-    
+
     // Derived binding to handle the secure toggle logic
     private var shouldShowSecure: Bool {
         return isSecure && !isPasswordVisible
@@ -28,11 +28,12 @@ struct AestheticInput: View {
                     Circle()
                         .fill(AppConfig.Colors.accent.opacity(0.1))
                         .frame(width: 36, height: 36)
-                    
+
                     Image(systemName: icon)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(AppConfig.Colors.accent)
                 }
+                .accessibilityHidden(true)
 
                 // Input Field
                 Group {
@@ -53,10 +54,12 @@ struct AestheticInput: View {
                         Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
                             .foregroundColor(AppConfig.Colors.textSecondary)
                     }
+                    .accessibilityLabel(isPasswordVisible ? "Hide password" : "Show password")
+                    .accessibilityHint("Toggles password visibility.")
                 }
             }
             .padding(12)
-//            .background(Color.white) // Clean white background
+            //            .background(Color.white) // Clean white background
             .glassEffect(.clear, in: .rect)
             .cornerRadius(AppConfig.UI.cornerRadius)
             // Soft Shadow + Border

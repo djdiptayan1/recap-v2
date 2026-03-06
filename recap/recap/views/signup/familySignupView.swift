@@ -111,7 +111,9 @@ struct familySignupView: View {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
-                                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+                                            .glassEffect(
+                                                .regular,
+                                                in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                     } else {
                                         Text(buttonTitle)
                                             .font(AppConfig.Fonts.headline)
@@ -256,7 +258,7 @@ struct familySignupView: View {
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
                     .cornerRadius(AppConfig.UI.cornerRadius)
                     .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                     .overlay(

@@ -75,6 +75,7 @@ struct PatientLoginView: View {
                 .shadow(
                     color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10
                 )
+                .accessibilityHidden(true)
 
             VStack(spacing: 6) {
                 Text("Welcome Back")
@@ -149,6 +150,8 @@ struct PatientLoginView: View {
                 color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
         }
         .disabled(viewModel.isLoading)
+        .accessibilityLabel(viewModel.isLoading ? "Logging in" : "Log In")
+        .accessibilityHint("Logs in with your email and password.")
     }
 
     private var dividerSection: some View {
@@ -161,6 +164,7 @@ struct PatientLoginView: View {
         }
         .padding(.vertical, 30)
         .padding(.horizontal, 40)
+        .accessibilityHidden(true)
     }
 
     private var socialSignInSection: some View {
@@ -186,7 +190,7 @@ struct PatientLoginView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 56)
-            .background(Color.white)
+            .background(Color(UIColor.systemBackground))
             .cornerRadius(AppConfig.UI.cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)

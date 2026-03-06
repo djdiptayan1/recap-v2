@@ -8,7 +8,7 @@ import SwiftUI
 
 struct FamilyCard: View {
     let member: FamilyMember
-    
+
     // Color logic
     private var relationshipColor: Color {
         switch member.relation.lowercased() {
@@ -17,10 +17,10 @@ struct FamilyCard: View {
         default: return AppConfig.Colors.accent
         }
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            
+
             // 1. Full Image
             GeometryReader { geo in
                 AsyncImage(url: URL(string: member.imageURL)) { phase in
@@ -41,7 +41,7 @@ struct FamilyCard: View {
                     }
                 }
             }
-            
+
             // 2. Gradient Overlay (Improved visibility)
             LinearGradient(
                 colors: [.black.opacity(0.8), .black.opacity(0.0)],
@@ -49,7 +49,8 @@ struct FamilyCard: View {
                 endPoint: .center
             )
             .frame(height: 120)
-            
+            .accessibilityHidden(true)
+
             // 3. Info Layer
             HStack(alignment: .bottom, spacing: 0) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -63,18 +64,18 @@ struct FamilyCard: View {
                         .background(relationshipColor)
                         .clipShape(Capsule())
                         .shadow(radius: 2)
-                    
+
                     // Name (Scaled to fit)
                     Text(member.name)
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundColor(.white)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.6) // Prevents truncation like "Bo..."
+                        .minimumScaleFactor(0.6)  // Prevents truncation like "Bo..."
                         .shadow(radius: 2)
                 }
-                
+
                 Spacer(minLength: 8)
-                
+
                 // Call Button
                 Button(action: {
                     if let url = URL(string: "tel://\(member.phone)") {
@@ -91,11 +92,14 @@ struct FamilyCard: View {
                         )
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
+                .accessibilityLabel("Call \(member.name)")
+                .accessibilityHint("Makes a phone call to \(member.name).")
+                .accessibilityAddTraits(.isButton)
             }
             .padding(16)
         }
-        .frame(height: 220) // Reduced height slightly to balance the width
-//        .background(Color.white)
+        .frame(height: 220)  // Reduced height slightly to balance the width
+        //        .background(Color.white)
         .glassEffect(.clear, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         // Soft Shadow to lift card off background
@@ -107,16 +111,17 @@ struct FamilyCard: View {
     ZStack {
         // Grey background to see the card clearly
         Color.gray.opacity(0.2).ignoresSafeArea()
-        
+
         let familyMember = FamilyMember(
             id: UUID().uuidString,
             name: "Jack Puth",
             relation: "Husband",
             phone: "8208457322",
             email: "contact@example.com",
-            imageURL: "https://as1.ftcdn.net/v2/jpg/02/99/04/20/1000_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg"
+            imageURL:
+                "https://as1.ftcdn.net/v2/jpg/02/99/04/20/1000_F_299042079_vGBD7wIlSeNl7vOevWHiL93G4koMM967.jpg"
         )
-        
+
         FamilyCard(member: familyMember)
             .padding()
     }

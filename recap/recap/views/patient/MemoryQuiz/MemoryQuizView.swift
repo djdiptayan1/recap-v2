@@ -47,6 +47,8 @@ struct MemoryQuizView: View {
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Question \(viewModel.currentIndex + 1) of \(viewModel.questions.count)")
 
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
@@ -63,7 +65,7 @@ struct MemoryQuizView: View {
                                 }
                             }
                             .frame(height: 8)
-                        }
+                            .accessibilityHidden(true)
                         .padding(AppConfig.UI.screenPadding)
                         .padding(.top, 30)
 
@@ -88,6 +90,8 @@ struct MemoryQuizView: View {
                             }) {
                                 AnswerButtonLabel(text: "True", color: AppConfig.Colors.accent)
                             }
+                            .accessibilityLabel("True")
+                            .accessibilityHint("Select True as your answer.")
 
                             Button(action: {
                                 HapticManager.shared.trigger(.selection)
@@ -96,6 +100,8 @@ struct MemoryQuizView: View {
                                 AnswerButtonLabel(
                                     text: "False", color: AppConfig.Colors.textSecondary)
                             }
+                            .accessibilityLabel("False")
+                            .accessibilityHint("Select False as your answer.")
                         }
                         .padding(AppConfig.UI.screenPadding)
                         .padding(.bottom, 20)
@@ -137,6 +143,7 @@ struct QuestionCard: View {
             Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
                 .font(.system(size: 40))
                 .foregroundColor(AppConfig.Colors.accent.opacity(0.6))
+                .accessibilityHidden(true)
 
             Text(question.question)
                 .font(AppConfig.Fonts.headline)
@@ -147,13 +154,14 @@ struct QuestionCard: View {
         }
         .padding(30)
         .frame(maxWidth: .infinity)
-        .background(Color.white)
+        .background(Color(UIColor.systemBackground))
         .cornerRadius(24)
         .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 10)
         .overlay(
             RoundedRectangle(cornerRadius: 24)
                 .stroke(AppConfig.Colors.stroke, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
     }
 }
 

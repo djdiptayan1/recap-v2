@@ -19,8 +19,10 @@ struct StreaksCard: View {
 
     var body: some View {
         // Use patientDocumentID for Streaks data
-        let documentID = KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id ?? ""
-        
+        let documentID =
+            KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id
+            ?? ""
+
         NavigationLink(destination: StreaksView(documentID: documentID)) {
             VStack(spacing: 0) {
                 HStack {
@@ -33,6 +35,7 @@ struct StreaksCard: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                        .accessibilityHidden(true)
                 }
                 .padding(AppConfig.UI.padding)
 
@@ -69,17 +72,18 @@ struct StreaksCard: View {
                 .padding(.vertical, 20)
             }
             .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-//            .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(
                 color: Color.black.opacity(0.05),
                 radius: AppConfig.UI.cardShadowRadius,
                 x: 0,
                 y: AppConfig.UI.cardShadowOffsetY
             )
-//            .overlay(
-//                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-//                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-//            )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(
+                "Daily Insight. Max streak \(viewModel.maxStreak), Current streak \(viewModel.currentStreak), Active days \(viewModel.activeDays)"
+            )
+            .accessibilityHint("Tap to view your streaks calendar.")
+            .accessibilityAddTraits(.isButton)
             .onAppear {
                 if !documentID.isEmpty {
                     viewModel.updateDocumentID(documentID)
@@ -101,24 +105,13 @@ struct StreaksCard: View {
 }
 
 struct SingleStatColumn: View {
-//    let icon: String
+    //    let icon: String
     let color: Color
     let value: String
     let label: String
 
-
     var body: some View {
         VStack(spacing: 8) {
-//            ZStack {
-//                Circle()
-//                    .fill(color.opacity(0.1))
-//                    .frame(width: 32, height: 32)
-//
-//                Image(systemName: icon)
-//                    .font(.system(size: 14, weight: .bold))
-//                    .foregroundColor(color)
-//            }
-
             VStack(spacing: 2) {
                 Text(value)
                     .font(AppConfig.Fonts.titleMedium)
@@ -132,6 +125,8 @@ struct SingleStatColumn: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
 

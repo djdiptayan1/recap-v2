@@ -27,7 +27,9 @@ struct FamilyLoginView: View {
                                 .frame(width: 80, height: 80)
                                 .shadow(
                                     color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0,
-                                    y: 10)
+                                    y: 10
+                                )
+                                .accessibilityHidden(true)
 
                             VStack(spacing: 6) {
                                 Text("Family Access")
@@ -117,13 +119,18 @@ struct FamilyLoginView: View {
                                     }
                                 }
                                 .padding(16)
-                                .background(Color.white)
+                                .background(Color(UIColor.systemBackground))
                                 .cornerRadius(AppConfig.UI.cornerRadius)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
                                         .stroke(AppConfig.Colors.success.opacity(0.5), lineWidth: 1)
                                 )
                                 .transition(.scale.combined(with: .opacity))
+                                .accessibilityElement(children: .ignore)
+                                .accessibilityLabel(
+                                    "Patient ID verified. Patient found successfully."
+                                )
+                                .accessibilityHint("Tap the close button to reset verification.")
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
@@ -154,7 +161,7 @@ struct FamilyLoginView: View {
                                     }
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 56)
-                                    .background(Color.white)
+                                    .background(Color(UIColor.systemBackground))
                                     .cornerRadius(AppConfig.UI.cornerRadius)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)

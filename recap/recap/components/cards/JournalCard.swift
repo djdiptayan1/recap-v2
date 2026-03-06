@@ -86,6 +86,7 @@ struct JournalCard: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                    .accessibilityHidden(true)
             }
         }
         .padding(AppConfig.UI.padding)
@@ -96,5 +97,18 @@ struct JournalCard: View {
             x: 0,
             y: AppConfig.UI.cardShadowOffsetY
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            {
+                var label = entry.title ?? "Journal entry"
+                if entry.isMemory { label += ", Memory" }
+                label += ", \(entry.formattedDate)"
+                if entry.hasPhotos { label += ", has photos" }
+                if entry.hasAudio { label += ", has audio" }
+                return label
+            }()
+        )
+        .accessibilityHint("Tap to read this journal entry.")
+        .accessibilityAddTraits(.isButton)
     }
 }

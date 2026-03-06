@@ -31,7 +31,8 @@ struct ProfileView: View {
         guard let date = formatter.date(from: latest.date) else {
             return "Last check: \(latest.date)"
         }
-        let components = Calendar.current.dateComponents([.minute, .hour, .day, .weekOfYear, .month], from: date, to: Date())
+        let components = Calendar.current.dateComponents(
+            [.minute, .hour, .day, .weekOfYear, .month], from: date, to: Date())
         if let months = components.month, months > 0 {
             return "Last check: \(months) month\(months == 1 ? "" : "s") ago"
         } else if let weeks = components.weekOfYear, weeks > 0 {
@@ -55,7 +56,7 @@ struct ProfileView: View {
                         VStack(spacing: 12) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.white)
+                                    .fill(Color(UIColor.systemBackground))
                                     .frame(width: 110, height: 110)
                                     .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
 
@@ -295,7 +296,9 @@ struct ProfileView: View {
             .scrollIndicators(.hidden)
             //            .navigationTitle("Profile")
             .onAppear {
-                let patientId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+                let patientId =
+                    KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id
+                    ?? ""
                 if !patientId.isEmpty {
                     Task {
                         await quizViewModel.fetchMemoryReports(patientId: patientId)
@@ -323,7 +326,8 @@ struct ProfileView: View {
                     showDeleteConfirmation = true
                 }
             } message: {
-                Text("This action is permanent and cannot be undone. All your data will be deleted.")
+                Text(
+                    "This action is permanent and cannot be undone. All your data will be deleted.")
             }
             .alert("Confirm Deletion", isPresented: $showDeleteConfirmation) {
                 TextField("Type DELETE to confirm", text: $deleteConfirmationText)
@@ -359,7 +363,8 @@ struct ProfileView: View {
     }
 
     private func deleteAccount() {
-        let documentId = KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
+        let documentId =
+            KeychainManager.shared.getString(key: .documentID) ?? appState.currentUser?.id ?? ""
         guard !documentId.isEmpty else { return }
         isDeleting = true
         Task {

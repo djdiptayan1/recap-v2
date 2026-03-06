@@ -30,10 +30,10 @@ struct GamesCard: View {
             // Icon with soft glow
             ZStack {
                 // Subtle glow behind the icon
-//                Circle()
-//                    .fill(cardTintColor.opacity(0.25))
-//                    .frame(width: 70, height: 70)
-//                    .blur(radius: 16)
+                //                Circle()
+                //                    .fill(cardTintColor.opacity(0.25))
+                //                    .frame(width: 70, height: 70)
+                //                    .blur(radius: 16)
 
                 // Inner glass circle
                 Circle()
@@ -76,5 +76,8 @@ struct GamesCard: View {
             .regular.tint(cardTintColor).interactive(),
             in: .rect(cornerRadius: AppConfig.UI.cornerRadius)
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(game.name). \(game.description)")
+        .accessibilityAddTraits(.isButton)
     }
 }

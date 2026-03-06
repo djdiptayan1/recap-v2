@@ -27,10 +27,13 @@ struct QuizResultView: View {
                             .font(.system(size: 40))
                             .foregroundColor(result.color)
                     }
+                    .accessibilityHidden(true)
 
                     Text("Your Score: \(result.score) / \(result.totalQuestions)")
                         .font(AppConfig.Fonts.titleMedium)
                         .foregroundColor(AppConfig.Colors.textPrimary)
+                        .accessibilityLabel(
+                            "Your score is \(result.score) out of \(result.totalQuestions)")
                 }
                 .padding(.top, 40)
 
@@ -48,14 +51,16 @@ struct QuizResultView: View {
                         .lineSpacing(6)
                 }
                 .padding(24)
-                .background(Color.white)
+                .background(Color(UIColor.systemBackground))
                 .cornerRadius(20)
                 .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
+                .accessibilityElement(children: .combine)
 
                 // Disclaimer
                 HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "info.circle")
                         .foregroundColor(.secondary)
+                        .accessibilityHidden(true)
                     Text(
                         "This quiz is for awareness only and does not constitute a medical diagnosis."
                     )
@@ -80,6 +85,8 @@ struct QuizResultView: View {
                             .background(AppConfig.Colors.textPrimary)
                             .cornerRadius(16)
                     }
+                    .accessibilityLabel("Done")
+                    .accessibilityHint("Exits the quiz.")
 
                     Button(action: {
                         HapticManager.shared.trigger(.selection)
@@ -89,6 +96,8 @@ struct QuizResultView: View {
                             .font(.subheadline)
                             .foregroundColor(AppConfig.Colors.textSecondary)
                     }
+                    .accessibilityLabel("Retake Quiz")
+                    .accessibilityHint("Restarts the memory quiz.")
                 }
                 .padding(.horizontal, 20)
             }
