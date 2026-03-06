@@ -124,7 +124,7 @@ struct ProfileView: View {
                         }
                         .padding(20)
                         //                    .background(Color.white)
-                        .glassEffect(.clear, in: .rect)
+                        .glassEffect(.regular, in: .rect)
                         .cornerRadius(AppConfig.UI.cornerRadius)
                         .shadow(
                             color: AppConfig.Colors.accent.opacity(0.15), radius: 15, x: 0, y: 8
@@ -260,7 +260,7 @@ struct ProfileView: View {
                                 }
                             }
                             //                        .background(Color.white)
-                            .glassEffect(.clear, in: .rect)
+                            .glassEffect(.regular, in: .rect)
                             .cornerRadius(AppConfig.UI.cornerRadius)
                             .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                         }
@@ -276,7 +276,7 @@ struct ProfileView: View {
                                 .padding()
                                 .frame(maxWidth: .infinity)
                                 //                            .background(Color.white)
-                                .glassEffect(.clear, in: .rect)
+                                .glassEffect(.regular, in: .rect)
                                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
@@ -310,6 +310,7 @@ struct ProfileView: View {
             .alert("Log Out", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
+                    DataPrefetchManager.shared.invalidateAll()
                     try? AuthService.shared.signOut()
                     appState.currentUser = nil
                 }
@@ -365,6 +366,7 @@ struct ProfileView: View {
             do {
                 try await AuthService.shared.deleteAccount(documentId: documentId)
                 await MainActor.run {
+                    DataPrefetchManager.shared.invalidateAll()
                     isDeleting = false
                     appState.currentUser = nil
                 }
@@ -417,7 +419,7 @@ struct InfoTile: View {
         }
         .padding(AppConfig.UI.screenPadding - 10)
         //        .background(Color.white)
-        .glassEffect(.clear, in: .rect)
+        .glassEffect(.regular, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
     }

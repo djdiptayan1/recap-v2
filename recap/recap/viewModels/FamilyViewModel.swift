@@ -52,6 +52,14 @@ class FamilyViewModel: ObservableObject {
     @MainActor
     func fetchFamilyMembers() async {
         guard !documentID.isEmpty else { return }
+        guard familyMembers.isEmpty else { return }
+
+        // Use prefetched data if available
+        if let cached = DataPrefetchManager.shared.familyMembers {
+            self.familyMembers = cached
+            return
+        }
+
         isLoading = true
         errorMessage = nil
         

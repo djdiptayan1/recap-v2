@@ -14,7 +14,8 @@ export const patientSignup = async (req, res, next) => {
             bloodGroup,
             sex,
             stage,
-            profileImageBase64 } = req.body;
+            profileImageBase64,
+            profileImageURL: socialProfileImageURL } = req.body;
 
         let profileImageURL = "";
 
@@ -45,6 +46,9 @@ export const patientSignup = async (req, res, next) => {
                     message: 'Failed to upload profile image'
                 });
             }
+        } else if (socialProfileImageURL) {
+            // Use the profile image URL from social login (Google/Apple) as fallback
+            profileImageURL = socialProfileImageURL;
         }
 
         // Generate Unique ID

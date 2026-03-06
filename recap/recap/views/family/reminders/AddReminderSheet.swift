@@ -86,28 +86,30 @@ struct AddReminderSheet: View {
                 trailing: Button("Save") {
                     let details = buildCategoryDetails()
                     if let reminder = reminderToEdit {
-                        viewModel.editReminder(
-                            patientId: patientId,
-                            reminderId: reminder.id,
-                            title: title,
-                            category: selectedCategory,
-                            frequency: selectedFrequency,
-                            time: time,
-                            notes: notes,
-                            categoryDetails: details
-                        ) { success in
+                        Task {
+                            let success = await viewModel.editReminder(
+                                patientId: patientId,
+                                reminderId: reminder.id,
+                                title: title,
+                                category: selectedCategory,
+                                frequency: selectedFrequency,
+                                time: time,
+                                notes: notes,
+                                categoryDetails: details
+                            )
                             if success { dismiss() }
                         }
                     } else {
-                        viewModel.addReminder(
-                            patientId: patientId,
-                            title: title,
-                            category: selectedCategory,
-                            frequency: selectedFrequency,
-                            time: time,
-                            notes: notes,
-                            categoryDetails: details
-                        ) { success in
+                        Task {
+                            let success = await viewModel.addReminder(
+                                patientId: patientId,
+                                title: title,
+                                category: selectedCategory,
+                                frequency: selectedFrequency,
+                                time: time,
+                                notes: notes,
+                                categoryDetails: details
+                            )
                             if success { dismiss() }
                         }
                     }

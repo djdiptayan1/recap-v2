@@ -45,7 +45,7 @@ struct ArticleDetailView: View {
                     // Main Text - High Readability
                     Text(article.content)
                         .font(.system(size: 19, weight: .regular, design: .serif))  // Serif + Large size
-                        .foregroundColor(Color(hex: "2C2C2C"))  // Soft Black
+                        .foregroundColor(AppConfig.Colors.textSecondary)
                         .lineSpacing(8)  // Extra breathing room
 
                     // Citation Box
@@ -82,9 +82,8 @@ struct ArticleDetailView: View {
                     }
                     .padding(.top, 10)
                 }
-                .padding(24)
-                .background(Color.white)
-                .cornerRadius(24)
+                .padding(AppConfig.UI.screenPadding - 10)
+                .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                 .offset(y: -40)  // Overlap effect
             }
         }

@@ -13,6 +13,7 @@ struct PatternMemoryInstructionView: View {
     var body: some View {
         VStack(spacing: 24) {
             Image(systemName: "square.grid.2x2.fill")
+            Image(systemName: "square.grid.2x2.fill")
                 .font(.system(size: 80))
                 .foregroundColor(AppConfig.Colors.accent)
                 .padding(30)
@@ -45,7 +46,7 @@ struct PatternMemoryInstructionView: View {
             .padding(.top, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .standardBackground()
+//        .standardBackground()
     }
 }
 

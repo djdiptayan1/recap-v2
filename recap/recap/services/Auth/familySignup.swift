@@ -9,27 +9,27 @@ import Foundation
 
 class FamilySignupService {
     static let shared = FamilySignupService()
-    
+
     private init() {}
-    
+
     // MARK: - API Endpoints
     private enum FamilySignupAPI: Endpoint {
         case createProfile(request: FamilySignupRequest)
-        
+
         var path: String {
             switch self {
             case .createProfile:
                 return AppConfig.ApiEndpoints.familySignupCompletion
             }
         }
-        
+
         var method: HTTPMethod {
             switch self {
             case .createProfile:
                 return .post
             }
         }
-        
+
         var body: Encodable? {
             switch self {
             case .createProfile(let request):
@@ -40,7 +40,8 @@ class FamilySignupService {
 
     // MARK: - Create Family Profile (Backend API)
     func createFamilyProfile(request: FamilySignupRequest) async throws -> FamilySignupResponse {
-        return try await NetworkManager.shared.request(endpoint: FamilySignupAPI.createProfile(request: request))
+        return try await NetworkManager.shared.request(
+            endpoint: FamilySignupAPI.createProfile(request: request))
     }
 }
 
@@ -50,6 +51,7 @@ struct FamilySignupRequest: Codable {
     let email: String
     let name: String
     let profileImageBase64: String
+    let profileImageURL: String?
     let phone: String
     let relation: String
 }

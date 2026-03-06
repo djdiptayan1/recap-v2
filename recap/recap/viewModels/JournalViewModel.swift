@@ -89,6 +89,14 @@ class JournalViewModel: ObservableObject {
     // MARK: - Fetch Methods
 
     func fetchEntries(patientId: String) async {
+        guard entries.isEmpty else { return }
+
+        // Use prefetched data if available
+        if let cached = DataPrefetchManager.shared.journalEntries {
+            self.entries = cached
+            return
+        }
+
         isLoading = true
         errorMessage = nil
 

@@ -14,7 +14,6 @@ struct JournalView: View {
         ZStack {
             if viewModel.isLoading && viewModel.entries.isEmpty {
                 ProgressView()
-                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     .scaleEffect(1.5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.entries.isEmpty {

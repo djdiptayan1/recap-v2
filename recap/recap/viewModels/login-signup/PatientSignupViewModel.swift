@@ -51,6 +51,25 @@ class PatientSignupViewModel: ObservableObject {
     let stages = ["Early", "Middle", "Late"]
 
     private var userId: String?
+    var socialUser: SocialUserData?
+
+    // MARK: - Initializer
+
+    init(socialUser: SocialUserData? = nil) {
+        self.socialUser = socialUser
+        if let user = socialUser {
+            self.email = user.email
+            let components = user.name.components(separatedBy: " ")
+            if let first = components.first {
+                self.firstName = first
+            }
+            if components.count > 1 {
+                self.lastName = components.dropFirst().joined(separator: " ")
+            }
+            self.userId = user.uid
+            self.currentStep = .details  // Skip credentials step for social auth
+        }
+    }
 
     // MARK: - Actions
 
@@ -154,7 +173,8 @@ class PatientSignupViewModel: ObservableObject {
             bloodGroup: bloodGroup,
             sex: sex,
             stage: stage,
-            profileImageBase64: profileImageBase64 ?? ""
+            profileImageBase64: profileImageBase64 ?? "",
+            profileImageURL: profileImage == nil ? socialUser?.profileImageURL : nil
         )
 
         Task {
@@ -162,14 +182,31 @@ class PatientSignupViewModel: ObservableObject {
                 // 1. Create Profile in Backend
                 try await PatientSignupService.shared.createPatientProfile(request: request)
 
-                // 2. Auto-Login (Fetch full user model & save to Keychain)
-                // We use the already known credentials
-                let user = try await AuthService.shared.signIn(email: email, password: password)
+                let user: patientModel
 
-                // 3. Mark as verified locally (redundant with login but safe)
+                if socialUser != nil {
+                    // Social login users are already authenticated via Firebase.
+                    // Just fetch the profile from backend — no password sign-in needed.
+                    user = try await AuthService.shared.fetchUser(email: email)
+
+                    // Save to Keychain (signIn does this automatically, but we need to do it manually here)
+                    if let id = user.id {
+                        try? KeychainManager.shared.save(key: .documentID, value: id)
+                        try? KeychainManager.shared.save(key: .patientDocumentID, value: id)
+                    }
+                    if !user.patientUID.isEmpty {
+                        try? KeychainManager.shared.save(key: .patientUID, value: user.patientUID)
+                    }
+                    try? KeychainManager.shared.save(key: .userType, value: "patient")
+                } else {
+                    // Email/password signup — sign in with credentials
+                    user = try await AuthService.shared.signIn(email: email, password: password)
+                }
+
+                // 2. Mark as verified locally
                 UserDefaults.standard.set(uid, forKey: "verifiedUserDocID")
 
-                // 4. Trigger Navigation via AppState (by setting signedInUser)
+                // 3. Trigger Navigation via AppState (by setting signedInUser)
                 await MainActor.run {
                     self.isLoading = false
                     self.signedInUser = user

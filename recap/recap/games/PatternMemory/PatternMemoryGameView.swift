@@ -107,7 +107,7 @@ struct PatternMemoryGameView: View {
                     .padding(.bottom, 24)
             }
         }
-        .standardBackground()
+//        .standardBackground()
         .animation(.easeInOut(duration: 0.3), value: viewModel.currentPhase)
     }
 

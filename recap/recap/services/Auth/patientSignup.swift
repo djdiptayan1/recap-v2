@@ -9,27 +9,27 @@ import Foundation
 
 class PatientSignupService {
     static let shared = PatientSignupService()
-    
+
     private init() {}
-    
+
     // MARK: - API Endpoints
     private enum PatientSignupAPI: Endpoint {
         case createProfile(request: PatientSignupRequest)
-        
+
         var path: String {
             switch self {
             case .createProfile:
                 return AppConfig.ApiEndpoints.patientSignupCompletion
             }
         }
-        
+
         var method: HTTPMethod {
             switch self {
             case .createProfile:
                 return .post
             }
         }
-        
+
         var body: Encodable? {
             switch self {
             case .createProfile(let request):
@@ -41,7 +41,8 @@ class PatientSignupService {
     // MARK: - Create Patient Profile (Backend API)
     func createPatientProfile(request: PatientSignupRequest) async throws {
         // We expect a successful response, even if empty/generic
-        let _: PatientSignupResponse = try await NetworkManager.shared.request(endpoint: PatientSignupAPI.createProfile(request: request))
+        let _: PatientSignupResponse = try await NetworkManager.shared.request(
+            endpoint: PatientSignupAPI.createProfile(request: request))
     }
 }
 
@@ -56,6 +57,7 @@ struct PatientSignupRequest: Codable {
     let sex: String
     let stage: String
     let profileImageBase64: String
+    let profileImageURL: String?
 }
 
 // Response matching backend: { "message": "...", "user": { ... } }
@@ -63,4 +65,3 @@ struct PatientSignupResponse: Codable {
     let message: String
     let user: patientModel?
 }
-

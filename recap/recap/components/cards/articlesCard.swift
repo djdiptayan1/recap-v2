@@ -18,11 +18,11 @@ struct ArticleCard: View {
                     .indicator(.activity)
                     .transition(.fade(duration: 0.5))
                     .scaledToFill()
-                .frame(height: 180)
-                .clipped()
-                .overlay(
-                    LinearGradient(colors: [.black.opacity(0.3), .clear], startPoint: .bottom, endPoint: .center)
-                )
+                    .frame(height: 180)
+                    .clipped()
+                    .overlay(
+                        LinearGradient(colors: [.black.opacity(0.3), .clear], startPoint: .bottom, endPoint: .center)
+                    )
                 
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
@@ -36,6 +36,9 @@ struct ArticleCard: View {
                 .cornerRadius(AppConfig.UI.cornerRadius)
                 .padding(12)
             }
+            .frame(height: 180)
+            .clipped()
+            .clipShape(RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius))
             
             VStack(alignment: .leading, spacing: 10) {
                 Text(article.title)
@@ -54,8 +57,7 @@ struct ArticleCard: View {
             }
             .padding(16)
         }
-        .background(Color.white)
-        .cornerRadius(AppConfig.UI.cornerRadius)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
 //        .overlay(
 //            RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)

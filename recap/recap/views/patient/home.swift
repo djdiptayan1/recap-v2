@@ -14,7 +14,7 @@ struct home: View {
     @State private var showProfile = false
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     QuestionsCard(hasFamilyMembers: !familyViewModel.familyMembers.isEmpty)
                     StreaksCard()
@@ -41,9 +41,9 @@ struct home: View {
                     }
                     .tint(AppConfig.Colors.accent)
                 }
-                
+
                 ToolbarSpacer(.fixed, placement: .topBarTrailing)
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     NavigationLink(destination: remindersView(viewModel: reminderViewModel)) {
                         Image(systemName: "bell.badge.waveform.fill")

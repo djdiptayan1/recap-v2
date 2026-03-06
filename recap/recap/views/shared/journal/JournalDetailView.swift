@@ -122,7 +122,6 @@ struct JournalDetailView: View {
         .sheet(item: $fullscreenPhoto) { photo in
             fullscreenPhotoView(photo: photo)
         }
-        .standardBackground()
         .onDisappear {
             viewModel.stopAudio()
         }

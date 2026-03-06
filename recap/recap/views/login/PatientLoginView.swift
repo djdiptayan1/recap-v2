@@ -6,6 +6,7 @@
 //
 
 import AuthenticationServices
+import FirebaseAuth
 import SwiftUI
 
 struct PatientLoginView: View {
@@ -14,154 +15,19 @@ struct PatientLoginView: View {
 
     var body: some View {
         VStack {
-
             ScrollView {
                 VStack(spacing: 0) {
-                    VStack(spacing: 16) {
-                        Image("recapLogo")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 80, height: 80)
-                            .shadow(
-                                color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10
-                            )
-
-                        VStack(spacing: 6) {
-                            Text("Welcome Back")
-                                .font(AppConfig.Fonts.titleLarge)
-                                .foregroundColor(AppConfig.Colors.textPrimary)
-
-                            Text("Sign in to access your health journal")
-                                .font(AppConfig.Fonts.body)
-                                .foregroundColor(AppConfig.Colors.textSecondary)
-                        }
-                    }
-                    .padding(.top, 40)
-                    .padding(.bottom, 40)
-
-                    VStack(spacing: 20) {
-                        AestheticInput(
-                            icon: "envelope.fill",
-                            placeholder: "Email address",
-                            text: $viewModel.email,
-                            isPasswordVisible: .constant(false)
-                        )
-
-                        VStack(alignment: .trailing, spacing: 8) {
-                            AestheticInput(
-                                icon: "lock.fill",
-                                placeholder: "Password",
-                                text: $viewModel.password,
-                                isSecure: true,
-                                showToggle: true,
-                                isPasswordVisible: $viewModel.showPassword
-                            )
-
-                            Button("Forgot Password?") {
-                                HapticManager.shared.trigger(.selection)
-                                viewModel.forgotPasswordEmail = viewModel.email
-                                viewModel.showForgotPassword = true
-                            }
-                            .font(AppConfig.Fonts.small)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
-                        }
-
-                        Button(action: {
-                            HapticManager.shared.trigger(.selection)
-                            loginWithEmail()
-                        }) {
-                            HStack {
-                                if viewModel.isLoading {
-                                    ProgressView()
-                                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-                                        .padding(.trailing, 5)
-                                }
-                                Text("Log In")
-                                    .font(AppConfig.Fonts.headline)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(AppConfig.Colors.accent)
-                            .foregroundColor(.white)
-                            .cornerRadius(AppConfig.UI.cornerRadius)
-                            .shadow(
-                                color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
-                        }
-                        .disabled(viewModel.isLoading)
-                    }
-                    .padding(.horizontal, AppConfig.UI.screenPadding)
-
-                    HStack {
-                        Rectangle().fill(AppConfig.Colors.stroke).frame(height: 1)
-                        Text("or continue with")
-                            .font(AppConfig.Fonts.small)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
-                        Rectangle().fill(AppConfig.Colors.stroke).frame(height: 1)
-                    }
-                    .padding(.vertical, 30)
-                    .padding(.horizontal, 40)
-
-                    VStack(spacing: 16) {
-                        // Google
-                        Button(action: {
-                            HapticManager.shared.trigger(.selection)
-                            signInWithGoogle()
-                        }) {
-                            HStack {
-                                Image("google")
-                                    .resizable()
-                                    .frame(width: 20, height: 20)
-                                Text("Sign in with Google")
-                                    .font(AppConfig.Fonts.bodyBold)
-                                    .foregroundColor(AppConfig.Colors.textPrimary)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(Color.white)
-                            .cornerRadius(AppConfig.UI.cornerRadius)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
-                                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
-                            )
-                            .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
-                        }
-                        .frame(height: 56)
-                        .cornerRadius(AppConfig.UI.cornerRadius)
-
-                        // Apple
-                        SignInWithAppleButton(.signIn) { request in
-                            let nonce = AuthService.shared.generateNonce()
-                            request.requestedScopes = [.email, .fullName]
-                            request.nonce = AuthService.shared.sha256(nonce)
-                        } onCompletion: { result in
-                            handleAppleSignInResult(result)
-                        }
-                        .signInWithAppleButtonStyle(.black)
-                        .frame(height: 56)
-                        .cornerRadius(AppConfig.UI.cornerRadius)
-                    }
-                    .padding(.horizontal, AppConfig.UI.screenPadding)
-
+                    headerSection
+                    emailPasswordSection
+                    dividerSection
+                    socialSignInSection
                     Spacer(minLength: 40)
-
-                    HStack {
-                        Text("Don't have an account?")
-                            .font(AppConfig.Fonts.body)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
-
-                        Button("Sign Up") {
-                            HapticManager.shared.trigger(.selection)
-                            viewModel.showSignupSheet = true
-                        }
-                        .font(AppConfig.Fonts.bodyBold)
-                        .foregroundColor(AppConfig.Colors.accent)
-                    }
-                    .padding(.bottom, 20)
+                    footerSection
                 }
             }
             .scrollIndicators(.hidden)
             .sheet(isPresented: $viewModel.showSignupSheet) {
-                patientSignupView()
+                patientSignupView(socialUser: viewModel.pendingSocialUser)
             }
         }
         .alert("Error", isPresented: $viewModel.showAlert) {
@@ -193,11 +59,172 @@ struct PatientLoginView: View {
         .background(
             Color.clear
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    hideKeyboard()
-                }
+                .onTapGesture { hideKeyboard() }
         )
         .standardBackground()
+    }
+
+    // MARK: - Extracted Sections
+
+    private var headerSection: some View {
+        VStack(spacing: 16) {
+            Image("recapLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 80, height: 80)
+                .shadow(
+                    color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10
+                )
+
+            VStack(spacing: 6) {
+                Text("Welcome Back")
+                    .font(AppConfig.Fonts.titleLarge)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+
+                Text("Sign in to access your health journal")
+                    .font(AppConfig.Fonts.body)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+            }
+        }
+        .padding(.top, 40)
+        .padding(.bottom, 40)
+    }
+
+    private var emailPasswordSection: some View {
+        VStack(spacing: 20) {
+            AestheticInput(
+                icon: "envelope.fill",
+                placeholder: "Email address",
+                text: $viewModel.email,
+                isPasswordVisible: .constant(false)
+            )
+
+            VStack(alignment: .trailing, spacing: 8) {
+                AestheticInput(
+                    icon: "lock.fill",
+                    placeholder: "Password",
+                    text: $viewModel.password,
+                    isSecure: true,
+                    showToggle: true,
+                    isPasswordVisible: $viewModel.showPassword
+                )
+
+                Button("Forgot Password?") {
+                    HapticManager.shared.trigger(.selection)
+                    viewModel.forgotPasswordEmail = viewModel.email
+                    viewModel.showForgotPassword = true
+                }
+                .font(AppConfig.Fonts.small)
+                .foregroundColor(AppConfig.Colors.textSecondary)
+            }
+
+            loginButton
+        }
+        .padding(.horizontal, AppConfig.UI.screenPadding)
+    }
+
+    private var loginButton: some View {
+        Button(action: {
+            HapticManager.shared.trigger(.selection)
+            loginWithEmail()
+        }) {
+            HStack {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .glassEffect(
+                            .regular,
+                            in: .rect(cornerRadius: AppConfig.UI.cornerRadius)
+                        )
+                        .padding(.trailing, 5)
+                }
+                Text("Log In")
+                    .font(AppConfig.Fonts.headline)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(AppConfig.Colors.accent)
+            .foregroundColor(.white)
+            .cornerRadius(AppConfig.UI.cornerRadius)
+            .shadow(
+                color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
+        }
+        .disabled(viewModel.isLoading)
+    }
+
+    private var dividerSection: some View {
+        HStack {
+            Rectangle().fill(AppConfig.Colors.stroke).frame(height: 1)
+            Text("or continue with")
+                .font(AppConfig.Fonts.small)
+                .foregroundColor(AppConfig.Colors.textSecondary)
+            Rectangle().fill(AppConfig.Colors.stroke).frame(height: 1)
+        }
+        .padding(.vertical, 30)
+        .padding(.horizontal, 40)
+    }
+
+    private var socialSignInSection: some View {
+        VStack(spacing: 16) {
+            googleButton
+            appleButton
+        }
+        .padding(.horizontal, AppConfig.UI.screenPadding)
+    }
+
+    private var googleButton: some View {
+        Button(action: {
+            HapticManager.shared.trigger(.selection)
+            signInWithGoogle()
+        }) {
+            HStack {
+                Image("google")
+                    .resizable()
+                    .frame(width: 20, height: 20)
+                Text("Sign in with Google")
+                    .font(AppConfig.Fonts.bodyBold)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 56)
+            .background(Color.white)
+            .cornerRadius(AppConfig.UI.cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
+        }
+        .frame(height: 56)
+        .cornerRadius(AppConfig.UI.cornerRadius)
+    }
+
+    private var appleButton: some View {
+        SignInWithAppleButton(.signIn) { request in
+            let nonce = AuthService.shared.generateNonce()
+            request.requestedScopes = [.email, .fullName]
+            request.nonce = AuthService.shared.sha256(nonce)
+        } onCompletion: { result in
+            handleAppleSignInResult(result)
+        }
+        .signInWithAppleButtonStyle(.black)
+        .frame(height: 56)
+        .cornerRadius(AppConfig.UI.cornerRadius)
+    }
+
+    private var footerSection: some View {
+        HStack {
+            Text("Don't have an account?")
+                .font(AppConfig.Fonts.body)
+                .foregroundColor(AppConfig.Colors.textSecondary)
+
+            Button("Sign Up") {
+                HapticManager.shared.trigger(.selection)
+                viewModel.showSignupSheet = true
+            }
+            .font(AppConfig.Fonts.bodyBold)
+            .foregroundColor(AppConfig.Colors.accent)
+        }
+        .padding(.bottom, 20)
     }
 
     // MARK: - Logic Functions
@@ -227,10 +254,12 @@ struct PatientLoginView: View {
     private func handleAppleSignInResult(_ result: Result<ASAuthorization, Error>) {
         switch result {
         case .success(let authorization):
-            guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
-                  let appleIDToken = appleIDCredential.identityToken,
-                  let idTokenString = String(data: appleIDToken, encoding: .utf8),
-                  let nonce = AuthService.shared.getCurrentNonce()
+            guard
+                let appleIDCredential = authorization.credential
+                    as? ASAuthorizationAppleIDCredential,
+                let appleIDToken = appleIDCredential.identityToken,
+                let idTokenString = String(data: appleIDToken, encoding: .utf8),
+                let nonce = AuthService.shared.getCurrentNonce()
             else {
                 viewModel.alertMessage = "Unable to process Apple Sign-In."
                 viewModel.showAlert = true
@@ -238,11 +267,39 @@ struct PatientLoginView: View {
             }
             Task {
                 do {
-                    let user = try await AuthService.shared.signInWithApple(
+                    let (user, email) = try await AuthService.shared.performAppleSignIn(
                         idTokenString: idTokenString, nonce: nonce)
+
+                    let userModel = try await AuthService.shared.fetchUser(email: email)
+
+                    if let id = userModel.id {
+                        try? KeychainManager.shared.save(key: .documentID, value: id)
+                        try? KeychainManager.shared.save(key: .patientDocumentID, value: id)
+                    }
+                    if !userModel.patientUID.isEmpty {
+                        try? KeychainManager.shared.save(
+                            key: .patientUID, value: userModel.patientUID)
+                    }
+                    try? KeychainManager.shared.save(key: .userType, value: "patient")
+
                     await MainActor.run {
                         HapticManager.shared.trigger(.success)
-                        appState.currentUser = user
+                        appState.currentUser = userModel
+                    }
+                } catch let error as NSError
+                    where error.code == 404
+                    || error.localizedDescription.contains("User profile not found")
+                {
+                    await MainActor.run {
+                        if let currentUser = Auth.auth().currentUser {
+                            viewModel.pendingSocialUser = SocialUserData(
+                                uid: currentUser.uid,
+                                email: currentUser.email ?? "",
+                                name: currentUser.displayName ?? "",
+                                profileImageURL: currentUser.photoURL?.absoluteString
+                            )
+                            viewModel.showSignupSheet = true
+                        }
                     }
                 } catch {
                     await MainActor.run {

@@ -53,7 +53,7 @@ struct JournalHomeCard: View {
                 }
                 .padding(20)
             }
-            .glassEffect(.clear, in: .rect)
+            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(
                 color: Color.black.opacity(0.05),

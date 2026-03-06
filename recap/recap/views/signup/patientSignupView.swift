@@ -8,13 +8,18 @@
 import SwiftUI
 
 struct patientSignupView: View {
-    @StateObject private var viewModel = PatientSignupViewModel()
+    @StateObject private var viewModel: PatientSignupViewModel
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var appState: AppState
 
     // Visibility Toggles
     @State private var isPasswordVisible = false
     @State private var isConfirmVisible = false
+
+    // Initializer to pass data into ViewModel
+    init(socialUser: SocialUserData? = nil) {
+        _viewModel = StateObject(wrappedValue: PatientSignupViewModel(socialUser: socialUser))
+    }
 
     var body: some View {
         NavigationStack {
@@ -99,7 +104,9 @@ struct patientSignupView: View {
                                 ZStack {
                                     if viewModel.isLoading {
                                         ProgressView()
-                                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+                                            .glassEffect(
+                                                .regular,
+                                                in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                                     } else {
                                         if viewModel.currentStep == .credentials {
                                             Text("Create Account")

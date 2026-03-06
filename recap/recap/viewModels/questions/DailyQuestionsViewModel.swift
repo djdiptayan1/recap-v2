@@ -82,6 +82,21 @@ class DailyQuestionsViewModel: ObservableObject {
         errorMessage = nil
 
         Task { @MainActor in
+            // Use prefetched data if available
+            if let cached = DataPrefetchManager.shared.dailyQuestions {
+                let allQuestions = cached.data
+                if role == "patient" {
+                    self.questions = allQuestions.filter { !($0.isAnswered ?? false) }
+                } else {
+                    self.questions = allQuestions.filter { ($0.correctAnswers ?? []).isEmpty }
+                }
+                if self.questions.isEmpty {
+                    self.isCompleted = true
+                }
+                self.isLoading = false
+                return
+            }
+
             do {
                 let response = try await NetworkManager.shared.request(
                     endpoint: QuestionAPI.fetch(patientId: patientId),
@@ -114,6 +129,10 @@ class DailyQuestionsViewModel: ObservableObject {
 
     func submitAnswer(_ answer: [String], answeredBy: String) {
         guard let question = currentQuestion else { return }
+
+        // Invalidate cached questions and streak stats since answers change the data
+        DataPrefetchManager.shared.invalidateDailyQuestions()
+        DataPrefetchManager.shared.invalidateStreakStats()
 
         let request = AnswerRequest(
             patientId: patientId,
