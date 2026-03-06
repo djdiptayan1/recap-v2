@@ -168,6 +168,9 @@ struct ImagePicker: View {
                     
                 }
                 .frame(width: 130, height: 130)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Processing photo")
+                .accessibilityHint("Please wait")
             }
         }
         // Action Sheet
@@ -224,6 +227,7 @@ struct ImagePicker: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: displayCornerRadius, style: .continuous)
                                 .stroke(Color.white, lineWidth: 3)
+                                .accessibilityHidden(true)
                         )
                 } else {
                     // Empty State
@@ -236,12 +240,14 @@ struct ImagePicker: View {
                             .scaledToFit()
                             .frame(width: 40)
                             .foregroundColor(.gray.opacity(0.5))
+                            .accessibilityHidden(true)
                     }
                     .frame(width: 130, height: 130)
                     .overlay(
                         RoundedRectangle(cornerRadius: displayCornerRadius, style: .continuous)
                             .stroke(style: StrokeStyle(lineWidth: 1, dash: [6]))
                             .foregroundColor(.gray.opacity(0.5))
+                            .accessibilityHidden(true)
                     )
                 }
 
@@ -257,8 +263,12 @@ struct ImagePicker: View {
                     .overlay(Circle().stroke(Color.white, lineWidth: 2))
                     .shadow(radius: 3)
                     .offset(x: 4, y: 4)
+                    .accessibilityHidden(true)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(selectedImage == nil ? "Add photo" : "Change photo")
+        .accessibilityHint(selectedImage == nil ? "Opens options to take or choose a profile photo" : "Opens options to update or remove your profile photo")
     }
 
     // MARK: - Logic
@@ -336,7 +346,45 @@ struct SquareImageCropper: View {
                             )
                         )
                 }
-                // IMPORTANT: Frame matches crop size so image centers correctly
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Image crop area")
+                .accessibilityHint("Use adjustable actions to zoom, and actions to move the image")
+                .accessibilityAdjustableAction { direction in
+                    switch direction {
+                    case .increment:
+                        scale = min(scale + 0.1, 5)
+                        lastScale = scale
+                    case .decrement:
+                        scale = max(scale - 0.1, 1)
+                        lastScale = scale
+                    @unknown default:
+                        break
+                    }
+                }
+                .accessibilityAction(named: Text("Move Left")) {
+                    offset.width -= 15
+                    lastOffset = offset
+                }
+                .accessibilityAction(named: Text("Move Right")) {
+                    offset.width += 15
+                    lastOffset = offset
+                }
+                .accessibilityAction(named: Text("Move Up")) {
+                    offset.height -= 15
+                    lastOffset = offset
+                }
+                .accessibilityAction(named: Text("Move Down")) {
+                    offset.height += 15
+                    lastOffset = offset
+                }
+                .accessibilityAction(named: Text("Reset")) {
+                    withAnimation {
+                        scale = 1
+                        offset = .zero
+                        lastScale = 1
+                        lastOffset = .zero
+                    }
+                }
                 .frame(width: cropSize, height: cropSize)
                 .clipped()
             }
@@ -357,20 +405,13 @@ struct SquareImageCropper: View {
                 )
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
+                .accessibilityHidden(true)
 
             // 3. Grid Lines & Border (Square)
             Rectangle()
                 .stroke(Color.white, lineWidth: 2)
                 .frame(width: cropSize, height: cropSize)
-                .overlay(
-                    // Rule of thirds grid
-                    ZStack {
-                        Rectangle().frame(width: 1).foregroundColor(.white.opacity(0.3)).offset(x: cropSize/3)
-                        Rectangle().frame(width: 1).foregroundColor(.white.opacity(0.3)).offset(x: -cropSize/3)
-                        Rectangle().frame(height: 1).foregroundColor(.white.opacity(0.3)).offset(y: cropSize/3)
-                        Rectangle().frame(height: 1).foregroundColor(.white.opacity(0.3)).offset(y: -cropSize/3)
-                    }
-                )
+                .accessibilityHidden(true)
                 .allowsHitTesting(false)
 
             // 4. Instructions
@@ -396,6 +437,7 @@ struct SquareImageCropper: View {
                         }
                         .foregroundColor(.white)
                     }
+                    .accessibilityHint("Dismiss without applying crop")
 
                     Button {
                         HapticManager.shared.trigger(.medium)
@@ -418,6 +460,8 @@ struct SquareImageCropper: View {
                                 .foregroundColor(.black)
                         }
                     }
+                    .accessibilityLabel("Crop photo")
+                    .accessibilityHint("Apply crop and close")
                     .shadow(radius: 10)
                     .offset(y: -10)
 
@@ -436,6 +480,7 @@ struct SquareImageCropper: View {
                         }
                         .foregroundColor(.white)
                     }
+                    .accessibilityHint("Reset zoom and position")
                 }
                 .padding(.bottom, 50)
             }
@@ -539,3 +584,4 @@ struct CameraPicker: UIViewControllerRepresentable {
         }
     }
 }
+
