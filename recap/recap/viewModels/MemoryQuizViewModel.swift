@@ -32,6 +32,7 @@ class MemoryQuizViewModel: ObservableObject {
     }
 
     func fetchQuestions() async {
+        guard questions.isEmpty else { return }
         isLoading = true
         errorMessage = nil
 

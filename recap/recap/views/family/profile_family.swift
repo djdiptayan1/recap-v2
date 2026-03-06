@@ -190,7 +190,7 @@ struct ProfileFamilyView: View {
                                     }
                                     .padding(16)
                                 }
-                                .glassEffect(.clear, in: .rect)
+                                .glassEffect(.regular, in: .rect)
                                 .cornerRadius(AppConfig.UI.cornerRadius)
                                 .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
                             }
@@ -206,7 +206,7 @@ struct ProfileFamilyView: View {
                                 .foregroundColor(AppConfig.Colors.alert)
                                 .padding()
                                 .frame(maxWidth: .infinity)
-                                .glassEffect(.clear, in: .rect)
+                                .glassEffect(.regular, in: .rect)
                                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
@@ -226,6 +226,7 @@ struct ProfileFamilyView: View {
             .alert("Log Out", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Log Out", role: .destructive) {
+                    DataPrefetchManager.shared.invalidateAll()
                     try? AuthService.shared.signOut()
                     appState.currentUser = nil
                 }
@@ -274,6 +275,7 @@ struct ProfileFamilyView: View {
             do {
                 try await AuthService.shared.deleteAccount(documentId: documentId)
                 await MainActor.run {
+                    DataPrefetchManager.shared.invalidateAll()
                     isDeleting = false
                     appState.currentUser = nil
                 }

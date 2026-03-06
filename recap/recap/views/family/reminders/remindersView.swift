@@ -167,7 +167,9 @@ struct remindersView: View {
                 KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?
                 .id ?? ""
             if !patientId.isEmpty {
-                viewModel.fetchReminders(patientId: patientId)
+                Task {
+                    await viewModel.fetchReminders(patientId: patientId)
+                }
             }
         }
         .sheet(isPresented: $showingAddSheet, onDismiss: { reminderToEdit = nil }) {
@@ -182,7 +184,8 @@ struct remindersView: View {
                 reminderToDelete = nil
             }
             Button("Delete", role: .destructive) {
-                viewModel.deleteReminder(patientId: patientId, reminderId: reminder.id) { success in
+                Task {
+                    let success = await viewModel.deleteReminder(patientId: patientId, reminderId: reminder.id)
                     if success {
                         withAnimation {
                             reminderToDelete = nil

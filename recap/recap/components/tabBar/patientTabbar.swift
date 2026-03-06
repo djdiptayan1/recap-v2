@@ -44,7 +44,9 @@ struct patientTabbar: View {
                 KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?
                 .id ?? ""
             if !patientId.isEmpty {
-                reminderViewModel.fetchReminders(patientId: patientId)
+                Task {
+                    await reminderViewModel.fetchReminders(patientId: patientId)
+                }
             }
         }
         .onChange(of: reminderViewModel.reminders) { reminders in

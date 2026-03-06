@@ -17,6 +17,13 @@ class ArticlesViewModel: ObservableObject {
     
     func fetchArticles() async {
         guard articles.isEmpty else { return }
+
+        // Use prefetched data if available
+        if let cached = DataPrefetchManager.shared.articles {
+            self.articles = cached
+            return
+        }
+
         isLoading = true
         errorMessage = nil
         

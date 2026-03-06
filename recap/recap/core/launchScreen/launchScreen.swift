@@ -43,6 +43,17 @@ struct SplashScreenView: View {
             // Check session (this updates appState.currentUser and appState.isLoggedIn)
             await appState.restoreSession()
 
+            // Prefetch all data during splash to reduce network calls on tab switches
+            if appState.isLoggedIn, let user = appState.currentUser {
+                let patientDocID =
+                    KeychainManager.shared.getString(key: .patientDocumentID) ?? user.id ?? ""
+                let documentID = user.id ?? ""
+                await DataPrefetchManager.shared.prefetchAll(
+                    documentID: documentID,
+                    patientDocumentID: patientDocID
+                )
+            }
+
             // Calculate time elapsed
             let elapsed = Date().timeIntervalSince(startTime)
             let remainingTime = max(0, minSplashTime - elapsed)

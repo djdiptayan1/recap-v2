@@ -16,6 +16,7 @@ class CitationsViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     func fetchCitations() async {
+        guard citations.isEmpty else { return }
         isLoading = true
         errorMessage = nil
         
