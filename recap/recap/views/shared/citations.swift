@@ -13,12 +13,23 @@ struct CitationsView: View {
     var body: some View {
         Group {
             if viewModel.isLoading {
-                ProgressView()
+                ProgressView("Loading citations...")
                     .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
             } else if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .padding()
+                VStack(spacing: 12) {
+                    Text("Error")
+                        .font(.headline)
+                        .foregroundColor(.red)
+                        .accessibilityAddTraits(.isHeader)
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                    Button("Retry") {
+                        Task { await viewModel.fetchCitations() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityHint("Retry loading citations.")
+                }
+                .padding()
             } else {
                 List(viewModel.citations) { citation in
                     VStack(alignment: .leading, spacing: 4) {
@@ -48,6 +59,9 @@ struct CitationsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(citation.title), \(citation.authors), \(citation.year)")
+                    .accessibilityValue(citation.journal.isEmpty ? "" : citation.journal)
                 }
 //                .listStyle(.plain)
             }

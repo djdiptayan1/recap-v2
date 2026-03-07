@@ -29,14 +29,17 @@ struct DailyQuestionsView: View {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.system(size: 50))
                             .foregroundColor(.orange)
+                            .accessibilityHidden(true)
                         Text("Something went wrong")
                             .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
                         Text(errorMessage)
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Button("Retry") {
                             viewModel.loadQuestions(role: appState.currentUser?.type ?? "patient")
                         }
+                        .accessibilityHint("Retry loading daily check-in questions.")
                     }
                 } else if viewModel.isCompleted {
                     // 2. Completion State
@@ -98,6 +101,7 @@ struct DailyQuestionsView: View {
                         .disabled(selectedAnswers.isEmpty)
                         .padding(.horizontal, AppConfig.UI.screenPadding)
                         .padding(.bottom, 20)
+                        .accessibilityHint("Submits your selected answers and moves to the next question.")
                     }
                 } else {
                     VStack(spacing: 16) {
@@ -148,7 +152,11 @@ struct ProgressBar: View {
                 }
             }
             .frame(height: 6)
+            .accessibilityHidden(true)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Progress")
+        .accessibilityValue("\(Int((value * 100).rounded())) percent complete")
     }
 }
 
@@ -173,6 +181,7 @@ struct QuestionDisplayCard: View {
                 .foregroundColor(AppConfig.Colors.textPrimary)
                 .lineSpacing(4)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
 
             Divider()
 
@@ -181,6 +190,7 @@ struct QuestionDisplayCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "lightbulb.fill")
                         .foregroundColor(.yellow)
+                        .accessibilityHidden(true)
                     Text(hint)
                         .font(AppConfig.Fonts.small)  // Size 14
                         .foregroundColor(AppConfig.Colors.textSecondary)
@@ -197,6 +207,7 @@ struct QuestionDisplayCard: View {
             RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
                 .stroke(AppConfig.Colors.stroke, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -216,6 +227,7 @@ struct AnswerOptionButton: View {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .foregroundColor(isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke)
                 .font(.system(size: 24))
+                .accessibilityHidden(true)
         }
         .padding()
         .frame(height: 60)
@@ -231,6 +243,9 @@ struct AnswerOptionButton: View {
                     isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
                     lineWidth: isSelected ? 2 : 1)
         )
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
     }
 }
 
@@ -242,11 +257,13 @@ struct CompletionView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 80))
                 .foregroundColor(AppConfig.Colors.success)
+                .accessibilityHidden(true)
 
             VStack(spacing: 8) {
                 Text("All Done!")
                     .font(AppConfig.Fonts.titleMedium)
                     .foregroundColor(AppConfig.Colors.textPrimary)
+                    .accessibilityAddTraits(.isHeader)
 
                 Text("Great job completing your daily check-in.")
                     .font(AppConfig.Fonts.body)
@@ -267,6 +284,7 @@ struct CompletionView: View {
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
             .padding(.top, 20)
+            .accessibilityHint("Closes Daily Check-in.")
         }
         .frame(maxWidth: 320)
         .padding(.vertical, 40)
