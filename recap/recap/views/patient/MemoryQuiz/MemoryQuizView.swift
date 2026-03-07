@@ -11,6 +11,8 @@ import UIKit
 struct MemoryQuizView: View {
     @StateObject private var viewModel = MemoryQuizViewModel()
     @Environment(\.dismiss) var dismiss
+    @State private var hasAnnouncedCompletion = false
+    @State private var focusUpdateWorkItem: DispatchWorkItem?
     @AccessibilityFocusState private var focusedQuestionIndex: Int?
     
     private var currentQuestionNumber: Int {
@@ -25,9 +27,12 @@ struct MemoryQuizView: View {
     private let accessibilityFocusDelay: TimeInterval = 0.1
     
     private func moveFocusToQuestion(_ index: Int) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + accessibilityFocusDelay) {
+        focusUpdateWorkItem?.cancel()
+        let workItem = DispatchWorkItem {
             focusedQuestionIndex = index
         }
+        focusUpdateWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + accessibilityFocusDelay, execute: workItem)
     }
     
     var body: some View {
@@ -146,10 +151,6 @@ struct MemoryQuizView: View {
                         .transition(.scale.combined(with: .opacity))
                         .onAppear {
                             HapticManager.shared.trigger(.success)
-                            let result = viewModel.getResult()
-                            UIAccessibility.post(
-                                notification: .announcement,
-                                argument: "Quiz complete. Your score is \(result.score) out of \(result.totalQuestions).")
                         }
                     }
                 }
@@ -166,6 +167,17 @@ struct MemoryQuizView: View {
             .onChange(of: viewModel.questions.count) { newCount in
                 guard newCount > 0 else { return }
                 moveFocusToQuestion(viewModel.currentIndex)
+            }
+            .onChange(of: viewModel.isCompleted) { isCompleted in
+                if isCompleted, !hasAnnouncedCompletion {
+                    let result = viewModel.getResult()
+                    UIAccessibility.post(
+                        notification: .announcement,
+                        argument: "Quiz complete. Your score is \(result.score) out of \(result.totalQuestions).")
+                    hasAnnouncedCompletion = true
+                } else if !isCompleted {
+                    hasAnnouncedCompletion = false
+                }
             }
         }
     }
