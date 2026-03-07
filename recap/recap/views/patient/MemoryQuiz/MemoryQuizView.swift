@@ -22,6 +22,14 @@ struct MemoryQuizView: View {
         return Int((Double(currentQuestionNumber) / Double(viewModel.questions.count) * 100).rounded())
     }
     
+    private let accessibilityFocusDelay: TimeInterval = 0.1
+    
+    private func moveFocusToQuestion(_ index: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + accessibilityFocusDelay) {
+            focusedQuestionIndex = index
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -153,15 +161,11 @@ struct MemoryQuizView: View {
                 await viewModel.fetchQuestions()
             }
             .onChange(of: viewModel.currentIndex) { newIndex in
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    focusedQuestionIndex = newIndex
-                }
+                moveFocusToQuestion(newIndex)
             }
             .onChange(of: viewModel.questions.count) { newCount in
                 guard newCount > 0 else { return }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    focusedQuestionIndex = viewModel.currentIndex
-                }
+                moveFocusToQuestion(viewModel.currentIndex)
             }
         }
     }
