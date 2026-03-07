@@ -12,6 +12,7 @@ struct SmritiRequest: Codable {
     let query: String
     let context: SmritiContext?
     let history: [SmritiHistoryMessage]?
+    let userIdentifier: String
 }
 
 struct SmritiContext: Codable {
@@ -52,4 +53,27 @@ struct SmritiResponse: Codable {
 struct SmritiSource: Codable, Hashable {
     let name: String
     let url: String
+}
+
+// MARK: - Usage Response (rate limiting)
+struct SmritiUsageResponse: Codable {
+    let dailyRemaining: Int
+    let weeklyRemaining: Int
+    let dailyLimit: Int
+    let weeklyLimit: Int
+    let nextDailyReset: String?
+    let nextWeeklyReset: String?
+    let aiProvider: String
+}
+
+// MARK: - Rate Limit Error Response
+struct SmritiRateLimitError: Codable {
+    let error: String
+    let message: String
+    let dailyRemaining: Int
+    let weeklyRemaining: Int
+    let dailyLimit: Int
+    let weeklyLimit: Int
+    let resetAt: String?
+    let aiProvider: String
 }
