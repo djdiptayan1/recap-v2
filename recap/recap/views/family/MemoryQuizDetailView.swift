@@ -213,7 +213,6 @@ struct ScoreProgressRow: View {
                 }
             }
             .frame(height: 8)
-            .accessibilityHidden(true)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(label)

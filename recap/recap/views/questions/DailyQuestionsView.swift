@@ -152,7 +152,6 @@ struct ProgressBar: View {
                 }
             }
             .frame(height: 6)
-            .accessibilityHidden(true)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Progress")
