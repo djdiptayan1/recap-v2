@@ -75,6 +75,7 @@ struct MemoryQuizView: View {
                                     .font(AppConfig.Fonts.body)
                                     .foregroundColor(AppConfig.Colors.textSecondary)
                             }
+                            .padding(.horizontal, AppConfig.UI.screenPadding - 10)
                             .accessibilityElement(children: .ignore)
                             .accessibilityLabel("Question \(viewModel.currentIndex + 1) of \(viewModel.questions.count)")
                             .accessibilityValue("\(progressPercentage) percent complete")

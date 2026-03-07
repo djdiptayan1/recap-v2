@@ -164,7 +164,6 @@ struct ImagePicker: View {
                     RoundedRectangle(cornerRadius: displayCornerRadius, style: .continuous)
                         .fill(.white.opacity(0.7))
                     ProgressView()
-                        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     
                 }
                 .frame(width: 130, height: 130)
