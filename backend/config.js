@@ -53,6 +53,15 @@ export default {
 
     analyticsCacheTTL: 300, // seconds (default 5 minutes)
 
+    smriti: {
+        aiProvider: 'gemini',  // 'gemini' | 'appleIntelligence'
+        rateLimits: {
+            daily: 2,
+            weekly: 8,
+        },
+        firestoreCollection: 'smritiUsage',
+    },
+
     question_category: {
         immediate: 'immediateMemory',
         recent: 'recentMemory',
