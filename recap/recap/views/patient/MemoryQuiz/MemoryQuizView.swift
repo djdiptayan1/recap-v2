@@ -24,8 +24,10 @@ struct MemoryQuizView: View {
         return Int((Double(currentQuestionNumber) / Double(viewModel.questions.count) * 100).rounded())
     }
     
+    // Small delay lets TabView render the new card before VoiceOver focus is moved.
     private let accessibilityFocusDelay: TimeInterval = 0.1
     
+    @MainActor
     private func moveFocusToQuestion(_ index: Int) {
         focusUpdateWorkItem?.cancel()
         let workItem = DispatchWorkItem {
@@ -173,7 +175,10 @@ struct MemoryQuizView: View {
                     let result = viewModel.getResult()
                     UIAccessibility.post(
                         notification: .announcement,
-                        argument: "Quiz complete. Your score is \(result.score) out of \(result.totalQuestions).")
+                        argument: String(
+                            localized:
+                                "Quiz complete. Your score is \(result.score) out of \(result.totalQuestions).")
+                    )
                     hasAnnouncedCompletion = true
                 } else if !isCompleted {
                     hasAnnouncedCompletion = false
