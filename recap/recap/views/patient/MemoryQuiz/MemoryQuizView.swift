@@ -43,7 +43,7 @@ struct MemoryQuizView: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
-                        .accessibilityHint("Retries loading memory quiz questions.")
+                        .accessibilityHint("Retry loading memory quiz questions.")
                     }
                 } else if !viewModel.questions.isEmpty {
                     if viewModel.isSubmitting {
@@ -153,11 +153,15 @@ struct MemoryQuizView: View {
                 await viewModel.fetchQuestions()
             }
             .onChange(of: viewModel.currentIndex) { newIndex in
-                focusedQuestionIndex = newIndex
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    focusedQuestionIndex = newIndex
+                }
             }
             .onChange(of: viewModel.questions.count) { newCount in
                 guard newCount > 0 else { return }
-                focusedQuestionIndex = viewModel.currentIndex
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    focusedQuestionIndex = viewModel.currentIndex
+                }
             }
         }
     }
