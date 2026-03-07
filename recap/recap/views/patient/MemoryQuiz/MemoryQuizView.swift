@@ -6,10 +6,36 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct MemoryQuizView: View {
     @StateObject private var viewModel = MemoryQuizViewModel()
     @Environment(\.dismiss) var dismiss
+    @State private var hasAnnouncedCompletion = false
+    @State private var focusUpdateWorkItem: DispatchWorkItem?
+    @AccessibilityFocusState private var focusedQuestionIndex: Int?
+    
+    private var currentQuestionNumber: Int {
+        min(viewModel.currentIndex + 1, viewModel.questions.count)
+    }
+    
+    private var progressPercentage: Int {
+        guard !viewModel.questions.isEmpty else { return 0 }
+        return Int((Double(currentQuestionNumber) / Double(viewModel.questions.count) * 100).rounded())
+    }
+    
+    // Small delay lets TabView render the new card before VoiceOver focus is moved.
+    private let accessibilityFocusDelay: TimeInterval = 0.1
+    
+    @MainActor
+    private func moveFocusToQuestion(_ index: Int) {
+        focusUpdateWorkItem?.cancel()
+        let workItem = DispatchWorkItem {
+            focusedQuestionIndex = index
+        }
+        focusUpdateWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + accessibilityFocusDelay, execute: workItem)
+    }
     
     var body: some View {
         NavigationStack {
@@ -22,6 +48,7 @@ struct MemoryQuizView: View {
                         Text("Error")
                             .font(.headline)
                             .foregroundColor(.red)
+                            .accessibilityAddTraits(.isHeader)
                         Text(errorMessage)
                             .multilineTextAlignment(.center)
                             .padding()
@@ -31,6 +58,7 @@ struct MemoryQuizView: View {
                             }
                         }
                         .buttonStyle(.borderedProminent)
+                        .accessibilityHint("Retry loading memory quiz questions.")
                     }
                 } else if !viewModel.questions.isEmpty {
                     if viewModel.isSubmitting {
@@ -49,6 +77,8 @@ struct MemoryQuizView: View {
                             }
                             .accessibilityElement(children: .ignore)
                             .accessibilityLabel("Question \(viewModel.currentIndex + 1) of \(viewModel.questions.count)")
+                            .accessibilityValue("\(progressPercentage) percent complete")
+                            .accessibilityAddTraits(.isHeader)
                             
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
@@ -76,10 +106,12 @@ struct MemoryQuizView: View {
                                     QuestionCard(question: viewModel.questions[index])
                                         .tag(index)
                                         .padding(.horizontal, AppConfig.UI.screenPadding)
+                                        .accessibilityFocused($focusedQuestionIndex, equals: index)
                                 }
                             }
                             .tabViewStyle(.page(indexDisplayMode: .never))
                             .frame(height: 300)
+                            .accessibilityHint("Swipe left or right to review the current set of questions.")
                             
                             Spacer()
                             
@@ -131,6 +163,27 @@ struct MemoryQuizView: View {
             .task {
                 await viewModel.fetchQuestions()
             }
+            .onChange(of: viewModel.currentIndex) { newIndex in
+                moveFocusToQuestion(newIndex)
+            }
+            .onChange(of: viewModel.questions.count) { newCount in
+                guard newCount > 0 else { return }
+                moveFocusToQuestion(viewModel.currentIndex)
+            }
+            .onChange(of: viewModel.isCompleted) { isCompleted in
+                if isCompleted, !hasAnnouncedCompletion {
+                    let result = viewModel.getResult()
+                    UIAccessibility.post(
+                        notification: .announcement,
+                        argument: String(
+                            localized:
+                                "Quiz complete. Your score is \(result.score) out of \(result.totalQuestions).")
+                    )
+                    hasAnnouncedCompletion = true
+                } else if !isCompleted {
+                    hasAnnouncedCompletion = false
+                }
+            }
         }
     }
     
@@ -150,6 +203,7 @@ struct MemoryQuizView: View {
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                     .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityAddTraits(.isHeader)
             }
             .padding(30)
             .frame(maxWidth: .infinity)

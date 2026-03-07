@@ -23,6 +23,7 @@ struct games: View {
                                 GamesCard(game: game)
                             }
                             .buttonStyle(ScaleButtonStyle())
+                            .accessibilityHint("Opens \(game.name).")
                         }
                     }
                 }

@@ -35,6 +35,7 @@ struct MemoryQuizDetailView: View {
                         Text(report.safeStatus)
                             .font(AppConfig.Fonts.titleLarge)
                             .foregroundColor(AppConfig.Colors.textPrimary)
+                            .accessibilityAddTraits(.isHeader)
 
                         Text(report.formattedDate)
                             .font(AppConfig.Fonts.body)
@@ -42,7 +43,9 @@ struct MemoryQuizDetailView: View {
                     }
                 }
                 .padding(.top, 20)
-                .accessibilityElement(children: .combine)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(report.safeStatus)
+                .accessibilityValue("Recorded on \(report.formattedDate)")
 
                 // MARK: - 2. Key Stats Grid
                 HStack(spacing: 16) {
@@ -98,6 +101,7 @@ struct MemoryQuizDetailView: View {
                                         .foregroundColor(.orange)
                                         .font(.system(size: 18))
                                         .padding(.top, 2)
+                                        .accessibilityHidden(true)
 
                                     Text(recommendation)
                                         .font(AppConfig.Fonts.body)
@@ -176,6 +180,10 @@ struct ScoreProgressRow: View {
         return Double(correct) / Double(total)
     }
 
+    var percentageText: String {
+        "\(Int((percent * 100).rounded())) percent"
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
@@ -206,5 +214,8 @@ struct ScoreProgressRow: View {
             }
             .frame(height: 8)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue("\(correct) out of \(total), \(percentageText)")
     }
 }
