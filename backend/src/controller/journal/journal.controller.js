@@ -263,11 +263,10 @@ async function deleteEntry(req, res, next) {
             await deleteFromCloudinary(entryData.audioPublicId, 'video');
         }
         if (entryData.photos && Array.isArray(entryData.photos)) {
-            for (const photo of entryData.photos) {
-                if (photo.publicId) {
-                    await deleteFromCloudinary(photo.publicId, 'image');
-                }
-            }
+            const deletePromises = entryData.photos
+                .filter(photo => photo.publicId)
+                .map(photo => deleteFromCloudinary(photo.publicId, 'image'));
+            await Promise.all(deletePromises);
         }
 
         await deleteDoc(entryDocRef);
