@@ -188,6 +188,44 @@ export const getDashboardAnalytics = async (req, res, next) => {
             return questions;
         }
 
+        // --- PREFETCH ALL DATES CONCURRENTLY ---
+        // Instead of awaiting each date sequentially in the loops below,
+        // we determine all dates needed and fetch them in parallel.
+        const datesToFetch = new Set();
+        datesToFetch.add(today);
+
+        // Weekly & Summary (last 30 days)
+        for (let i = 0; i <= 29; i++) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            datesToFetch.add(formatDate(d));
+        }
+
+        // Monthly (last 4 months)
+        for (let i = 3; i >= 0; i--) {
+            const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const year = monthDate.getFullYear();
+            const month = monthDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const d = new Date(year, month, day);
+                if (d <= now) datesToFetch.add(formatDate(d));
+            }
+        }
+
+        // Decline detection (last 4 weeks - max 28 days back, already covered by last 30 days,
+        // but we add it to be robust against changes in loop sizes)
+        for (let w = 3; w >= 0; w--) {
+            for (let d = 6; d >= 0; d--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - (w * 7 + d));
+                datesToFetch.add(formatDate(date));
+            }
+        }
+
+        // Fetch all unique dates concurrently
+        await Promise.all(Array.from(datesToFetch).map(dateStr => getCachedQuestions(dateStr)));
+
         // 1. Daily stats (today)
         const todayQuestions = await getCachedQuestions(today);
         const dailyStats = calculateStats(todayQuestions);
