@@ -137,19 +137,26 @@ struct SmritiView: View {
             .navigationTitle(isMemoryLaneMode ? "Smriti" : "Care Assistant")
             .standardBackground()
             .toolbar {
-                // Usage badge
-                if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .foregroundStyle(.secondary)
-                    }
+                ToolbarItem(placement: .topBarLeading) {
+//                    if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
+//                        Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
+//                            .font(AppConfig.Fonts.small)
+//                            .padding(.horizontal, 10)
+//                            .padding(.vertical, 4)
+//                            .fixedSize()
+//                    }
+                    Group {
+                            if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
+                                Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
+                            } else {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
+                        }
+                        .frame(width: 40)
                 }
 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(
                         isMemoryLaneMode ? "Care Assistant" : "Smriti",
                         systemImage: isMemoryLaneMode ? "sparkles" : "brain.head.profile"
