@@ -82,24 +82,27 @@ async function createEntry(req, res, next) {
             }
         }
 
-        // Upload each photo in photoBase64s
-        const photos = [];
+        // Upload each photo in photoBase64s in parallel
+        let photos = [];
         if (photoBase64s && Array.isArray(photoBase64s)) {
-            for (let i = 0; i < photoBase64s.length; i++) {
-                const { imageBase64, caption } = photoBase64s[i];
-                if (!imageBase64) continue;
+            const uploadPromises = photoBase64s.map(async (photo, i) => {
+                const { imageBase64, caption } = photo;
+                if (!imageBase64) return null;
                 const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
                 const buffer = Buffer.from(base64Data, 'base64');
                 const photoId = `journal_${patientId}_photo_${Date.now()}_${i}`;
                 const uploadResult = await uploadOnCloudinary(buffer, 'recap/journal/photos', photoId);
                 if (uploadResult) {
-                    photos.push({
+                    return {
                         url: uploadResult.secure_url || uploadResult.url,
                         publicId: uploadResult.public_id,
                         caption: caption || '',
-                    });
+                    };
                 }
-            }
+                return null;
+            });
+            const results = await Promise.all(uploadPromises);
+            photos = results.filter(p => p !== null);
         }
 
         // Auto-derive entryType if not supplied
@@ -259,15 +262,22 @@ async function deleteEntry(req, res, next) {
         }
 
         const entryData = snap.data();
+        const deletionPromises = [];
+
         if (entryData.audioPublicId) {
-            await deleteFromCloudinary(entryData.audioPublicId, 'video');
+            deletionPromises.push(deleteFromCloudinary(entryData.audioPublicId, 'video'));
         }
+
         if (entryData.photos && Array.isArray(entryData.photos)) {
-            for (const photo of entryData.photos) {
+            entryData.photos.forEach(photo => {
                 if (photo.publicId) {
-                    await deleteFromCloudinary(photo.publicId, 'image');
+                    deletionPromises.push(deleteFromCloudinary(photo.publicId, 'image'));
                 }
-            }
+            });
+        }
+
+        if (deletionPromises.length > 0) {
+            await Promise.all(deletionPromises);
         }
 
         await deleteDoc(entryDocRef);
