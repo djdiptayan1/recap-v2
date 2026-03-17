@@ -110,19 +110,28 @@ struct EngagementDay: Codable, Identifiable {
 // MARK: - API Endpoint
 
 private enum AnalyticsAPI: Endpoint {
-    case dashboard(patientId: String)
-    case memoryReports(patientId: String)
+    case dashboard(patientId: String, bypassCache: Bool = false)
+    case memoryReports(patientId: String, bypassCache: Bool = false)
 
     var path: String {
         switch self {
-        case .dashboard(let patientId):
+        case .dashboard(let patientId, _):
             return "\(AppConfig.ApiEndpoints.analyticsDashboard)/\(patientId)"
-        case .memoryReports(let patientId):
+        case .memoryReports(let patientId, _):
             return "\(AppConfig.ApiEndpoints.memoryQuiz)/reports/\(patientId)"
         }
     }
 
     var method: HTTPMethod { .get }
+
+    var queryItems: [URLQueryItem]? {
+        switch self {
+        case .dashboard(_, let bypassCache):
+            return bypassCache ? [URLQueryItem(name: "bypassCache", value: "true")] : nil
+        case .memoryReports(_, let bypassCache):
+            return bypassCache ? [URLQueryItem(name: "bypassCache", value: "true")] : nil
+        }
+    }
 }
 
 // MARK: - ViewModel
@@ -151,7 +160,7 @@ class AnalyticsViewModel: ObservableObject {
         }
     }
 
-    func fetchAnalytics() {
+    func fetchAnalytics(bypassCache: Bool = false) {
         guard !patientId.isEmpty else { return }
         isLoading = true
         errorMessage = nil
@@ -159,7 +168,7 @@ class AnalyticsViewModel: ObservableObject {
         Task { @MainActor in
             do {
                 let response: AnalyticsDashboardResponse = try await NetworkManager.shared.request(
-                    endpoint: AnalyticsAPI.dashboard(patientId: patientId),
+                    endpoint: AnalyticsAPI.dashboard(patientId: patientId, bypassCache: bypassCache),
                     keyDecodingStrategy: .useDefaultKeys
                 )
 
@@ -210,13 +219,13 @@ class AnalyticsViewModel: ObservableObject {
         }
     }
 
-    func fetchMemoryReports() {
+    func fetchMemoryReports(bypassCache: Bool = false) {
         guard !patientId.isEmpty else { return }
 
         Task { @MainActor in
             do {
                 let response: MemoryReportsResponse = try await NetworkManager.shared.request(
-                    endpoint: AnalyticsAPI.memoryReports(patientId: patientId),
+                    endpoint: AnalyticsAPI.memoryReports(patientId: patientId, bypassCache: bypassCache),
                     keyDecodingStrategy: .useDefaultKeys
                 )
 
@@ -227,5 +236,9 @@ class AnalyticsViewModel: ObservableObject {
                 print("Error fetching memory reports: \(error)")
             }
         }
+    }
+    func refreshAnalytics() {
+        fetchAnalytics(bypassCache: true)
+        fetchMemoryReports(bypassCache: true)
     }
 }

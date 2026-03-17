@@ -26,19 +26,34 @@ struct MemoryAnalyticsCard: View {
             
             VStack(spacing: 16) {
                 // Tappable header for overall analytics
-                Button(action: {
-                    HapticManager.shared.trigger(.selection)
-                    navigateToOverall = true
-                }) {
-                    HStack{
-                        Text("Trends")
-                            .font(AppConfig.Fonts.headline)
-                            .foregroundColor(AppConfig.Colors.textPrimary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                HStack {
+                    Button(action: {
+                        HapticManager.shared.trigger(.selection)
+                        navigateToOverall = true
+                    }) {
+                        HStack{
+                            Text("Trends")
+                                .font(AppConfig.Fonts.headline)
+                                .foregroundColor(AppConfig.Colors.textPrimary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+                        }
                     }
+
+                    Button(action: {
+                        HapticManager.shared.trigger(.selection)
+                        viewModel.refreshAnalytics()
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(AppConfig.Colors.accent)
+                            .padding(8)
+                            .background(AppConfig.Colors.accent.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .padding(.leading, 8)
                 }
                 .padding(.top, 24)
                 .padding(.horizontal, 20)
