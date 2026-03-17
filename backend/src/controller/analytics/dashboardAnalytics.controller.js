@@ -138,6 +138,8 @@ function getMonthLabel(date) {
 export const getDashboardAnalytics = async (req, res, next) => {
     try {
         const { patientId } = req.params;
+        const { bypassCache } = req.query;
+        const shouldBypassCache = bypassCache === 'true';
 
         if (!patientId) {
             return res.status(400).json({
@@ -162,18 +164,21 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
         // --- Check cache ---
         const cacheDocRef = doc(firestore, USERS_COLLECTION, patientId, ANALYTICS_CACHE_COLLECTION, today);
-        const cacheSnap = await getDoc(cacheDocRef);
 
-        if (cacheSnap.exists()) {
-            const cached = cacheSnap.data();
-            const cachedAt = cached.cachedAt || 0;
-            const ttlMs = (config.analyticsCacheTTL || 300) * 1000;
-            if (now.getTime() - cachedAt < ttlMs) {
-                return res.status(200).json({
-                    success: true,
-                    data: cached.data,
-                    cached: true
-                });
+        if (!shouldBypassCache) {
+            const cacheSnap = await getDoc(cacheDocRef);
+
+            if (cacheSnap.exists()) {
+                const cached = cacheSnap.data();
+                const cachedAt = cached.cachedAt || 0;
+                const ttlMs = (config.analyticsCacheTTL || 300) * 1000;
+                if (now.getTime() - cachedAt < ttlMs) {
+                    return res.status(200).json({
+                        success: true,
+                        data: cached.data,
+                        cached: true
+                    });
+                }
             }
         }
 
