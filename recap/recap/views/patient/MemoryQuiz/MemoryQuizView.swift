@@ -135,6 +135,11 @@ struct QuestionCard: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            HStack {
+                Spacer()
+                SpeechButton(textToSpeak: question.question)
+            }
+
             Image(systemName: "bubble.left.and.exclamationmark.bubble.right.fill")
                 .font(.system(size: 40))
                 .foregroundColor(AppConfig.Colors.accent.opacity(0.6))

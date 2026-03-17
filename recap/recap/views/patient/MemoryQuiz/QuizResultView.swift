@@ -72,23 +72,35 @@ struct QuizResultView: View {
                         HapticManager.shared.trigger(.selection)
                         onExit()
                     }) {
-                        Text("Done")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 56)
-                            .background(AppConfig.Colors.textPrimary)
-                            .cornerRadius(16)
+                        HStack(spacing: 8) {
+                            Text("Done")
+                                .font(AppConfig.Fonts.headline)
+                            Image(systemName: "checkmark")
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 64)
+                        .background(AppConfig.Colors.textPrimary)
+                        .cornerRadius(16)
                     }
+                    .accessibilityLabel("Return to Home Screen")
 
                     Button(action: {
                         HapticManager.shared.trigger(.selection)
                         onRestart()
                     }) {
-                        Text("Retake Quiz")
-                            .font(.subheadline)
-                            .foregroundColor(AppConfig.Colors.textSecondary)
+                        HStack(spacing: 8) {
+                            Text("Retake Quiz")
+                                .font(AppConfig.Fonts.headline)
+                            Image(systemName: "arrow.clockwise")
+                        }
+                        .foregroundColor(AppConfig.Colors.textPrimary)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 64)
+                        .background(AppConfig.Colors.textPrimary.opacity(0.1))
+                        .cornerRadius(16)
                     }
+                    .accessibilityLabel("Try Memory Check Again")
                 }
                 .padding(.horizontal, 20)
             }

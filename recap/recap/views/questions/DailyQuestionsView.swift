@@ -167,24 +167,32 @@ struct QuestionDisplayCard: View {
             //                .background(AppConfig.Colors.accent.opacity(0.1))
             //                .cornerRadius(8)
 
-            // The Question
-            Text(question.text)
-                .font(AppConfig.Fonts.headline)  // Size 22
-                .foregroundColor(AppConfig.Colors.textPrimary)
-                .lineSpacing(4)
-                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .top) {
+                // The Question
+                Text(question.text)
+                    .font(AppConfig.Fonts.headline)  // Size 22
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+                    .lineSpacing(4)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer()
+
+                SpeechButton(textToSpeak: question.text)
+            }
 
             Divider()
 
             // Hint (if available)
             if let hint = question.hint, !hint.isEmpty {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Image(systemName: "lightbulb.fill")
                         .foregroundColor(.yellow)
+                        .accessibilityHidden(true)
                     Text(hint)
-                        .font(AppConfig.Fonts.small)  // Size 14
-                        .foregroundColor(AppConfig.Colors.textSecondary)
+                        .font(AppConfig.Fonts.body)  // Increased from small
+                        .foregroundColor(AppConfig.Colors.textPrimary) // Increased contrast from textSecondary
                         .italic()
+                        .accessibilityLabel("Hint: \(hint)")
                 }
             }
         }
@@ -210,27 +218,29 @@ struct AnswerOptionButton: View {
                 .font(AppConfig.Fonts.bodyBold)
                 .foregroundColor(
                     isSelected ? AppConfig.Colors.accent : AppConfig.Colors.textPrimary)
+                .multilineTextAlignment(.leading)
 
             Spacer()
 
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .foregroundColor(isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke)
-                .font(.system(size: 24))
+                .font(.system(size: 28)) // Increased for better tapping/visibility
+                .accessibilityHidden(true)
         }
         .padding()
-        .frame(height: 60)
+        .frame(minHeight: 60) // Changed from exact height to minHeight for dynamic text
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-//        .cornerRadius(16)
         .shadow(
-            color: isSelected ? AppConfig.Colors.accent.opacity(0.2) : Color.black.opacity(0.03),
+            color: isSelected ? AppConfig.Colors.accent.opacity(0.3) : Color.black.opacity(0.05), // Increased shadow for depth
             radius: 5, x: 0, y: 2
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(
                     isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
-                    lineWidth: isSelected ? 2 : 1)
+                    lineWidth: isSelected ? 3 : 2) // Increased line width for visibility
         )
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
     }
 }
 
@@ -238,14 +248,15 @@ struct CompletionView: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 32) {
             Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 80))
+                .font(.system(size: 100))
                 .foregroundColor(AppConfig.Colors.success)
+                .accessibilityHidden(true)
 
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Text("All Done!")
-                    .font(AppConfig.Fonts.titleMedium)
+                    .font(AppConfig.Fonts.titleLarge)
                     .foregroundColor(AppConfig.Colors.textPrimary)
 
                 Text("Great job completing your daily check-in.")
@@ -258,21 +269,27 @@ struct CompletionView: View {
                 HapticManager.shared.trigger(.success)
                 onDismiss()
             }) {
-                Text("Finish")
-                    .font(AppConfig.Fonts.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(AppConfig.Colors.textPrimary)
-                    .cornerRadius(AppConfig.UI.buttonCornerRadius)
+                HStack(spacing: 8) {
+                    Text("Return to Home")
+                        .font(AppConfig.Fonts.headline)
+                    Image(systemName: "house.fill")
+                        .font(.system(size: 20))
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                .background(AppConfig.Colors.textPrimary)
+                .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
-            .padding(.top, 20)
+            .padding(.top, 24)
+            .accessibilityLabel("Return to Home Screen")
         }
-        .frame(maxWidth: 320)
-        .padding(.vertical, 40)
-        .padding(.horizontal, 30)
+        .frame(maxWidth: 340)
+        .padding(.vertical, 48)
+        .padding(.horizontal, 32)
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
         .cornerRadius(AppConfig.UI.cornerRadius)
+        .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
     }
 }
 
