@@ -22,13 +22,15 @@ async function fetchQuestionsForDate(patientId, dateStr) {
     }
 
     const questions = [];
-    for (const subCol of SUBCOLLECTIONS) {
-        const subColRef = collection(dailyDocRef, subCol);
-        const snapshot = await getDocs(subColRef);
+    const promises = SUBCOLLECTIONS.map(subCol => {
+        return getDocs(collection(dailyDocRef, subCol));
+    });
+    const snapshots = await Promise.all(promises);
+    snapshots.forEach(snapshot => {
         snapshot.docs.forEach(d => {
             questions.push({ id: d.id, ...d.data() });
         });
-    }
+    });
     return questions;
 }
 
