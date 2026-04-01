@@ -44,14 +44,18 @@ export const deleteQuestion = async (req, res, next) => {
 
         const subcollections = ['immediateQuestions', 'recentQuestions', 'remoteQuestions'];
 
-        for (const sub of subcollections) {
+        const promises = subcollections.map(async (sub) => {
             const tempRef = doc(dailyDocRef, sub, questionId);
             const tempSnap = await getDoc(tempRef);
-            if (tempSnap.exists()) {
-                questionRef = tempRef;
-                questionSnap = tempSnap;
-                break;
-            }
+            return { tempRef, tempSnap };
+        });
+
+        const results = await Promise.all(promises);
+
+        const found = results.find(result => result.tempSnap.exists());
+        if (found) {
+            questionRef = found.tempRef;
+            questionSnap = found.tempSnap;
         }
 
         // Fallback to legacy path if not found in daily subcollections
