@@ -259,17 +259,19 @@ async function deleteEntry(req, res, next) {
         }
 
         const entryData = snap.data();
+        const deletePromises = [];
         if (entryData.audioPublicId) {
-            await deleteFromCloudinary(entryData.audioPublicId, 'video');
+            deletePromises.push(deleteFromCloudinary(entryData.audioPublicId, 'video'));
         }
         if (entryData.photos && Array.isArray(entryData.photos)) {
             for (const photo of entryData.photos) {
                 if (photo.publicId) {
-                    await deleteFromCloudinary(photo.publicId, 'image');
+                    deletePromises.push(deleteFromCloudinary(photo.publicId, 'image'));
                 }
             }
         }
 
+        await Promise.all(deletePromises);
         await deleteDoc(entryDocRef);
 
         return res.status(200).json({ success: true, message: 'Journal entry deleted successfully' });
