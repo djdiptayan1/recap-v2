@@ -63,6 +63,9 @@ class DailyObjectsGameViewModel: ObservableObject {
     // MARK: - Game Control
 
     func startGame() {
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
+            AnalyticsManager.Parameters.gameType: "DailyObjects"
+        ])
         score = 0
         currentRound = 1
         objectsPerRound = 3
@@ -126,6 +129,11 @@ class DailyObjectsGameViewModel: ObservableObject {
         withAnimation {
             currentPhase = .roundSummary
         }
+        
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
+            AnalyticsManager.Parameters.gameType: "DailyObjects",
+            AnalyticsManager.Parameters.score: score
+        ])
     }
 
     func nextRound() {

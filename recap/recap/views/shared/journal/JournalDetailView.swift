@@ -2,6 +2,7 @@
 // recap
 // Created by Copilot on 25/02/26.
 
+import SDWebImageSwiftUI
 import SwiftUI
 
 struct JournalDetailView: View {
@@ -140,16 +141,13 @@ struct JournalDetailView: View {
                     HStack(spacing: 10) {
                         ForEach(photos) { photo in
                             Button { fullscreenPhoto = photo } label: {
-                                AsyncImage(url: URL(string: photo.url)) { image in
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                } placeholder: {
-                                    Color(AppConfig.Colors.stroke)
-                                        .overlay(ProgressView())
-                                }
-                                .frame(width: 200, height: 200)
-                                .clipShape(RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius))
+                                WebImage(url: URL(string: photo.thumbnailURL ?? photo.url))
+                                    .resizable()
+                                    .indicator(.activity)
+                                    .transition(AnyTransition.fade(duration: 0.3))
+                                    .scaledToFill()
+                                    .frame(width: 200, height: 200)
+                                    .clipShape(RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius))
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
@@ -177,17 +175,14 @@ struct JournalDetailView: View {
 
     private func singlePhotoView(photo: JournalPhoto) -> some View {
         Button { fullscreenPhoto = photo } label: {
-            AsyncImage(url: URL(string: photo.url)) { image in
-                image
-                    .resizable()
-                    .scaledToFill()
-            } placeholder: {
-                Color(AppConfig.Colors.stroke)
-                    .overlay(ProgressView())
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 260)
-            .clipShape(Rectangle())
+            WebImage(url: URL(string: photo.detailURL ?? photo.url))
+                .resizable()
+                .indicator(.activity)
+                .transition(AnyTransition.fade(duration: 0.3))
+                .scaledToFill()
+                .frame(maxWidth: .infinity)
+                .frame(height: 260)
+                .clipShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -195,14 +190,10 @@ struct JournalDetailView: View {
     private func fullscreenPhotoView(photo: JournalPhoto) -> some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            AsyncImage(url: URL(string: photo.url)) { image in
-                image
-                    .resizable()
-                    .scaledToFit()
-            } placeholder: {
-                ProgressView()
-                    .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
-            }
+            WebImage(url: URL(string: photo.originalURL ?? photo.detailURL ?? photo.url))
+                .resizable()
+                .indicator(.activity)
+                .scaledToFit()
         }
         .overlay(alignment: .topTrailing) {
             Button {

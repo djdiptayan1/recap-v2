@@ -26,7 +26,7 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
     res.status(200).json({
         message: 'Welcome to Recap Backend API',
-        version: '1.0.0'
+        version: '2.1.0'
     });
 });
 

@@ -87,6 +87,7 @@ async function smritiStream(req, res, next) {
             contents,
         });
 
+        let hasIncremented = false;
         for await (const chunk of response) {
             // Extract text from chunk — handle both SDK formats
             let text = '';
@@ -99,6 +100,11 @@ async function smritiStream(req, res, next) {
             }
 
             if (text) {
+                // Increment usage ONLY when we get the first successful chunk
+                if (!hasIncremented && typeof req.incrementSmritiUsage === 'function') {
+                    await req.incrementSmritiUsage();
+                    hasIncremented = true;
+                }
                 res.write(`data: ${JSON.stringify({ text })}\n\n`);
             }
         }

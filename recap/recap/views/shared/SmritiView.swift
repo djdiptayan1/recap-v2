@@ -104,16 +104,59 @@ struct SmritiView: View {
 
                 VStack {
                     Spacer()
-                    InputBar(text: $textInput, showCamera: $showCamera, onSend: sendMessage)
+
+                    // Rate limit banner
+                    if viewModel.isRateLimited {
+                        HStack(spacing: 10) {
+                            Image(systemName: "clock.badge.exclamationmark")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(.orange)
+                            Text(
+                                viewModel.rateLimitMessage
+                                    ?? "Message limit reached. Try again later."
+                            )
+                            .font(.system(size: 14, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.leading)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                         .padding(.horizontal)
                         .padding(.bottom, 10)
-                        .disabled(viewModel.isLoading)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else {
+                        InputBar(text: $textInput, showCamera: $showCamera, onSend: sendMessage)
+                            .padding(.horizontal)
+                            .padding(.bottom, 10)
+                            .disabled(viewModel.isLoading)
+                    }
                 }
             }
             .navigationTitle(isMemoryLaneMode ? "Smriti" : "Care Assistant")
             .standardBackground()
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarLeading) {
+//                    if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
+//                        Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
+//                            .font(AppConfig.Fonts.small)
+//                            .padding(.horizontal, 10)
+//                            .padding(.vertical, 4)
+//                            .fixedSize()
+//                    }
+                    Group {
+                            if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
+                                Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
+                            } else {
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
+                        }
+                        .frame(width: 40)
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(
                         isMemoryLaneMode ? "Care Assistant" : "Smriti",
                         systemImage: isMemoryLaneMode ? "sparkles" : "brain.head.profile"
@@ -127,7 +170,9 @@ struct SmritiView: View {
             }
             .task {
                 await loadContext()
+                await viewModel.fetchUsage()
             }
+            .animation(.easeInOut(duration: 0.3), value: viewModel.isRateLimited)
         }
     }
 
@@ -167,7 +212,8 @@ struct SmritiView: View {
             familyMembers: members,
             streakDays: streakDays,
             reminderTitles: nil,
-            isMemoryLane: isPatient
+            isMemoryLane: isPatient,
+            userIdentifier: docId
         )
     }
 

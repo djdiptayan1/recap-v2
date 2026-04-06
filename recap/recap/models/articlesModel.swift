@@ -14,6 +14,7 @@ struct articleModel: Identifiable, Codable {
     let author: String
     let content: String
     let image: String
+    let thumbnailImage: String?
     let link: String
     let source: String
     let citation: String

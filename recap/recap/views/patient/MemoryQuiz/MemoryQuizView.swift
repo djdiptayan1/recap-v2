@@ -63,7 +63,8 @@ struct MemoryQuizView: View {
                 } else if !viewModel.questions.isEmpty {
                     if viewModel.isSubmitting {
                         ProgressView("Submitting results...")
-                            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+                            .glassEffect(
+                                .regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
                     } else if !viewModel.isCompleted {
                         VStack(spacing: 8) {
                             HStack {
@@ -217,6 +218,14 @@ struct MemoryQuizView: View {
             )
             .accessibilityElement(children: .combine)
         }
+        .padding(30)
+        .frame(maxWidth: .infinity)
+        .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+        .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+        )
     }
     
     struct AnswerButtonLabel: View {

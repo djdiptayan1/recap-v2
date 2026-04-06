@@ -51,6 +51,9 @@ class MemoryGameViewModel: ObservableObject {
     }
 
     func startGame() {
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
+            AnalyticsManager.Parameters.gameType: "MatchMania"
+        ])
         gameState = .playing
         startNewGame()
     }

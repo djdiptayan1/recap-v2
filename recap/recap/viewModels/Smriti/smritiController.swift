@@ -21,13 +21,22 @@ class SmritiViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var followupPrompt: String?
+    @Published var usageInfo: SmritiUsageResponse?
+    @Published var isRateLimited = false
+    @Published var rateLimitMessage: String?
 
     private var patientContext: SmritiContext?
+    private var userIdentifier: String = ""
 
     // API Endpoints
     private enum SmritiAPI: Endpoint {
-        case ask(query: String, context: SmritiContext?, history: [SmritiHistoryMessage]?)
-        case stream(query: String, context: SmritiContext?, history: [SmritiHistoryMessage]?)
+        case ask(
+            query: String, context: SmritiContext?, history: [SmritiHistoryMessage]?,
+            userIdentifier: String)
+        case stream(
+            query: String, context: SmritiContext?, history: [SmritiHistoryMessage]?,
+            userIdentifier: String)
+        case usage(userIdentifier: String)
 
         var path: String {
             switch self {
@@ -35,6 +44,8 @@ class SmritiViewModel: ObservableObject {
                 return AppConfig.ApiEndpoints.smriti
             case .stream:
                 return AppConfig.ApiEndpoints.smriti + "/stream"
+            case .usage(let userIdentifier):
+                return AppConfig.ApiEndpoints.smriti + "/usage/\(userIdentifier)"
             }
         }
 
@@ -42,22 +53,31 @@ class SmritiViewModel: ObservableObject {
             switch self {
             case .ask, .stream:
                 return .post
+            case .usage:
+                return .get
             }
         }
 
         var body: Encodable? {
             switch self {
-            case .ask(let query, let context, let history),
-                .stream(let query, let context, let history):
-                return SmritiRequest(query: query, context: context, history: history)
+            case .ask(let query, let context, let history, let userIdentifier),
+                .stream(let query, let context, let history, let userIdentifier):
+                return SmritiRequest(
+                    query: query, context: context, history: history, userIdentifier: userIdentifier
+                )
+            case .usage:
+                return nil
             }
         }
     }
 
     func configure(
         patient: patientModel?, familyMembers: [FamilyMember]?, streakDays: Int? = nil,
-        reminderTitles: [String]? = nil, isMemoryLane: Bool = false
+        reminderTitles: [String]? = nil, isMemoryLane: Bool = false,
+        userIdentifier: String = ""
     ) {
+        self.userIdentifier = userIdentifier
+
         guard let patient = patient else {
             patientContext = nil
             setupGreeting(name: nil, memoryLane: isMemoryLane)
@@ -134,7 +154,48 @@ class SmritiViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Usage Fetching
+
+    func fetchUsage() async {
+        guard !userIdentifier.isEmpty else { return }
+
+        do {
+            let response: SmritiUsageResponse = try await NetworkManager.shared.request(
+                endpoint: SmritiAPI.usage(userIdentifier: userIdentifier))
+
+            self.usageInfo = response
+            self.isRateLimited = response.dailyRemaining <= 0 || response.weeklyRemaining <= 0
+
+            if self.isRateLimited {
+                if response.dailyRemaining <= 0 {
+                    self.rateLimitMessage =
+                        "You've used all \(response.dailyLimit) messages for today. Come back tomorrow! 💛"
+                } else {
+                    self.rateLimitMessage =
+                        "You've used all \(response.weeklyLimit) messages this week. Your quota resets on Monday! 💛"
+                }
+            } else {
+                self.rateLimitMessage = nil
+            }
+        } catch {
+            // Silently fail — don't block the user from trying
+            print("Failed to fetch Smriti usage: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - Send Message
+
     func sendMessage(text: String) {
+        guard !isRateLimited else {
+            let limitMsg = ChatMessage(
+                text: rateLimitMessage
+                    ?? "You've reached your message limit. Please try again later. 💛",
+                isUser: false
+            )
+            messages.append(limitMsg)
+            return
+        }
+
         let userMessage = ChatMessage(text: text, isUser: true)
         messages.append(userMessage)
         isLoading = true
@@ -148,6 +209,9 @@ class SmritiViewModel: ObservableObject {
                 await sendStructured(query: text, history: history)
             }
             self.isLoading = false
+
+            // Refresh usage after sending a message
+            await fetchUsage()
         }
     }
 
@@ -159,7 +223,9 @@ class SmritiViewModel: ObservableObject {
         messages.append(placeholder)
 
         let stream = NetworkManager.shared.streamRequest(
-            endpoint: SmritiAPI.stream(query: query, context: patientContext, history: history),
+            endpoint: SmritiAPI.stream(
+                query: query, context: patientContext, history: history,
+                userIdentifier: userIdentifier),
             timeoutSeconds: 15
         )
 
@@ -182,6 +248,12 @@ class SmritiViewModel: ObservableObject {
             extractFollowup(from: fullText)
             return true
         } catch {
+            // Check if this is a 429 rate limit error
+            if case NetworkError.httpError(let statusCode) = error, statusCode == 429 {
+                removePlaceholder(id: placeholderID)
+                handleRateLimitHit()
+                return true  // Return true to prevent structured fallback
+            }
             // Always remove placeholder on error
             removePlaceholder(id: placeholderID)
             return false
@@ -199,7 +271,9 @@ class SmritiViewModel: ObservableObject {
     private func sendStructured(query: String, history: [SmritiHistoryMessage]?) async {
         do {
             let response: SmritiResponse = try await NetworkManager.shared.request(
-                endpoint: SmritiAPI.ask(query: query, context: patientContext, history: history))
+                endpoint: SmritiAPI.ask(
+                    query: query, context: patientContext, history: history,
+                    userIdentifier: userIdentifier))
 
             var responseText = response.answer
 
@@ -235,12 +309,36 @@ class SmritiViewModel: ObservableObject {
             }
 
         } catch {
+            // Check if this is a 429 rate limit error
+            if case NetworkError.httpError(let statusCode) = error, statusCode == 429 {
+                handleRateLimitHit()
+                return
+            }
+
             self.errorMessage = error.localizedDescription
             let errorMsg = ChatMessage(
                 text:
                     "I apologize, but I'm having trouble connecting right now. Please try again in a moment. 🙏",
                 isUser: false)
             self.messages.append(errorMsg)
+        }
+    }
+
+    /// Handle a 429 rate limit response
+    private func handleRateLimitHit() {
+        isRateLimited = true
+        rateLimitMessage =
+            rateLimitMessage ?? "You've reached your message limit. Please try again later. 💛"
+
+        let limitMsg = ChatMessage(
+            text: rateLimitMessage!,
+            isUser: false
+        )
+        messages.append(limitMsg)
+
+        // Refresh usage info
+        Task {
+            await fetchUsage()
         }
     }
 

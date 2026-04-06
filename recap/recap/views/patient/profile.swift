@@ -61,7 +61,9 @@ struct ProfileView: View {
                                     .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
 
                                 if let profileImageURL = patient.profileImageURL,
-                                    let url = URL(string: profileImageURL)
+                                    let url = URL(
+                                        string: CloudinaryUtility.optimize(
+                                            profileImageURL, transform: .avatar))
                                 {
                                     WebImage(url: url)
                                         .resizable()

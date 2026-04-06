@@ -15,9 +15,20 @@ import { firestore } from '../utils/db.js';
 import config from '../../config.js';
 import { ARTICLE_FIELDS } from '../models/articles.model.js';
 import { validationResult } from 'express-validator';
+import { getOptimizedImageUrl } from '../utils/cloudinary.js';
 
 const COLLECTION_NAME = config.firestoreNames.articlesCollection;
 const articlesRef = () => collection(firestore, COLLECTION_NAME);
+
+function serializeArticle(docSnap) {
+    const data = docSnap.data();
+    return {
+        id: docSnap.id,
+        ...data,
+        image: getOptimizedImageUrl(data.image, 'articleDetail'),
+        thumbnailImage: getOptimizedImageUrl(data.image, 'articleThumbnail'),
+    };
+}
 
 async function createArticle(req, res, next) {
     try {
@@ -37,7 +48,7 @@ async function createArticle(req, res, next) {
         });
 
         const snap = await getDoc(docRef);
-        return res.status(201).json({ success: true, data: { id: snap.id, ...snap.data() } });
+        return res.status(201).json({ success: true, data: serializeArticle(snap) });
     } catch (err) {
         next(err);
     }
@@ -53,7 +64,7 @@ async function getArticleByID(req, res, next) {
         if (!snap.exists()) {
             return res.status(404).json({ success: false, error: 'Article not found' });
         }
-        return res.status(200).json({ success: true, data: { id: snap.id, ...snap.data() } });
+        return res.status(200).json({ success: true, data: serializeArticle(snap) });
     } catch (err) {
         next(err);
     }
@@ -76,7 +87,7 @@ async function getAllArticles(req, res, next) {
         }
 
         const snap = await getDocs(q);
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const data = snap.docs.map(serializeArticle);
 
         return res.status(200).json({ success: true, data, count: data.length });
     } catch (err) {
@@ -104,7 +115,7 @@ async function updateArticle(req, res, next) {
         await updateDoc(docRef, { ...updates, updatedAt: serverTimestamp() });
         const snap = await getDoc(docRef);
 
-        return res.status(200).json({ success: true, data: { id: snap.id, ...snap.data() } });
+        return res.status(200).json({ success: true, data: serializeArticle(snap) });
     } catch (err) {
         next(err);
     }

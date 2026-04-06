@@ -2,7 +2,7 @@ import { collection, getDocs, query, where, serverTimestamp, doc, getDoc, setDoc
 import { firestore } from '../utils/db.js';
 import { validationResult } from 'express-validator';
 import config from '../../config.js';
-import { uploadOnCloudinary, getOptimizedUrl, deleteFromCloudinary } from '../utils/cloudinary.js';
+import { uploadOnCloudinary, getOptimizedImageUrl, deleteFromCloudinary } from '../utils/cloudinary.js';
 
 export const familySignup = async (req, res, next) => {
     try {
@@ -58,7 +58,7 @@ export const familySignup = async (req, res, next) => {
                 const uploadResult = await uploadOnCloudinary(buffer, "recap/family_members/profiles", familyMemberId);
 
                 if (uploadResult && uploadResult.public_id) {
-                    imageURL = getOptimizedUrl(uploadResult.public_id);
+                    imageURL = getOptimizedImageUrl(uploadResult.public_id);
                 }
             } catch (uploadError) {
                 console.error("Failed to upload profile image:", uploadError);

@@ -123,6 +123,8 @@ class FamilyLoginViewModel: ObservableObject {
         
          try KeychainManager.shared.save(key: .userType, value: "family")
         
+        AnalyticsManager.shared.logLogin(method: "social")
+        
         var familyUser = patientModel(
             firstName: response.name ?? "Family Member",
             lastName: "",

@@ -188,6 +188,7 @@ class PatientSignupViewModel: ObservableObject {
                     // Social login users are already authenticated via Firebase.
                     // Just fetch the profile from backend — no password sign-in needed.
                     user = try await AuthService.shared.fetchUser(email: email)
+                    AnalyticsManager.shared.logSignUp(method: "google")
 
                     // Save to Keychain (signIn does this automatically, but we need to do it manually here)
                     if let id = user.id {
@@ -201,6 +202,7 @@ class PatientSignupViewModel: ObservableObject {
                 } else {
                     // Email/password signup — sign in with credentials
                     user = try await AuthService.shared.signIn(email: email, password: password)
+                    AnalyticsManager.shared.logSignUp(method: "email")
                 }
 
                 // 2. Mark as verified locally

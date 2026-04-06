@@ -2,6 +2,7 @@
 // recap
 // Created by Copilot on 25/02/26.
 
+import SDWebImageSwiftUI
 import SwiftUI
 
 struct JournalCard: View {
@@ -11,15 +12,14 @@ struct JournalCard: View {
         HStack(spacing: 14) {
             // Leading: photo thumbnail for memories, mood emoji for journal entries
             if entry.hasPhotos, let firstPhotoURL = entry.photos?.first?.url {
-                AsyncImage(url: URL(string: firstPhotoURL)) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    Color(AppConfig.Colors.stroke)
-                }
-                .frame(width: 52, height: 52)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                let thumbnailURL = entry.photos?.first?.thumbnailURL ?? firstPhotoURL
+                WebImage(url: URL(string: thumbnailURL))
+                    .resizable()
+                    .indicator(.activity)
+                    .transition(AnyTransition.fade(duration: 0.3))
+                    .scaledToFill()
+                    .frame(width: 52, height: 52)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
             } else {
                 Text(entry.moodEmoji)
                     .font(.system(size: 36))

@@ -133,6 +133,12 @@ async function smriti(req, res, next) {
             }
 
             const jsonResponse = JSON.parse(responseText);
+
+            // Increment usage ONLY on successful response
+            if (typeof req.incrementSmritiUsage === 'function') {
+                await req.incrementSmritiUsage();
+            }
+
             return res.status(200).json(jsonResponse);
         } else {
             throw new Error("No response from AI");

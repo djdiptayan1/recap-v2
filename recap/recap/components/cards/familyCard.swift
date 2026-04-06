@@ -5,6 +5,7 @@
 //  Created by Diptayan Jash on 04/12/25.
 //
 import SwiftUI
+import SDWebImageSwiftUI
 
 struct FamilyCard: View {
     let member: FamilyMember
@@ -23,23 +24,13 @@ struct FamilyCard: View {
 
             // 1. Full Image
             GeometryReader { geo in
-                AsyncImage(url: URL(string: member.imageURL)) { phase in
-                    if let image = phase.image {
-                        image
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: geo.size.width, height: geo.size.height)
-                            .clipped()
-                    } else {
-                        // Fallback
-                        ZStack {
-                            Color.gray.opacity(0.2)
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 40))
-                                .foregroundColor(.gray)
-                        }
-                    }
-                }
+                WebImage(url: URL(string: CloudinaryUtility.optimize(member.imageURL, transform: .thumbnail)))
+                    .resizable()
+                    .indicator(.activity)
+                    .transition(AnyTransition.fade(duration: 0.3))
+                    .scaledToFill()
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .clipped()
             }
 
             // 2. Gradient Overlay (Improved visibility)
@@ -98,8 +89,7 @@ struct FamilyCard: View {
             }
             .padding(16)
         }
-        .frame(height: 220)  // Reduced height slightly to balance the width
-        //        .background(Color.white)
+        .frame(height: 220) // Reduced height slightly to balance the width
         .glassEffect(.clear, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         // Soft Shadow to lift card off background

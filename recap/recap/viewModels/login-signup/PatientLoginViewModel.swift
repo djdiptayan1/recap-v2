@@ -46,6 +46,7 @@ class PatientLoginViewModel: ObservableObject {
 
         do {
             let user = try await authService.signIn(email: email, password: password)
+            AnalyticsManager.shared.logLogin(method: "email")
             return user
         } catch {
             alertMessage = error.localizedDescription
@@ -72,6 +73,7 @@ class PatientLoginViewModel: ObservableObject {
             }
             try? KeychainManager.shared.save(key: .userType, value: "patient")
 
+            AnalyticsManager.shared.logLogin(method: "google")
             return userModel
         } catch let error as NSError
             where error.code == 404 || error.localizedDescription.contains("User profile not found")

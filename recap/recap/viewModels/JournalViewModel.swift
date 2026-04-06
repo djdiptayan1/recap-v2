@@ -175,6 +175,10 @@ class JournalViewModel: ObservableObject {
 
     func deleteEntry(entryId: String, patientId: String) async -> Bool {
         errorMessage = nil
+        
+        // Optimistic UI: Save copy and remove immediately
+        let index = entries.firstIndex(where: { $0.id == entryId })
+        let removedEntry = index.map { entries.remove(at: $0) }
 
         do {
             // Network response for delete returns success/message
@@ -187,12 +191,19 @@ class JournalViewModel: ObservableObject {
                 keyDecodingStrategy: .useDefaultKeys
             )
             if response.success {
-                entries.removeAll { $0.id == entryId }
                 return true
             } else {
+                // Rollback on server error
+                if let entry = removedEntry, let idx = index {
+                    entries.insert(entry, at: idx)
+                }
                 errorMessage = "Failed to delete journal entry"
             }
         } catch {
+            // Rollback on network error
+            if let entry = removedEntry, let idx = index {
+                entries.insert(entry, at: idx)
+            }
             errorMessage = error.localizedDescription
             print("Error deleting journal entry: \(error)")
         }
@@ -204,11 +215,37 @@ class JournalViewModel: ObservableObject {
 
     func startRecording() {
         let session = AVAudioSession.sharedInstance()
+        
+        switch session.recordPermission {
+        case .undetermined:
+            session.requestRecordPermission { granted in
+                if granted {
+                    Task { @MainActor in
+                        self.startRecordingProcess()
+                    }
+                } else {
+                    Task { @MainActor in
+                        self.errorMessage = "Microphone access is required to record voice notes. Please enable it in Settings."
+                    }
+                }
+            }
+        case .denied:
+            errorMessage = "Microphone access is denied. Please enable it in Settings."
+        case .granted:
+            startRecordingProcess()
+        @unknown default:
+            errorMessage = "Unknown microphone permission state."
+        }
+    }
+
+    private func startRecordingProcess() {
+        let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .default)
+            try session.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
             try session.setActive(true)
         } catch {
             print("Failed to set up audio session: \(error)")
+            errorMessage = "Could not start audio session: \(error.localizedDescription)"
             return
         }
 
@@ -236,6 +273,7 @@ class JournalViewModel: ObservableObject {
             }
         } catch {
             print("Failed to start recording: \(error)")
+            errorMessage = "Failed to start recording: \(error.localizedDescription)"
         }
     }
 
