@@ -741,6 +741,61 @@ Content-Type: application/json
 }
 ```
 
+For large uploads on Vercel, do not send many base64 images plus audio in one JSON body. Use direct Cloudinary uploads first:
+
+```http
+POST /api/journal/uploads/sign
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "mediaType": "photo",
+  "index": 0
+}
+```
+
+Or fetch all upload signatures in one call:
+
+```http
+POST /api/journal/uploads/sign-batch
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "photoCount": 10,
+  "includeAudio": true
+}
+```
+
+Then upload the file directly to the returned `uploadUrl`, and create the journal entry with media references instead of base64:
+
+```http
+POST /api/journal
+Content-Type: application/json
+
+{
+  "patientId": "firebase_doc_id",
+  "content": "Today I remembered...",
+  "audioUpload": {
+    "url": "https://res.cloudinary.com/.../audio-file.m4a",
+    "publicId": "recap/journal/audio/journal_patient_audio_..."
+  },
+  "photoUploads": [
+    {
+      "url": "https://res.cloudinary.com/.../photo-1.jpg",
+      "publicId": "recap/journal/photos/journal_patient_photo_...",
+      "caption": "Morning flowers"
+    }
+  ]
+}
+```
+
+Rules:
+- Use either `audioBase64` or `audioUpload`, never both
+- Use either `photoBase64s` or `photoUploads`, never both
+- Maximum 10 photos per journal entry
+- `audioUpload.url` and `photoUploads[].url` must be Cloudinary URLs
+
 **Mood values**: `happy`, `sad`, `neutral`, `anxious`, `calm`, `grateful`
 
 **Entry types**: `journal`, `memory`
