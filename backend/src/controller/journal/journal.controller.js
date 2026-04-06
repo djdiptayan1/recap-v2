@@ -249,31 +249,46 @@ async function deleteEntry(req, res, next) {
         const { id: entryId } = req.params;
         const { patientId } = req.query;
 
+        console.log(`[Journal] Attempting to delete entry ${entryId} for patient ${patientId}`);
+
         const entryDocRef = doc(
             firestore, USERS_COLLECTION, patientId, JOURNAL_SUBCOLLECTION, entryId
         );
         const snap = await getDoc(entryDocRef);
 
         if (!snap.exists()) {
+            console.warn(`[Journal] Delete failed: Entry ${entryId} not found`);
             return res.status(404).json({ success: false, error: 'Journal entry not found' });
         }
 
         const entryData = snap.data();
-        if (entryData.audioPublicId) {
-            await deleteFromCloudinary(entryData.audioPublicId, 'video');
-        }
-        if (entryData.photos && Array.isArray(entryData.photos)) {
-            for (const photo of entryData.photos) {
-                if (photo.publicId) {
-                    await deleteFromCloudinary(photo.publicId, 'image');
+        
+        // Asynchronously delete media assets, but don't let them block Firestore deletion if they fail
+        // However, we log the errors for debugging
+        try {
+            if (entryData.audioPublicId) {
+                console.log(`[Journal] Deleting audio asset: ${entryData.audioPublicId}`);
+                await deleteFromCloudinary(entryData.audioPublicId, 'video');
+            }
+            if (entryData.photos && Array.isArray(entryData.photos)) {
+                for (const photo of entryData.photos) {
+                    if (photo.publicId) {
+                        console.log(`[Journal] Deleting photo asset: ${photo.publicId}`);
+                        await deleteFromCloudinary(photo.publicId, 'image');
+                    }
                 }
             }
+        } catch (mediaError) {
+            console.error(`[Journal] Error deleting media assets from Cloudinary for entry ${entryId}:`, mediaError);
+            // We continue with document deletion even if media deletion fails to avoid orphaned database records
         }
 
         await deleteDoc(entryDocRef);
+        console.log(`[Journal] Successfully deleted entry ${entryId}`);
 
         return res.status(200).json({ success: true, message: 'Journal entry deleted successfully' });
     } catch (err) {
+        console.error(`[Journal] Unexpected error during deletion of entry ${req.params.id}:`, err);
         next(err);
     }
 }

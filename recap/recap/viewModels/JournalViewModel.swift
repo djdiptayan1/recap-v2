@@ -204,11 +204,37 @@ class JournalViewModel: ObservableObject {
 
     func startRecording() {
         let session = AVAudioSession.sharedInstance()
+        
+        switch session.recordPermission {
+        case .undetermined:
+            session.requestRecordPermission { granted in
+                if granted {
+                    Task { @MainActor in
+                        self.startRecordingProcess()
+                    }
+                } else {
+                    Task { @MainActor in
+                        self.errorMessage = "Microphone access is required to record voice notes. Please enable it in Settings."
+                    }
+                }
+            }
+        case .denied:
+            errorMessage = "Microphone access is denied. Please enable it in Settings."
+        case .granted:
+            startRecordingProcess()
+        @unknown default:
+            errorMessage = "Unknown microphone permission state."
+        }
+    }
+
+    private func startRecordingProcess() {
+        let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playAndRecord, mode: .default)
+            try session.setCategory(.playAndRecord, mode: .default, options: .defaultToSpeaker)
             try session.setActive(true)
         } catch {
             print("Failed to set up audio session: \(error)")
+            errorMessage = "Could not start audio session: \(error.localizedDescription)"
             return
         }
 
@@ -236,6 +262,7 @@ class JournalViewModel: ObservableObject {
             }
         } catch {
             print("Failed to start recording: \(error)")
+            errorMessage = "Failed to start recording: \(error.localizedDescription)"
         }
     }
 
