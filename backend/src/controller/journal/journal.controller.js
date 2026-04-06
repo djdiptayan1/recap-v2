@@ -20,13 +20,115 @@ import {
     uploadOnCloudinary,
     deleteFromCloudinary,
     buildResponsiveImageSet,
+    generateSignedUploadParams,
+    isCloudinaryUrl,
 } from '../../utils/cloudinary.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const JOURNAL_SUBCOLLECTION = config.firestoreNames.journalEntries_SubCollection;
+const VERCEL_SAFE_REQUEST_LIMIT_BYTES = 4 * 1024 * 1024;
+const MAX_JOURNAL_PHOTOS = 10;
 
 const journalRef = (patientId) =>
     collection(firestore, USERS_COLLECTION, patientId, JOURNAL_SUBCOLLECTION);
+
+function estimateRequestBodySize(body) {
+    try {
+        return Buffer.byteLength(JSON.stringify(body ?? {}), 'utf8');
+    } catch {
+        return 0;
+    }
+}
+
+function ensurePayloadFitsVercel(body) {
+    const estimatedBytes = estimateRequestBodySize(body);
+    const hasInlineMedia = Boolean(
+        body?.audioBase64 ||
+        (Array.isArray(body?.photoBase64s) && body.photoBase64s.length > 0)
+    );
+
+    if (hasInlineMedia && estimatedBytes > VERCEL_SAFE_REQUEST_LIMIT_BYTES) {
+        const estimatedMb = (estimatedBytes / (1024 * 1024)).toFixed(2);
+        const safeMb = (VERCEL_SAFE_REQUEST_LIMIT_BYTES / (1024 * 1024)).toFixed(2);
+        const error = new Error(
+            `Journal upload payload is ${estimatedMb} MB. Vercel rejects requests above about 4.5 MB before the function runs. Upload media directly to Cloudinary first and submit only URLs/public IDs to this endpoint.`
+        );
+        error.status = 413;
+        error.details = {
+            estimatedBytes,
+            safeLimitBytes: VERCEL_SAFE_REQUEST_LIMIT_BYTES,
+            safeLimitMb: safeMb,
+        };
+        throw error;
+    }
+}
+
+function normalizeUploadedAudio(audioUpload) {
+    if (!audioUpload?.url) return null;
+
+    return {
+        audioURL: audioUpload.url,
+        audioPublicId: audioUpload.publicId || null,
+    };
+}
+
+function normalizeUploadedPhotos(photoUploads) {
+    if (!Array.isArray(photoUploads)) return [];
+
+    return photoUploads
+        .filter(photo => photo?.url)
+        .map(photo => ({
+            url: photo.url,
+            publicId: photo.publicId || null,
+            caption: photo.caption || '',
+        }));
+}
+
+function validateUploadedMediaReferences({ audioUpload, photoUploads }) {
+    if (audioUpload?.url && !isCloudinaryUrl(audioUpload.url)) {
+        const error = new Error('audioUpload.url must be a valid Cloudinary URL');
+        error.status = 400;
+        throw error;
+    }
+
+    for (const photo of photoUploads || []) {
+        if (photo?.url && !isCloudinaryUrl(photo.url)) {
+            const error = new Error('Each photoUploads.url must be a valid Cloudinary URL');
+            error.status = 400;
+            throw error;
+        }
+    }
+}
+
+function validateJournalMediaInput({ audioBase64, audioUpload, photoBase64s, photoUploads }) {
+    if (audioBase64 && audioUpload?.url) {
+        const error = new Error('Provide either audioBase64 or audioUpload, not both');
+        error.status = 400;
+        throw error;
+    }
+
+    if ((photoBase64s?.length || 0) > 0 && (photoUploads?.length || 0) > 0) {
+        const error = new Error('Provide either photoBase64s or photoUploads, not both');
+        error.status = 400;
+        throw error;
+    }
+
+    const totalPhotos = (photoBase64s?.length || 0) + (photoUploads?.length || 0);
+    if (totalPhotos > MAX_JOURNAL_PHOTOS) {
+        const error = new Error(`A journal entry can include at most ${MAX_JOURNAL_PHOTOS} photos`);
+        error.status = 400;
+        throw error;
+    }
+
+    validateUploadedMediaReferences({ audioUpload, photoUploads });
+}
+
+function sanitizePublicIdSegment(value) {
+    return String(value ?? '')
+        .trim()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-zA-Z0-9_-]/g, '');
+}
 
 /**
  * Converts Firestore Timestamp objects to ISO date strings so the JSON
@@ -65,13 +167,24 @@ async function createEntry(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { patientId, title, content, mood, audioBase64, audioDuration, createdBy,
-                entryType, people, place, eventTag, photoBase64s } = req.body;
+        ensurePayloadFitsVercel(req.body);
 
-        if (!content && !audioBase64 && (!photoBase64s || !photoBase64s.length)) {
+        const { patientId, title, content, mood, audioBase64, audioDuration, createdBy,
+                entryType, people, place, eventTag, photoBase64s, audioUpload, photoUploads } = req.body;
+
+        const uploadedAudio = normalizeUploadedAudio(audioUpload);
+        const uploadedPhotos = normalizeUploadedPhotos(photoUploads);
+        validateJournalMediaInput({
+            audioBase64,
+            audioUpload,
+            photoBase64s,
+            photoUploads: uploadedPhotos,
+        });
+
+        if (!content && !audioBase64 && !uploadedAudio && (!photoBase64s || !photoBase64s.length) && uploadedPhotos.length === 0) {
             return res.status(400).json({
                 success: false,
-                error: 'At least one of content, audioBase64, or photoBase64s must be provided',
+                error: 'At least one of content, audioBase64, audioUpload, photoBase64s, or photoUploads must be provided',
             });
         }
 
@@ -115,9 +228,9 @@ async function createEntry(req, res, next) {
         await Promise.all(uploadPromises);
 
         // Process results
-        let audioURL = null;
-        let audioPublicId = null;
-        if (audioUploadPromise) {
+        let audioURL = uploadedAudio?.audioURL || null;
+        let audioPublicId = uploadedAudio?.audioPublicId || null;
+        if (audioUploadPromise && !uploadedAudio) {
             const result = await audioUploadPromise;
             if (result) {
                 audioURL = result.secure_url || result.url;
@@ -125,7 +238,7 @@ async function createEntry(req, res, next) {
             }
         }
 
-        const photos = [];
+        const photos = [...uploadedPhotos];
         for (const task of photoTasks) {
             const { result, caption } = await task;
             if (result) {
@@ -194,6 +307,87 @@ async function getEntries(req, res, next) {
     }
 }
 
+async function createUploadSignature(req, res, next) {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
+
+        const { patientId, mediaType, index } = req.body;
+        const normalizedPatientId = sanitizePublicIdSegment(patientId);
+        const timestamp = Date.now();
+        const suffix = mediaType === 'photo'
+            ? `photo_${Number.isInteger(index) ? index : 0}_${timestamp}`
+            : `audio_${timestamp}`;
+
+        const folder = mediaType === 'photo'
+            ? 'recap/journal/photos'
+            : 'recap/journal/audio';
+        const publicId = `journal_${normalizedPatientId}_${suffix}`;
+
+        const signedParams = generateSignedUploadParams({
+            folder,
+            publicId,
+            resourceType: 'auto',
+        });
+
+        return res.status(200).json({
+            success: true,
+            data: signedParams,
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
+async function createUploadSignaturesBatch(req, res, next) {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ success: false, errors: errors.array() });
+        }
+
+        const { patientId, photoCount = 0, includeAudio = false } = req.body;
+        const normalizedPatientId = sanitizePublicIdSegment(patientId);
+        const timestamp = Date.now();
+
+        const photos = Array.from({ length: photoCount }, (_, index) => {
+            const publicId = `journal_${normalizedPatientId}_photo_${index}_${timestamp}`;
+            return {
+                index,
+                ...generateSignedUploadParams({
+                    folder: 'recap/journal/photos',
+                    publicId,
+                    resourceType: 'auto',
+                }),
+            };
+        });
+
+        const audio = includeAudio
+            ? generateSignedUploadParams({
+                folder: 'recap/journal/audio',
+                publicId: `journal_${normalizedPatientId}_audio_${timestamp}`,
+                resourceType: 'auto',
+            })
+            : null;
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                audio,
+                photos,
+                limits: {
+                    maxPhotos: MAX_JOURNAL_PHOTOS,
+                    maxInlinePayloadBytes: VERCEL_SAFE_REQUEST_LIMIT_BYTES,
+                },
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+}
+
 async function getEntryById(req, res, next) {
     try {
         const errors = validationResult(req);
@@ -225,8 +419,17 @@ async function updateEntry(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
+        ensurePayloadFitsVercel(req.body);
+
         const { id: entryId } = req.params;
-        const { patientId, title, content, mood, audioBase64, audioDuration } = req.body;
+        const { patientId, title, content, mood, audioBase64, audioDuration, audioUpload } = req.body;
+        const uploadedAudio = normalizeUploadedAudio(audioUpload);
+        validateJournalMediaInput({
+            audioBase64,
+            audioUpload,
+            photoBase64s: [],
+            photoUploads: [],
+        });
 
         const entryDocRef = doc(
             firestore, USERS_COLLECTION, patientId, JOURNAL_SUBCOLLECTION, entryId
@@ -243,7 +446,7 @@ async function updateEntry(req, res, next) {
         if (mood !== undefined) updates.mood = mood;
         if (audioDuration !== undefined) updates.audioDuration = audioDuration;
 
-        if (audioBase64) {
+        if (audioBase64 || uploadedAudio) {
             const existingData = existingSnap.data();
             const uploadPromises = [];
             
@@ -252,19 +455,25 @@ async function updateEntry(req, res, next) {
                 uploadPromises.push(deleteFromCloudinary(existingData.audioPublicId, 'video'));
             }
 
-            const base64Data = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
-            const buffer = Buffer.from(base64Data, 'base64');
-            const tempId = `journal_${patientId}_${Date.now()}`;
-            const uploadNewTask = uploadOnCloudinary(buffer, 'recap/journal/audio', tempId);
-            uploadPromises.push(uploadNewTask);
+            if (uploadedAudio) {
+                await Promise.allSettled(uploadPromises);
+                updates.audioURL = uploadedAudio.audioURL;
+                updates.audioPublicId = uploadedAudio.audioPublicId;
+            } else {
+                const base64Data = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                const tempId = `journal_${patientId}_${Date.now()}`;
+                const uploadNewTask = uploadOnCloudinary(buffer, 'recap/journal/audio', tempId);
+                uploadPromises.push(uploadNewTask);
 
-            // Execute in parallel
-            await Promise.allSettled(uploadPromises);
-            
-            const uploadResult = await uploadNewTask;
-            if (uploadResult) {
-                updates.audioURL = uploadResult.secure_url || uploadResult.url;
-                updates.audioPublicId = uploadResult.public_id;
+                // Execute in parallel
+                await Promise.allSettled(uploadPromises);
+
+                const uploadResult = await uploadNewTask;
+                if (uploadResult) {
+                    updates.audioURL = uploadResult.secure_url || uploadResult.url;
+                    updates.audioPublicId = uploadResult.public_id;
+                }
             }
         }
 
@@ -340,6 +549,8 @@ async function deleteEntry(req, res, next) {
 
 export default {
     createEntry,
+    createUploadSignature,
+    createUploadSignaturesBatch,
     getEntries,
     getEntryById,
     updateEntry,
