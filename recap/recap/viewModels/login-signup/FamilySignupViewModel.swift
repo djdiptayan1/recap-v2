@@ -151,6 +151,8 @@ class FamilySignupViewModel: ObservableObject {
                         key: .patientDocumentID, value: patientDocumentId)
                 }
 
+                AnalyticsManager.shared.logSignUp(method: "google")
+
                 // Construct patientModel
                 // Note: We might be missing `linkedPatient` data here compared to `verifyFamilyMember` response.
                 // However, `patientModel` usually needs basic info.

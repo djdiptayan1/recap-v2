@@ -14,19 +14,23 @@ struct familyTabbar: View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
                 home_family()
+                    .onAppear { AnalyticsManager.shared.logScreen(name: "FamilyHome") }
             }
             Tab("Articles", systemImage: "person.2.fill") {
                 NavigationStack {
                     ArticlesView()
                 }
+                .onAppear { AnalyticsManager.shared.logScreen(name: "FamilyArticles") }
             }
             Tab("Journal", systemImage: "book.fill") {
                 NavigationStack {
                     JournalView()
                 }
+                .onAppear { AnalyticsManager.shared.logScreen(name: "FamilyJournal") }
             }
             Tab("Smriti", systemImage: "apple.intelligence") {
                 SmritiView()
+                    .onAppear { AnalyticsManager.shared.logScreen(name: "FamilySmriti") }
             }
 //            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
 //                NavigationStack {
