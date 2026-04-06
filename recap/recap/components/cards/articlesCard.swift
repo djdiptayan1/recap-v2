@@ -13,10 +13,10 @@ struct ArticleCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             ZStack(alignment: .topTrailing) {
-                WebImage(url: URL(string: article.image))
+                WebImage(url: URL(string: article.thumbnailImage ?? article.image))
                     .resizable()
                     .indicator(.activity)
-                    .transition(.fade(duration: 0.5))
+                    .transition(AnyTransition.fade(duration: 0.5))
                     .scaledToFill()
                     .frame(height: 180)
                     .clipped()
@@ -73,6 +73,7 @@ struct ArticleCard: View {
         author: "Dr. L. Chen",
         content: "Caregiving can be highly rewarding, but requires strategic management of the patient's routine and the caregiver's own health to avoid burnout. Remember to prioritize sleep and short breaks.",
         image: "https://picsum.photos/id/102/1000/600",
+        thumbnailImage: nil,
         link: "https://example.com",
         source: "The Journal of Aging",
         citation: "JN, 2024"

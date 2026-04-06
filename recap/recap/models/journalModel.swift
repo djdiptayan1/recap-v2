@@ -24,6 +24,9 @@ struct JournalPhoto: Codable, Equatable {
     let url: String
     let publicId: String?
     let caption: String?
+    let thumbnailURL: String?
+    let detailURL: String?
+    let originalURL: String?
 }
 
 extension JournalPhoto: Identifiable {

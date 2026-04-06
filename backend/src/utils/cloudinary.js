@@ -8,6 +8,76 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const DEFAULT_IMAGE_DELIVERY = {
+    fetch_format: 'auto',
+    quality: 'auto',
+};
+
+const IMAGE_PRESETS = {
+    default: {
+        ...DEFAULT_IMAGE_DELIVERY,
+    },
+    avatar: {
+        ...DEFAULT_IMAGE_DELIVERY,
+        width: 200,
+        height: 200,
+        crop: 'fill',
+        gravity: 'face',
+    },
+    thumbnail: {
+        ...DEFAULT_IMAGE_DELIVERY,
+        width: 400,
+        height: 400,
+        crop: 'thumb',
+        gravity: 'auto',
+    },
+    detail: {
+        ...DEFAULT_IMAGE_DELIVERY,
+        width: 1200,
+        crop: 'limit',
+    },
+    articleThumbnail: {
+        ...DEFAULT_IMAGE_DELIVERY,
+        width: 800,
+        height: 450,
+        crop: 'fill',
+        gravity: 'auto',
+    },
+    articleDetail: {
+        ...DEFAULT_IMAGE_DELIVERY,
+        width: 1400,
+        crop: 'limit',
+    },
+};
+
+const CLOUDINARY_HOST_PATTERN = /(?:^|\.)cloudinary\.com$/i;
+
+function looksLikeTransformationSegment(segment) {
+    if (!segment) return false;
+
+    return [
+        'c_',
+        'w_',
+        'h_',
+        'g_',
+        'q_',
+        'f_',
+        'dpr_',
+        'fl_',
+        'e_',
+        'ar_',
+        'x_',
+        'y_',
+        'z_',
+        'r_',
+        'a_',
+        'bo_',
+        'b_',
+        'o_',
+        '$',
+    ].some(prefix => segment.startsWith(prefix));
+}
+
 /**
  * Uploads a file buffer to Cloudinary
  * @param {Buffer} fileBuffer - Buffer of the file
@@ -86,11 +156,7 @@ const getOptimizedUrl = (publicId, options = {}) => {
         if (!publicId) return null;
 
         return cloudinary.url(publicId, {
-            fetch_format: 'auto',   // Auto format (WebP/AVIF etc)
-            quality: 'auto',        // Auto quality balance
-            gravity: 'auto',        // Auto gravity ()
-            // dpr: 'auto',         // Auto Device Pixel Ratio
-            // flags: ['progressive', 'strip_profile'], // Progressive loading + Remove metadata
+            ...DEFAULT_IMAGE_DELIVERY,
             ...options
         });
     } catch (error) {
@@ -99,8 +165,86 @@ const getOptimizedUrl = (publicId, options = {}) => {
     }
 }
 
+function isCloudinaryUrl(url) {
+    if (!url || typeof url !== 'string') return false;
+
+    try {
+        const parsed = new URL(url);
+        return CLOUDINARY_HOST_PATTERN.test(parsed.hostname);
+    } catch {
+        return false;
+    }
+}
+
+function extractPublicIdFromUrl(url) {
+    if (!isCloudinaryUrl(url)) return null;
+
+    try {
+        const parsed = new URL(url);
+        const pathSegments = parsed.pathname.split('/').filter(Boolean);
+        const uploadIndex = pathSegments.findIndex(segment => segment === 'upload');
+        if (uploadIndex === -1 || uploadIndex === pathSegments.length - 1) return null;
+
+        const assetSegments = pathSegments.slice(uploadIndex + 1);
+        const versionIndex = assetSegments.findIndex(segment => /^v\d+$/.test(segment));
+        let publicIdSegments;
+        if (versionIndex >= 0) {
+            publicIdSegments = assetSegments.slice(versionIndex + 1);
+        } else if (looksLikeTransformationSegment(assetSegments[0])) {
+            publicIdSegments = assetSegments.slice(1);
+        } else {
+            publicIdSegments = assetSegments;
+        }
+
+        if (!publicIdSegments.length) return null;
+
+        const normalizedSegments = [...publicIdSegments];
+        const lastSegment = normalizedSegments[normalizedSegments.length - 1];
+        normalizedSegments[normalizedSegments.length - 1] = lastSegment.replace(/\.[^.]+$/, '');
+
+        return normalizedSegments.join('/');
+    } catch (error) {
+        console.error("Error extracting Cloudinary public ID:", error);
+        return null;
+    }
+}
+
+function getOptimizedImageUrl(source, preset = 'default', overrides = {}) {
+    try {
+        if (!source) return null;
+
+        const publicId = isCloudinaryUrl(source) ? extractPublicIdFromUrl(source) : source;
+        if (!publicId) return source;
+
+        const presetOptions = IMAGE_PRESETS[preset] || IMAGE_PRESETS.default;
+        return getOptimizedUrl(publicId, {
+            ...presetOptions,
+            ...overrides,
+        });
+    } catch (error) {
+        console.error("Error generating optimized image URL:", error);
+        return source;
+    }
+}
+
+function buildResponsiveImageSet(source, presets = {}) {
+    if (!source) return null;
+
+    const originalURL = isCloudinaryUrl(source) ? source : null;
+
+    return {
+        originalURL: originalURL || source,
+        thumbnailURL: getOptimizedImageUrl(source, presets.thumbnail || 'thumbnail'),
+        detailURL: getOptimizedImageUrl(source, presets.detail || 'detail'),
+    };
+}
+
 export {
     uploadOnCloudinary,
     deleteFromCloudinary,
-    getOptimizedUrl
+    getOptimizedUrl,
+    getOptimizedImageUrl,
+    buildResponsiveImageSet,
+    extractPublicIdFromUrl,
+    isCloudinaryUrl,
 };

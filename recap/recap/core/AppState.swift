@@ -48,7 +48,7 @@ class AppState: ObservableObject {
                             sex: "",
                             bloodGroup: "",
                             stage: "",
-                            profileImageURL: response.imageURL,
+                            profileImageURL: CloudinaryUtility.optimize(response.imageURL, transform: .avatar),
                             email: email,
                             id: response.familymember_documentId,
                             type: "family",

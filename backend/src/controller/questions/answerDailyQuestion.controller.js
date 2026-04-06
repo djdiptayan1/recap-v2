@@ -9,6 +9,7 @@ const { updateStreak } = streakController;
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const USER_QUESTIONS_COLLECTION = config.firestoreNames.personalQuestions_SubCollection;
+const ANALYTICS_CACHE_COLLECTION = config.firestoreNames.analyticsCache_SubCollection;
 
 export const answerDailyQuestion = async (req, res, next) => {
     try {
@@ -36,7 +37,6 @@ export const answerDailyQuestion = async (req, res, next) => {
         }
 
         // Construct document reference
-        // users/{patientId}/questions/{date}/{subCollectionName}/{questionId}
         const questionRef = doc(
             firestore,
             USERS_COLLECTION,
@@ -51,53 +51,47 @@ export const answerDailyQuestion = async (req, res, next) => {
         const answersToAdd = Array.isArray(answer) ? answer : [answer];
 
         if (answeredBy === 'family') {
-            // Family answers go to 'correctAnswers'
             updateData.correctAnswers = arrayUnion(...answersToAdd);
             updateData.updatedAt = new Date().toISOString();
         } else if (answeredBy === 'patient') {
-            // Patient answers go to 'answers'
             updateData.answers = arrayUnion(...answersToAdd);
             updateData.isAnswered = true;
-            updateData.patientAnswer = answer; // Store latest answer input
+            updateData.patientAnswer = answer;
             updateData.lastAnsweredDate = new Date().toISOString();
         } else {
             return res.status(400).json({
                 success: false,
-                message: `Invalid answeredBy value: ${answeredBy}. Must be 'family' or 'patient'.`
+                message: `Invalid answeredBy value: ${answeredBy}`
             });
         }
 
-        // ...
+        // Prepare background tasks
+        const backgroundTasks = [updateDoc(questionRef, updateData)];
 
-        await updateDoc(questionRef, updateData);
-
-        // If patient answered, update their streak
+        // 1. Parallel Streak Update
         if (answeredBy === 'patient') {
-            try {
-                // Mock Express objects to reuse the existing controller logic
-                const mockReq = { body: { documentId: patientId } };
-                const mockRes = {
-                    status: (code) => ({
-                        json: (data) => console.log(`Internal Streak Update [${code}]:`, data)
-                    })
-                };
-                const mockNext = (err) => console.error("Internal Streak Update Error:", err);
-
-                // Call the controller as if it were a route handler
-                await updateStreak(mockReq, mockRes, mockNext);
-            } catch (error) {
-                console.error('Error updating streak:', error);
-            }
+            const streakTask = (async () => {
+                try {
+                    const mockReq = { body: { documentId: patientId } };
+                    const mockRes = { status: () => ({ json: () => {} }) };
+                    const mockNext = () => {};
+                    await updateStreak(mockReq, mockRes, mockNext);
+                } catch (e) { console.error("Streak update error:", e); }
+            })();
+            backgroundTasks.push(streakTask);
         }
+
+        // 2. Parallel Cache Invalidation
+        const cacheDocRef = doc(firestore, USERS_COLLECTION, patientId, ANALYTICS_CACHE_COLLECTION, date);
+        backgroundTasks.push(updateDoc(cacheDocRef, { updatedAt: new Date().getTime() }).catch(() => {}));
+
+        // Fire all in parallel
+        await Promise.all(backgroundTasks);
 
         res.status(200).json({
             success: true,
             message: 'Answer submitted successfully',
-            data: {
-                questionId,
-                date,
-                updatedField: answeredBy === 'family' ? 'correctAnswers' : 'answers'
-            }
+            data: { questionId, date }
         });
 
     } catch (error) {

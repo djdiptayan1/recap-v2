@@ -181,15 +181,54 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
         // Cache question data to avoid redundant Firestore reads
         const questionCache = new Map();
-        async function getCachedQuestions(dateStr) {
-            if (questionCache.has(dateStr)) return questionCache.get(dateStr);
-            const questions = await fetchQuestionsForDate(patientId, dateStr);
-            questionCache.set(dateStr, questions);
-            return questions;
+        
+        // Identify all dates we need to fetch up front to parallelize
+        const datesToFetch = new Set();
+        datesToFetch.add(today);
+        
+        // Dates for Weekly (7 days)
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            datesToFetch.add(formatDate(d));
+        }
+        
+        // Dates for Monthly (Last 4 months)
+        for (let i = 0; i < 4; i++) {
+            const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const year = monthDate.getFullYear();
+            const month = monthDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const d = new Date(year, month, day);
+                if (d > now) break;
+                datesToFetch.add(formatDate(d));
+            }
         }
 
+        // Dates for Decline Detection (Last 4 weeks = 28 days)
+        for (let i = 0; i < 28; i++) {
+            const d = new Date(now);
+            d.setDate(d.getDate() - i);
+            datesToFetch.add(formatDate(d));
+        }
+
+        // Fetch all unique dates in parallel
+        const uniqueDates = Array.from(datesToFetch);
+        console.log(`[Analytics] Parallel fetching ${uniqueDates.length} dates for patient ${patientId}`);
+        
+        const fetchPromises = uniqueDates.map(dateStr => 
+            fetchQuestionsForDate(patientId, dateStr).then(qs => ({ dateStr, questions: qs }))
+        );
+        
+        const results = await Promise.all(fetchPromises);
+        results.forEach(res => questionCache.set(res.dateStr, res.questions));
+
+        // Synchronous processing of cached data
+        const getCachedQuestions = (dateStr) => questionCache.get(dateStr) || [];
+
         // 1. Daily stats (today)
-        const todayQuestions = await getCachedQuestions(today);
+        const todayQuestions = getCachedQuestions(today);
         const dailyStats = calculateStats(todayQuestions);
 
         // 2. Weekly stats (last 7 days)
@@ -198,7 +237,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             const dateStr = formatDate(d);
-            const questions = await getCachedQuestions(dateStr);
+            const questions = getCachedQuestions(dateStr);
             const stats = calculateStats(questions);
             weeklyData.push({
                 date: dateStr,
@@ -224,9 +263,9 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const d = new Date(year, month, day);
-                if (d > now) break; // Don't go past today
+                if (d > now) break;
                 const dateStr = formatDate(d);
-                const questions = await getCachedQuestions(dateStr);
+                const questions = getCachedQuestions(dateStr);
                 const stats = calculateStats(questions);
                 totalCorrect += stats.correct;
                 totalAnswered += stats.correct + stats.incorrect;
@@ -252,7 +291,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
                 const date = new Date(now);
                 date.setDate(date.getDate() - (w * 7 + d));
                 const dateStr = formatDate(date);
-                const questions = await getCachedQuestions(dateStr);
+                const questions = getCachedQuestions(dateStr);
                 const stats = calculateStats(questions);
                 weekCorrect += stats.correct;
                 weekAnswered += stats.correct + stats.incorrect;
@@ -293,7 +332,7 @@ export const getDashboardAnalytics = async (req, res, next) => {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             const dateStr = formatDate(d);
-            const questions = await getCachedQuestions(dateStr);
+            const questions = getCachedQuestions(dateStr);
             const stats = calculateStats(questions);
 
             overallCorrect += stats.correct;

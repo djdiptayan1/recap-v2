@@ -1,6 +1,7 @@
 import { doc, getDoc } from 'firebase/firestore';
 import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
+import { getOptimizedImageUrl } from '../../utils/cloudinary.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 
@@ -17,7 +18,11 @@ export async function getPatientData(documentId) {
         const patientSnap = await getDoc(patientRef);
 
         if (patientSnap.exists()) {
-            return patientSnap.data();
+            const data = patientSnap.data();
+            return {
+                ...data,
+                profileImageURL: getOptimizedImageUrl(data.profileImageURL, 'avatar'),
+            };
         }
         return null;
     } catch (error) {

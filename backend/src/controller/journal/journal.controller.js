@@ -16,7 +16,11 @@ import { firestore } from '../../utils/db.js';
 import config from '../../../config.js';
 import { JOURNAL_FIELDS } from '../../models/journal.model.js';
 import { validationResult } from 'express-validator';
-import { uploadOnCloudinary, deleteFromCloudinary } from '../../utils/cloudinary.js';
+import {
+    uploadOnCloudinary,
+    deleteFromCloudinary,
+    buildResponsiveImageSet,
+} from '../../utils/cloudinary.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const JOURNAL_SUBCOLLECTION = config.firestoreNames.journalEntries_SubCollection;
@@ -37,6 +41,20 @@ function serializeEntry(data) {
             result[key] = value;
         }
     }
+
+    if (Array.isArray(result.photos)) {
+        result.photos = result.photos.map(photo => {
+            const responsive = buildResponsiveImageSet(photo?.url);
+            return {
+                ...photo,
+                url: responsive?.detailURL || photo?.url || '',
+                detailURL: responsive?.detailURL || photo?.url || '',
+                thumbnailURL: responsive?.thumbnailURL || photo?.url || '',
+                originalURL: responsive?.originalURL || photo?.url || '',
+            };
+        });
+    }
+
     return result;
 }
 

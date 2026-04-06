@@ -175,6 +175,10 @@ class JournalViewModel: ObservableObject {
 
     func deleteEntry(entryId: String, patientId: String) async -> Bool {
         errorMessage = nil
+        
+        // Optimistic UI: Save copy and remove immediately
+        let index = entries.firstIndex(where: { $0.id == entryId })
+        let removedEntry = index.map { entries.remove(at: $0) }
 
         do {
             // Network response for delete returns success/message
@@ -187,12 +191,19 @@ class JournalViewModel: ObservableObject {
                 keyDecodingStrategy: .useDefaultKeys
             )
             if response.success {
-                entries.removeAll { $0.id == entryId }
                 return true
             } else {
+                // Rollback on server error
+                if let entry = removedEntry, let idx = index {
+                    entries.insert(entry, at: idx)
+                }
                 errorMessage = "Failed to delete journal entry"
             }
         } catch {
+            // Rollback on network error
+            if let entry = removedEntry, let idx = index {
+                entries.insert(entry, at: idx)
+            }
             errorMessage = error.localizedDescription
             print("Error deleting journal entry: \(error)")
         }
