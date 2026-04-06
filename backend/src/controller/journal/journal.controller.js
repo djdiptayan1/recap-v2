@@ -64,41 +64,58 @@ async function createEntry(req, res, next) {
         // Remove audioBase64 from payload — it's processed separately
         delete payload.audioBase64;
 
-        let audioURL = null;
-        let audioPublicId = null;
-
+        // Prepare upload tasks for parallel execution
+        const uploadPromises = [];
+        
+        // 1. Audio upload task
+        let audioUploadPromise = null;
         if (audioBase64) {
-            // Strip the data URI prefix if present
             const base64Data = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
             const buffer = Buffer.from(base64Data, 'base64');
+            const tempId = `journal_${patientId}_audio_${Date.now()}`;
+            audioUploadPromise = uploadOnCloudinary(buffer, 'recap/journal/audio', tempId);
+            uploadPromises.push(audioUploadPromise);
+        }
 
-            // Generate a temporary ID for naming the file
-            const tempId = `journal_${patientId}_${Date.now()}`;
-            const uploadResult = await uploadOnCloudinary(buffer, 'recap/journal/audio', tempId);
+        // 2. Photo upload tasks
+        const photoTasks = [];
+        if (photoBase64s && Array.isArray(photoBase64s)) {
+            photoBase64s.forEach((photo, i) => {
+                if (photo.imageBase64) {
+                    const base64Data = photo.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+                    const buffer = Buffer.from(base64Data, 'base64');
+                    const photoId = `journal_${patientId}_photo_${Date.now()}_${i}`;
+                    const task = uploadOnCloudinary(buffer, 'recap/journal/photos', photoId)
+                        .then(result => ({ result, caption: photo.caption || '' }));
+                    photoTasks.push(task);
+                    uploadPromises.push(task);
+                }
+            });
+        }
 
-            if (uploadResult) {
-                audioURL = uploadResult.secure_url || uploadResult.url;
-                audioPublicId = uploadResult.public_id;
+        // Execute all uploads in parallel
+        await Promise.all(uploadPromises);
+
+        // Process results
+        let audioURL = null;
+        let audioPublicId = null;
+        if (audioUploadPromise) {
+            const result = await audioUploadPromise;
+            if (result) {
+                audioURL = result.secure_url || result.url;
+                audioPublicId = result.public_id;
             }
         }
 
-        // Upload each photo in photoBase64s
         const photos = [];
-        if (photoBase64s && Array.isArray(photoBase64s)) {
-            for (let i = 0; i < photoBase64s.length; i++) {
-                const { imageBase64, caption } = photoBase64s[i];
-                if (!imageBase64) continue;
-                const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-                const buffer = Buffer.from(base64Data, 'base64');
-                const photoId = `journal_${patientId}_photo_${Date.now()}_${i}`;
-                const uploadResult = await uploadOnCloudinary(buffer, 'recap/journal/photos', photoId);
-                if (uploadResult) {
-                    photos.push({
-                        url: uploadResult.secure_url || uploadResult.url,
-                        publicId: uploadResult.public_id,
-                        caption: caption || '',
-                    });
-                }
+        for (const task of photoTasks) {
+            const { result, caption } = await task;
+            if (result) {
+                photos.push({
+                    url: result.secure_url || result.url,
+                    publicId: result.public_id,
+                    caption: caption,
+                });
             }
         }
 
@@ -209,17 +226,24 @@ async function updateEntry(req, res, next) {
         if (audioDuration !== undefined) updates.audioDuration = audioDuration;
 
         if (audioBase64) {
-            // Delete old audio if exists
             const existingData = existingSnap.data();
+            const uploadPromises = [];
+            
+            // Delete old audio if exists
             if (existingData.audioPublicId) {
-                await deleteFromCloudinary(existingData.audioPublicId, 'video');
+                uploadPromises.push(deleteFromCloudinary(existingData.audioPublicId, 'video'));
             }
 
             const base64Data = audioBase64.replace(/^data:audio\/\w+;base64,/, '');
             const buffer = Buffer.from(base64Data, 'base64');
             const tempId = `journal_${patientId}_${Date.now()}`;
-            const uploadResult = await uploadOnCloudinary(buffer, 'recap/journal/audio', tempId);
+            const uploadNewTask = uploadOnCloudinary(buffer, 'recap/journal/audio', tempId);
+            uploadPromises.push(uploadNewTask);
 
+            // Execute in parallel
+            await Promise.allSettled(uploadPromises);
+            
+            const uploadResult = await uploadNewTask;
             if (uploadResult) {
                 updates.audioURL = uploadResult.secure_url || uploadResult.url;
                 updates.audioPublicId = uploadResult.public_id;
@@ -263,24 +287,27 @@ async function deleteEntry(req, res, next) {
 
         const entryData = snap.data();
         
-        // Asynchronously delete media assets, but don't let them block Firestore deletion if they fail
-        // However, we log the errors for debugging
-        try {
-            if (entryData.audioPublicId) {
-                console.log(`[Journal] Deleting audio asset: ${entryData.audioPublicId}`);
-                await deleteFromCloudinary(entryData.audioPublicId, 'video');
-            }
-            if (entryData.photos && Array.isArray(entryData.photos)) {
-                for (const photo of entryData.photos) {
-                    if (photo.publicId) {
-                        console.log(`[Journal] Deleting photo asset: ${photo.publicId}`);
-                        await deleteFromCloudinary(photo.publicId, 'image');
-                    }
+        // Asynchronously delete media assets in parallel
+        const cleanupPromises = [];
+        if (entryData.audioPublicId) {
+            console.log(`[Journal] Queueing audio deletion: ${entryData.audioPublicId}`);
+            cleanupPromises.push(deleteFromCloudinary(entryData.audioPublicId, 'video'));
+        }
+        if (entryData.photos && Array.isArray(entryData.photos)) {
+            entryData.photos.forEach(photo => {
+                if (photo.publicId) {
+                    console.log(`[Journal] Queueing photo deletion: ${photo.publicId}`);
+                    cleanupPromises.push(deleteFromCloudinary(photo.publicId, 'image'));
                 }
+            });
+        }
+
+        try {
+            if (cleanupPromises.length > 0) {
+                await Promise.allSettled(cleanupPromises);
             }
         } catch (mediaError) {
-            console.error(`[Journal] Error deleting media assets from Cloudinary for entry ${entryId}:`, mediaError);
-            // We continue with document deletion even if media deletion fails to avoid orphaned database records
+            console.error(`[Journal] Error during parallel media cleanup for entry ${entryId}:`, mediaError);
         }
 
         await deleteDoc(entryDocRef);
