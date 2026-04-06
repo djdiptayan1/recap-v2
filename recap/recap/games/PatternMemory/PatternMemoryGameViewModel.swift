@@ -57,6 +57,11 @@ class PatternMemoryGameViewModel: ObservableObject {
         score = 0
         sequence = []
         playerInput = []
+        
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
+            AnalyticsManager.Parameters.gameType: "PatternMemory"
+        ])
+        
         startNewRound()
     }
 
@@ -124,6 +129,11 @@ class PatternMemoryGameViewModel: ObservableObject {
 
     func continueAfterFeedback() {
         if lives <= 0 {
+            AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
+                AnalyticsManager.Parameters.gameType: "PatternMemory",
+                AnalyticsManager.Parameters.score: score,
+                "final_level": level
+            ])
             withAnimation { currentPhase = .gameOver }
         } else if lastAnswerCorrect {
             startNewRound()

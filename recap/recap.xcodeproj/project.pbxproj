@@ -16,6 +16,8 @@
 		9D43B92F2EE209EB0039C22F /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B92E2EE209EB0039C22F /* GoogleSignIn */; };
 		9D43B9312EE209EB0039C22F /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 9D43B9302EE209EB0039C22F /* GoogleSignInSwift */; };
 		9DA698F12EE0A38400B5B333 /* SDWebImageSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9DA698F02EE0A38400B5B333 /* SDWebImageSwiftUI */; };
+		9DF7E04D2F83BBD2003C0E9C /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 9DF7E04C2F83BBD2003C0E9C /* FirebaseCrashlytics */; };
+		9DF7E04F2F83BBDC003C0E9C /* FirebasePerformance in Frameworks */ = {isa = PBXBuildFile; productRef = 9DF7E04E2F83BBDC003C0E9C /* FirebasePerformance */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,6 +50,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9DF7E04F2F83BBDC003C0E9C /* FirebasePerformance in Frameworks */,
 				9DA698F12EE0A38400B5B333 /* SDWebImageSwiftUI in Frameworks */,
 				9D43B9282EE209090039C22F /* FirebaseCore in Frameworks */,
 				9D1AB7422F505097004EEC13 /* FirebaseAnalytics in Frameworks */,
@@ -55,6 +58,7 @@
 				9D1AB7442F505097004EEC13 /* FirebaseAnalyticsCore in Frameworks */,
 				9D43B92A2EE209090039C22F /* FirebaseDatabase in Frameworks */,
 				9D43B92C2EE209090039C22F /* FirebaseFirestore in Frameworks */,
+				9DF7E04D2F83BBD2003C0E9C /* FirebaseCrashlytics in Frameworks */,
 				9D43B9262EE209090039C22F /* FirebaseAuth in Frameworks */,
 				9D43B92F2EE209EB0039C22F /* GoogleSignIn in Frameworks */,
 			);
@@ -116,6 +120,8 @@
 				9D43B9302EE209EB0039C22F /* GoogleSignInSwift */,
 				9D1AB7412F505097004EEC13 /* FirebaseAnalytics */,
 				9D1AB7432F505097004EEC13 /* FirebaseAnalyticsCore */,
+				9DF7E04C2F83BBD2003C0E9C /* FirebaseCrashlytics */,
+				9DF7E04E2F83BBDC003C0E9C /* FirebasePerformance */,
 			);
 			productName = recap;
 			productReference = 9DA696EA2EE05C4A00B5B333 /* recap.app */;
@@ -329,7 +335,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.recap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -369,7 +375,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3;
+				MARKETING_VERSION = 2.3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.recap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -477,6 +483,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9DA698EF2EE0A38400B5B333 /* XCRemoteSwiftPackageReference "SDWebImageSwiftUI" */;
 			productName = SDWebImageSwiftUI;
+		};
+		9DF7E04C2F83BBD2003C0E9C /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
+		};
+		9DF7E04E2F83BBDC003C0E9C /* FirebasePerformance */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9D43B9242EE209090039C22F /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebasePerformance;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

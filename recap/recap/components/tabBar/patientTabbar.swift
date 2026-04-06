@@ -15,15 +15,19 @@ struct patientTabbar: View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
                 home()
+                    .onAppear { AnalyticsManager.shared.logScreen(name: "PatientHome") }
             }
             Tab("Family", systemImage: "person.2.fill") {
                 familyView()
+                    .onAppear { AnalyticsManager.shared.logScreen(name: "PatientFamilyList") }
             }
             Tab("Games", systemImage: "gamecontroller.fill") {
                 games()
+                    .onAppear { AnalyticsManager.shared.logScreen(name: "PatientGames") }
             }
             Tab("Smriti", systemImage: "apple.intelligence") {
                 SmritiView()
+                    .onAppear { AnalyticsManager.shared.logScreen(name: "PatientSmriti") }
             }
             //            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
             //                NavigationStack {

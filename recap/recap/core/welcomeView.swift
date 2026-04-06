@@ -61,6 +61,9 @@ struct welcomeView: View {
                 Spacer()
             }
             .standardBackground()
+            .onAppear {
+                AnalyticsManager.shared.logScreen(name: "Welcome")
+            }
         }
     }
 }
