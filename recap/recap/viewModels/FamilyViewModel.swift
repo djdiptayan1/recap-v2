@@ -81,6 +81,10 @@ class FamilyViewModel: ObservableObject {
         guard !documentID.isEmpty else { return false }
         errorMessage = nil
         
+        // Optimistic UI: Save copy and remove immediately
+        let index = familyMembers.firstIndex(where: { $0.id == memberID })
+        let removedMember = index.map { familyMembers.remove(at: $0) }
+        
         struct DeleteResponse: Decodable {
             let success: Bool
             let message: String?
@@ -89,12 +93,19 @@ class FamilyViewModel: ObservableObject {
         do {
             let response: DeleteResponse = try await NetworkManager.shared.request(endpoint: FamilyAPI.delete(documentID: documentID, memberID: memberID))
             if response.success {
-                familyMembers.removeAll { $0.id == memberID }
                 return true
             } else {
+                // Rollback on server error
+                if let member = removedMember, let idx = index {
+                    familyMembers.insert(member, at: idx)
+                }
                 errorMessage = response.message ?? "Failed to delete family member"
             }
         } catch {
+            // Rollback on network error
+            if let member = removedMember, let idx = index {
+                familyMembers.insert(member, at: idx)
+            }
             errorMessage = error.localizedDescription
             print("Error deleting family member: \(error)")
         }

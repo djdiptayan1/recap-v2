@@ -2,7 +2,7 @@ import { doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
 import { firestore } from '../utils/db.js';
 import config from '../../config.js';
 import generateUniquePatientID from '../utils/generateUniquePatientID.js';
-import { uploadOnCloudinary, getOptimizedUrl, deleteFromCloudinary } from '../utils/cloudinary.js';
+import { uploadOnCloudinary, getOptimizedImageUrl, deleteFromCloudinary } from '../utils/cloudinary.js';
 
 export const patientSignup = async (req, res, next) => {
     try {
@@ -37,7 +37,7 @@ export const patientSignup = async (req, res, next) => {
 
                 const uploadResult = await uploadOnCloudinary(buffer, "recap/patients/profiles", uid); // using uid as filename for consistency
                 if (uploadResult && uploadResult.public_id) {
-                    profileImageURL = getOptimizedUrl(uploadResult.public_id);
+                    profileImageURL = getOptimizedImageUrl(uploadResult.public_id);
                 }
             } catch (uploadError) {
                 console.error("Failed to upload profile image:", uploadError);

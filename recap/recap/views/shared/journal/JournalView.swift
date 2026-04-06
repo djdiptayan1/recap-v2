@@ -9,6 +9,8 @@ struct JournalView: View {
     @StateObject private var viewModel = JournalViewModel()
     @State private var showingCompose = false
     @State private var patientId: String = ""
+    @State private var showingDeleteConfirmation = false
+    @State private var entryToDelete: JournalEntry?
 
     var body: some View {
         ZStack {
@@ -37,12 +39,10 @@ struct JournalView: View {
                                 top: 8, leading: AppConfig.UI.screenPadding - 10, bottom: 8,
                                 trailing: AppConfig.UI.screenPadding - 10)
                         )
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button(role: .destructive) {
-                                HapticManager.shared.trigger(.warning)
-                                Task {
-                                    await viewModel.deleteEntry(entryId: entry.id, patientId: patientId)
-                                }
+                                entryToDelete = entry
+                                showingDeleteConfirmation = true
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
@@ -68,6 +68,17 @@ struct JournalView: View {
             }
         }
         .navigationTitle("My Journal")
+        .alert("Delete Entry?", isPresented: $showingDeleteConfirmation, presenting: entryToDelete) { entry in
+            Button("Delete", role: .destructive) {
+                HapticManager.shared.trigger(.warning)
+                Task {
+                    await viewModel.deleteEntry(entryId: entry.id, patientId: patientId)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: { entry in
+            Text("Are you sure you want to delete '\(entry.title ?? "this entry")'? This action cannot be undone.")
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {

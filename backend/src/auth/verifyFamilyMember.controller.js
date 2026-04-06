@@ -8,6 +8,7 @@ import { firestore } from '../utils/db.js';
 import config from '../../config.js';
 import { validationResult } from 'express-validator';
 import { getPatientData } from '../controller/patient/fetch.controller.js';
+import { getOptimizedImageUrl } from '../utils/cloudinary.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const FAMILY_MEMBERS_COLLECTION = config.firestoreNames.familyMembers_SubCollection;
@@ -44,7 +45,7 @@ export async function verifyFamilyMember(req, res, next) {
             message: 'User is a family member',
             familymember_documentId: snap.docs[0].id,
             name: snap.docs[0].data().name,
-            imageURL: snap.docs[0].data().imageURL,
+            imageURL: getOptimizedImageUrl(snap.docs[0].data().imageURL, 'avatar'),
             email: snap.docs[0].data().email,
             phone: snap.docs[0].data().phone,
             relation: snap.docs[0].data().relation,
