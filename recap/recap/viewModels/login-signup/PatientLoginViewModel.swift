@@ -12,11 +12,33 @@ import Foundation
 import GoogleSignIn
 import SwiftUI
 
+enum SocialAuthProvider {
+    case google
+    case apple
+
+    var displayName: String {
+        switch self {
+        case .google:
+            return "Google"
+        case .apple:
+            return "Apple"
+        }
+    }
+}
+
 struct SocialUserData {
     let uid: String
     let email: String
-    let name: String
+    let firstName: String
+    let lastName: String
     let profileImageURL: String?
+    let provider: SocialAuthProvider
+
+    var name: String {
+        [firstName, lastName]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+    }
 }
 
 @MainActor
@@ -80,11 +102,14 @@ class PatientLoginViewModel: ObservableObject {
         {
             // Profile does not exist, trigger signup with pre-filled data
             if let currentUser = Auth.auth().currentUser {
+                let parsedName = Self.splitDisplayName(currentUser.displayName)
                 self.pendingSocialUser = SocialUserData(
                     uid: currentUser.uid,
                     email: currentUser.email ?? "",
-                    name: currentUser.displayName ?? "",
-                    profileImageURL: currentUser.photoURL?.absoluteString
+                    firstName: parsedName.firstName,
+                    lastName: parsedName.lastName,
+                    profileImageURL: currentUser.photoURL?.absoluteString,
+                    provider: .google
                 )
                 self.showSignupSheet = true
             }
@@ -94,6 +119,20 @@ class PatientLoginViewModel: ObservableObject {
             showAlert = true
             return nil
         }
+    }
+
+    private static func splitDisplayName(_ fullName: String?) -> (firstName: String, lastName: String) {
+        let trimmed = (fullName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return ("", "")
+        }
+
+        let parts = trimmed.split(separator: " ").map(String.init)
+        guard let first = parts.first else {
+            return ("", "")
+        }
+
+        return (first, parts.dropFirst().joined(separator: " "))
     }
 
     func sendPasswordReset() async {

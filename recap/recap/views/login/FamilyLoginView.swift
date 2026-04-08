@@ -249,17 +249,23 @@ struct FamilyLoginView: View {
                 return
             }
             Task {
+                var appleAuthResult: AppleAuthResult?
                 do {
-                    let (user, email) = try await AuthService.shared.performAppleSignIn(
-                        idTokenString: idTokenString, nonce: nonce)
+                    let result = try await AuthService.shared.performAppleSignIn(
+                        idTokenString: idTokenString,
+                        nonce: nonce,
+                        appleEmail: appleIDCredential.email,
+                        fullName: appleIDCredential.fullName
+                    )
+                    appleAuthResult = result
 
                     // Verify family member link
                     let response = try await FamilyAuthService.shared.verifyFamilyMember(
-                        email: email, documentId: viewModel.patientDocumentId)
+                        email: result.email, documentId: viewModel.patientDocumentId)
 
                     if response.success {
                         if let familyUser = try? await viewModel.finalizeAppleLogin(
-                            response: response, email: email)
+                            response: response, email: result.email)
                         {
                             await MainActor.run {
                                 HapticManager.shared.trigger(.success)
@@ -269,9 +275,10 @@ struct FamilyLoginView: View {
                     } else {
                         await MainActor.run {
                             viewModel.pendingGoogleUser = GoogleUserData(
-                                email: email,
-                                name: user.displayName ?? "",
-                                profileImageURL: user.photoURL?.absoluteString
+                                email: result.email,
+                                firstName: result.firstName,
+                                lastName: result.lastName,
+                                profileImageURL: result.user.photoURL?.absoluteString
                             )
                             viewModel.showSignupSheet = true
                         }
@@ -281,8 +288,9 @@ struct FamilyLoginView: View {
                         await MainActor.run {
                             if let currentUser = Auth.auth().currentUser {
                                 viewModel.pendingGoogleUser = GoogleUserData(
-                                    email: currentUser.email ?? "",
-                                    name: currentUser.displayName ?? "",
+                                    email: appleAuthResult?.email ?? currentUser.email ?? "",
+                                    firstName: appleAuthResult?.firstName ?? "",
+                                    lastName: appleAuthResult?.lastName ?? "",
                                     profileImageURL: currentUser.photoURL?.absoluteString
                                 )
                             }

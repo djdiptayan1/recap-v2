@@ -138,6 +138,7 @@ function getMonthLabel(date) {
 export const getDashboardAnalytics = async (req, res, next) => {
     try {
         const { patientId } = req.params;
+        const forceRefresh = String(req.query.forceRefresh || '').toLowerCase() === 'true';
 
         if (!patientId) {
             return res.status(400).json({
@@ -160,11 +161,11 @@ export const getDashboardAnalytics = async (req, res, next) => {
         const now = new Date();
         const today = formatDate(now);
 
-        // --- Check cache ---
+        // --- Check cache (unless forceRefresh=true) ---
         const cacheDocRef = doc(firestore, USERS_COLLECTION, patientId, ANALYTICS_CACHE_COLLECTION, today);
         const cacheSnap = await getDoc(cacheDocRef);
 
-        if (cacheSnap.exists()) {
+        if (!forceRefresh && cacheSnap.exists()) {
             const cached = cacheSnap.data();
             const cachedAt = cached.cachedAt || 0;
             const ttlMs = (config.analyticsCacheTTL || 300) * 1000;
@@ -181,18 +182,18 @@ export const getDashboardAnalytics = async (req, res, next) => {
 
         // Cache question data to avoid redundant Firestore reads
         const questionCache = new Map();
-        
+
         // Identify all dates we need to fetch up front to parallelize
         const datesToFetch = new Set();
         datesToFetch.add(today);
-        
+
         // Dates for Weekly (7 days)
         for (let i = 0; i < 7; i++) {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
             datesToFetch.add(formatDate(d));
         }
-        
+
         // Dates for Monthly (Last 4 months)
         for (let i = 0; i < 4; i++) {
             const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -216,11 +217,11 @@ export const getDashboardAnalytics = async (req, res, next) => {
         // Fetch all unique dates in parallel
         const uniqueDates = Array.from(datesToFetch);
         console.log(`[Analytics] Parallel fetching ${uniqueDates.length} dates for patient ${patientId}`);
-        
-        const fetchPromises = uniqueDates.map(dateStr => 
+
+        const fetchPromises = uniqueDates.map(dateStr =>
             fetchQuestionsForDate(patientId, dateStr).then(qs => ({ dateStr, questions: qs }))
         );
-        
+
         const results = await Promise.all(fetchPromises);
         results.forEach(res => questionCache.set(res.dateStr, res.questions));
 

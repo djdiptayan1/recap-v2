@@ -215,21 +215,24 @@ struct patientSignupView: View {
 
     var detailsForm: some View {
         VStack(spacing: 20) {
-            // Name
-            HStack(spacing: 12) {
-                AestheticInput(
-                    icon: "person.fill",
-                    placeholder: "First Name",
-                    text: $viewModel.firstName,
-                    isPasswordVisible: .constant(false)
-                )
+            if viewModel.socialUser != nil {
+                importedIdentitySummary
+            } else {
+                HStack(spacing: 12) {
+                    AestheticInput(
+                        icon: "person.fill",
+                        placeholder: "First Name",
+                        text: $viewModel.firstName,
+                        isPasswordVisible: .constant(false)
+                    )
 
-                AestheticInput(
-                    icon: "",  // No icon for second field to save space or visual balance
-                    placeholder: "Last Name",
-                    text: $viewModel.lastName,
-                    isPasswordVisible: .constant(false)
-                )
+                    AestheticInput(
+                        icon: "",
+                        placeholder: "Last Name",
+                        text: $viewModel.lastName,
+                        isPasswordVisible: .constant(false)
+                    )
+                }
             }
 
             // Date of Birth
@@ -342,6 +345,46 @@ struct patientSignupView: View {
                 .foregroundColor(AppConfig.Colors.textSecondary)
         }
         .padding(.vertical, 20)
+    }
+
+    var importedIdentitySummary: some View {
+        let providerName = viewModel.socialUser?.provider.displayName ?? "social login"
+        let providerIcon = viewModel.socialUser?.provider == .apple ? "applelogo" : "person.crop.circle"
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Label("Imported from \(providerName)", systemImage: providerIcon)
+                .font(AppConfig.Fonts.bodyBold)
+                .foregroundColor(AppConfig.Colors.textPrimary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Name")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+                Text(viewModel.resolvedFirstName.isEmpty && viewModel.resolvedLastName.isEmpty ? "Apple provided your account name" : "\(viewModel.resolvedFirstName) \(viewModel.resolvedLastName)".trimmingCharacters(in: .whitespaces))
+                    .font(AppConfig.Fonts.body)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+
+                Text("Email")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+                    .padding(.top, 4)
+                Text(viewModel.resolvedEmail.isEmpty ? "\(providerName) provided your sign-in email" : viewModel.resolvedEmail)
+                    .font(AppConfig.Fonts.body)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(AppConfig.UI.cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+            )
+
+            Text("We use the name and email \(providerName) already shared to finish your account setup.")
+                .font(AppConfig.Fonts.small)
+                .foregroundColor(AppConfig.Colors.textSecondary)
+        }
     }
 }
 

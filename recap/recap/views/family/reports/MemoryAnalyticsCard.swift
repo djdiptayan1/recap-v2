@@ -13,6 +13,7 @@ struct MemoryAnalyticsCard: View {
     @State private var navigateToDetail = false
     @State private var navigateToOverall = false
     @State private var selectedDetailType: TimeFrame?
+    @State private var refreshTrigger = 0
     
     @State private var selectedDataPoint: AnalyticsData?
     
@@ -26,19 +27,40 @@ struct MemoryAnalyticsCard: View {
             
             VStack(spacing: 16) {
                 // Tappable header for overall analytics
-                Button(action: {
-                    HapticManager.shared.trigger(.selection)
-                    navigateToOverall = true
-                }) {
-                    HStack{
-                        Text("Trends")
-                            .font(AppConfig.Fonts.headline)
-                            .foregroundColor(AppConfig.Colors.textPrimary)
-                        Spacer()
+                HStack {
+                    Text("Trends")
+                        .font(AppConfig.Fonts.headline)
+                        .foregroundColor(AppConfig.Colors.textPrimary)
+
+                    Spacer()
+
+                    Button(action: {
+                        HapticManager.shared.trigger(.selection)
+                        refreshTrigger += 1
+                        viewModel.fetchAnalytics(forceRefresh: true)
+                    }) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.orange)
+                            .symbolEffect(
+                                .rotate.clockwise.byLayer,
+                                options: .nonRepeating,
+                                value: refreshTrigger
+                            )
+                    }
+                    Button(action: {
+                        HapticManager.shared.trigger(.selection)
+                        navigateToOverall = true
+                    }) {
                         Image(systemName: "chevron.right")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
                     }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    HapticManager.shared.trigger(.selection)
+                    navigateToOverall = true
                 }
                 .padding(.top, 24)
                 .padding(.horizontal, 20)

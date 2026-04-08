@@ -196,29 +196,33 @@ struct familySignupView: View {
 
     var detailsForm: some View {
         VStack(spacing: 20) {
-            // Display Email (Disabled)
-            AestheticInput(
-                icon: "envelope.fill",
-                placeholder: "Email",
-                text: $viewModel.email,
-                isPasswordVisible: .constant(false)
-            )
-
-            // Name (Pre-filled but editable)
-            HStack(spacing: 12) {
+            if viewModel.googleUser != nil {
+                importedIdentitySummary
+            } else {
                 AestheticInput(
-                    icon: "person.fill",
-                    placeholder: "First Name",
-                    text: $viewModel.firstName,
+                    icon: "envelope.fill",
+                    placeholder: "Email",
+                    text: $viewModel.email,
                     isPasswordVisible: .constant(false)
                 )
+                .disabled(true)
+                .opacity(0.8)
 
-                AestheticInput(
-                    icon: "",
-                    placeholder: "Last Name",
-                    text: $viewModel.lastName,
-                    isPasswordVisible: .constant(false)
-                )
+                HStack(spacing: 12) {
+                    AestheticInput(
+                        icon: "person.fill",
+                        placeholder: "First Name",
+                        text: $viewModel.firstName,
+                        isPasswordVisible: .constant(false)
+                    )
+
+                    AestheticInput(
+                        icon: "",
+                        placeholder: "Last Name",
+                        text: $viewModel.lastName,
+                        isPasswordVisible: .constant(false)
+                    )
+                }
             }
 
             // Phone
@@ -284,12 +288,52 @@ struct familySignupView: View {
         }
         .padding(.vertical, 20)
     }
+
+    var importedIdentitySummary: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Imported from Google", systemImage: "person.crop.circle")
+                .font(AppConfig.Fonts.bodyBold)
+                .foregroundColor(AppConfig.Colors.textPrimary)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Name")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+                Text("\(viewModel.resolvedFirstName) \(viewModel.resolvedLastName)".trimmingCharacters(in: .whitespaces))
+                    .font(AppConfig.Fonts.body)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+
+                Text("Email")
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(AppConfig.Colors.textSecondary)
+                    .padding(.top, 4)
+                Text(viewModel.resolvedEmail)
+                    .font(AppConfig.Fonts.body)
+                    .foregroundColor(AppConfig.Colors.textPrimary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(AppConfig.UI.cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
+            )
+
+            Text("We use the account details Google already shared to finish your family profile.")
+                .font(AppConfig.Fonts.small)
+                .foregroundColor(AppConfig.Colors.textSecondary)
+        }
+    }
 }
 
 #Preview {
     familySignupView(
         googleUser: GoogleUserData(
-            email: "test@gmail.com", name: "Test User", profileImageURL: nil),
+            email: "test@gmail.com",
+            firstName: "Test",
+            lastName: "User",
+            profileImageURL: nil),
         patientDocumentId: "123", patientUID: "123456"
     )
     .environmentObject(AppState())

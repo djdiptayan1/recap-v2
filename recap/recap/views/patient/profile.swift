@@ -15,7 +15,7 @@ struct ProfileView: View {
     @StateObject private var quizViewModel = MemoryQuizViewModel()
 
     @State private var showLogoutAlert = false
-    @State private var showCopyAlert = false
+    @State private var didCopyPatientID = false
     @State private var showDeleteAlert = false
     @State private var showDeleteConfirmation = false
     @State private var deleteConfirmationText = ""
@@ -108,13 +108,25 @@ struct ProfileView: View {
                             Spacer()
 
                             Button(action: {
-                                HapticManager.shared.trigger(.selection)
+                                HapticManager.shared.trigger(.success)
                                 UIPasteboard.general.string = patient.patientUID
-                                showCopyAlert = true
+
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    didCopyPatientID = true
+                                }
+
+                                Task {
+                                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                                    await MainActor.run {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            didCopyPatientID = false
+                                        }
+                                    }
+                                }
                             }) {
                                 HStack(spacing: 6) {
-                                    Image(systemName: "doc.on.doc")
-                                    Text("Copy")
+                                    Image(systemName: didCopyPatientID ? "checkmark" : "doc.on.doc")
+                                    Text(didCopyPatientID ? "Copied" : "Copy")
                                 }
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white)
@@ -303,11 +315,6 @@ struct ProfileView: View {
                         await quizViewModel.fetchMemoryReports(patientId: patientId)
                     }
                 }
-            }
-            .alert("Copied", isPresented: $showCopyAlert) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text("Patient ID has been copied to clipboard.")
             }
             .alert("Log Out", isPresented: $showLogoutAlert) {
                 Button("Cancel", role: .cancel) {}
