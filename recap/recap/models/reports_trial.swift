@@ -110,12 +110,12 @@ struct EngagementDay: Codable, Identifiable {
 // MARK: - API Endpoint
 
 private enum AnalyticsAPI: Endpoint {
-    case dashboard(patientId: String)
+    case dashboard(patientId: String, forceRefresh: Bool)
     case memoryReports(patientId: String)
 
     var path: String {
         switch self {
-        case .dashboard(let patientId):
+        case .dashboard(let patientId, _):
             return "\(AppConfig.ApiEndpoints.analyticsDashboard)/\(patientId)"
         case .memoryReports(let patientId):
             return "\(AppConfig.ApiEndpoints.memoryQuiz)/reports/\(patientId)"
@@ -123,6 +123,15 @@ private enum AnalyticsAPI: Endpoint {
     }
 
     var method: HTTPMethod { .get }
+
+    var queryItems: [URLQueryItem]? {
+        switch self {
+        case .dashboard(_, let forceRefresh):
+            return forceRefresh ? [URLQueryItem(name: "forceRefresh", value: "true")] : nil
+        case .memoryReports:
+            return nil
+        }
+    }
 }
 
 // MARK: - ViewModel
@@ -151,7 +160,7 @@ class AnalyticsViewModel: ObservableObject {
         }
     }
 
-    func fetchAnalytics() {
+    func fetchAnalytics(forceRefresh: Bool = false) {
         guard !patientId.isEmpty else { return }
         isLoading = true
         errorMessage = nil
@@ -159,7 +168,7 @@ class AnalyticsViewModel: ObservableObject {
         Task { @MainActor in
             do {
                 let response: AnalyticsDashboardResponse = try await NetworkManager.shared.request(
-                    endpoint: AnalyticsAPI.dashboard(patientId: patientId),
+                    endpoint: AnalyticsAPI.dashboard(patientId: patientId, forceRefresh: forceRefresh),
                     keyDecodingStrategy: .useDefaultKeys
                 )
 

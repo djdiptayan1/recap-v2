@@ -322,7 +322,7 @@
 				INFOPLIST_FILE = recap/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Recap;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Uses camera to capture image";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Recap uses the camera so you can take profile photos and journal images, for example when adding a memory or updating your profile.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Uses microphone to capture audio during voice journal record";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -335,7 +335,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.recap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -362,7 +362,7 @@
 				INFOPLIST_FILE = recap/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Recap;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Uses camera to capture image";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Recap uses the camera so you can take profile photos and journal images, for example when adding a memory or updating your profile.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Uses microphone to capture audio during voice journal record";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -375,7 +375,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.3.1;
+				MARKETING_VERSION = 2.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.srmist.recap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;

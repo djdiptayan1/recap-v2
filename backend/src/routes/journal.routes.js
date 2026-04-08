@@ -5,6 +5,53 @@ import journalController from '../controller/journal/journal.controller.js';
 const router = express.Router();
 
 /**
+ * POST /api/journal/uploads/sign
+ * Generate signed Cloudinary upload params for direct client uploads
+ */
+router.post('/uploads/sign',
+    [
+        body('patientId')
+            .notEmpty()
+            .withMessage('Patient ID is required')
+            .isString()
+            .withMessage('Patient ID must be a string'),
+        body('mediaType')
+            .notEmpty()
+            .withMessage('mediaType is required')
+            .isIn(['audio', 'photo'])
+            .withMessage('mediaType must be "audio" or "photo"'),
+        body('index')
+            .optional()
+            .isInt({ min: 0, max: 100 })
+            .withMessage('index must be an integer between 0 and 100'),
+    ],
+    journalController.createUploadSignature
+);
+
+/**
+ * POST /api/journal/uploads/sign-batch
+ * Generate upload params for all assets needed by one journal save
+ */
+router.post('/uploads/sign-batch',
+    [
+        body('patientId')
+            .notEmpty()
+            .withMessage('Patient ID is required')
+            .isString()
+            .withMessage('Patient ID must be a string'),
+        body('photoCount')
+            .optional()
+            .isInt({ min: 0, max: 10 })
+            .withMessage('photoCount must be an integer between 0 and 10'),
+        body('includeAudio')
+            .optional()
+            .isBoolean()
+            .withMessage('includeAudio must be a boolean'),
+    ],
+    journalController.createUploadSignaturesBatch
+);
+
+/**
  * GET /api/journal
  * List journal entries for a patient with optional pagination
  */
@@ -78,6 +125,14 @@ router.post('/',
             .optional()
             .isString()
             .withMessage('audioBase64 must be a string'),
+        body('audioUpload.url')
+            .optional()
+            .isString()
+            .withMessage('audioUpload.url must be a string'),
+        body('audioUpload.publicId')
+            .optional()
+            .isString()
+            .withMessage('audioUpload.publicId must be a string'),
         body('audioDuration')
             .optional()
             .isNumeric()
@@ -114,6 +169,22 @@ router.post('/',
             .optional()
             .isString()
             .withMessage('Photo caption must be a string'),
+        body('photoUploads')
+            .optional()
+            .isArray()
+            .withMessage('photoUploads must be an array'),
+        body('photoUploads.*.url')
+            .optional()
+            .isString()
+            .withMessage('Each photo upload url must be a string'),
+        body('photoUploads.*.publicId')
+            .optional()
+            .isString()
+            .withMessage('Each photo upload publicId must be a string'),
+        body('photoUploads.*.caption')
+            .optional()
+            .isString()
+            .withMessage('Each photo upload caption must be a string'),
     ],
     journalController.createEntry
 );
@@ -154,6 +225,14 @@ router.put('/:id',
             .optional()
             .isString()
             .withMessage('audioBase64 must be a string'),
+        body('audioUpload.url')
+            .optional()
+            .isString()
+            .withMessage('audioUpload.url must be a string'),
+        body('audioUpload.publicId')
+            .optional()
+            .isString()
+            .withMessage('audioUpload.publicId must be a string'),
         body('audioDuration')
             .optional()
             .isNumeric()

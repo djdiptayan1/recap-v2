@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs';
 import 'dotenv/config';
 
 cloudinary.config({
@@ -126,6 +125,53 @@ const uploadOnCloudinary = async (fileBuffer, folder = "recap", filename, transf
 }
 
 /**
+ * Generates signed upload params for direct client-to-Cloudinary uploads.
+ * The client uploads to Cloudinary directly and later sends only the URL/public_id
+ * back to the API, which keeps Vercel function payloads small.
+ * @param {object} options
+ * @param {string} options.folder
+ * @param {string} options.publicId
+ * @param {string} [options.resourceType="auto"]
+ * @param {boolean} [options.overwrite=true]
+ * @param {boolean} [options.invalidate=true]
+ * @returns {object}
+ */
+const generateSignedUploadParams = ({
+    folder = 'recap',
+    publicId,
+    resourceType = 'auto',
+    overwrite = true,
+    invalidate = true,
+} = {}) => {
+    const timestamp = Math.floor(Date.now() / 1000);
+    const paramsToSign = {
+        folder,
+        public_id: publicId,
+        overwrite: overwrite ? 'true' : 'false',
+        invalidate: invalidate ? 'true' : 'false',
+        timestamp,
+    };
+
+    const signature = cloudinary.utils.api_sign_request(
+        paramsToSign,
+        process.env.CLOUDINARY_API_SECRET
+    );
+
+    return {
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        uploadUrl: `https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+        resourceType,
+        folder,
+        publicId,
+        overwrite,
+        invalidate,
+        timestamp,
+        signature,
+    };
+};
+
+/**
  * Deletes a file from Cloudinary
  * @param {string} publicId - Public ID of the asset
  * @param {string} [resourceType="image"] - Resource type (image, video, raw)
@@ -241,6 +287,7 @@ function buildResponsiveImageSet(source, presets = {}) {
 
 export {
     uploadOnCloudinary,
+    generateSignedUploadParams,
     deleteFromCloudinary,
     getOptimizedUrl,
     getOptimizedImageUrl,

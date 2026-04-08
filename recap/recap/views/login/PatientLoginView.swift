@@ -270,11 +270,17 @@ struct PatientLoginView: View {
                 return
             }
             Task {
+                var appleAuthResult: AppleAuthResult?
                 do {
-                    let (user, email) = try await AuthService.shared.performAppleSignIn(
-                        idTokenString: idTokenString, nonce: nonce)
+                    let result = try await AuthService.shared.performAppleSignIn(
+                        idTokenString: idTokenString,
+                        nonce: nonce,
+                        appleEmail: appleIDCredential.email,
+                        fullName: appleIDCredential.fullName
+                    )
+                    appleAuthResult = result
 
-                    let userModel = try await AuthService.shared.fetchUser(email: email)
+                    let userModel = try await AuthService.shared.fetchUser(email: result.email)
 
                     if let id = userModel.id {
                         try? KeychainManager.shared.save(key: .documentID, value: id)
@@ -298,9 +304,11 @@ struct PatientLoginView: View {
                         if let currentUser = Auth.auth().currentUser {
                             viewModel.pendingSocialUser = SocialUserData(
                                 uid: currentUser.uid,
-                                email: currentUser.email ?? "",
-                                name: currentUser.displayName ?? "",
-                                profileImageURL: currentUser.photoURL?.absoluteString
+                                email: appleAuthResult?.email ?? currentUser.email ?? "",
+                                firstName: appleAuthResult?.firstName ?? "",
+                                lastName: appleAuthResult?.lastName ?? "",
+                                profileImageURL: currentUser.photoURL?.absoluteString,
+                                provider: .apple
                             )
                             viewModel.showSignupSheet = true
                         }
