@@ -54,16 +54,35 @@ class FamilySignupViewModel: ObservableObject {
         self.patientUID = patientUID
 
         if let user = googleUser {
-            let components = user.name.components(separatedBy: " ")
-            if let first = components.first {
-                self.firstName = first
-            }
-            if components.count > 1 {
-                self.lastName = components.dropFirst().joined(separator: " ")
-            }
+            self.firstName = user.firstName
+            self.lastName = user.lastName
             self.email = user.email
             // We could try to load the image or just use the URL string when creating the profile
         }
+    }
+
+    var resolvedFirstName: String {
+        let trimmed = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        return googleUser?.firstName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    var resolvedLastName: String {
+        let trimmed = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        return googleUser?.lastName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    var resolvedEmail: String {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        return googleUser?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     // MARK: - Actions
@@ -78,8 +97,8 @@ class FamilySignupViewModel: ObservableObject {
     }
 
     func completeDetails() {
-        guard !firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            !lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+        guard !resolvedFirstName.isEmpty,
+            !resolvedLastName.isEmpty,
             !phone.isEmpty, !relation.isEmpty
         else {
             showError("Please fill in first name, last name, phone, and relation.")
@@ -113,11 +132,11 @@ class FamilySignupViewModel: ObservableObject {
             profileImageBase64 = imageData.base64EncodedString()
         }
 
-        let fullName = "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces)
+        let fullName = "\(resolvedFirstName) \(resolvedLastName)".trimmingCharacters(in: .whitespaces)
 
         let request = FamilySignupRequest(
             patient_documentId: patientDocumentId,
-            email: email,
+            email: resolvedEmail,
             name: fullName,
             profileImageBase64: profileImageBase64,
             profileImageURL: profileImage == nil ? googleUser?.profileImageURL : nil,

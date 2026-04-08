@@ -59,16 +59,35 @@ class PatientSignupViewModel: ObservableObject {
         self.socialUser = socialUser
         if let user = socialUser {
             self.email = user.email
-            let components = user.name.components(separatedBy: " ")
-            if let first = components.first {
-                self.firstName = first
-            }
-            if components.count > 1 {
-                self.lastName = components.dropFirst().joined(separator: " ")
-            }
+            self.firstName = user.firstName
+            self.lastName = user.lastName
             self.userId = user.uid
             self.currentStep = .details  // Skip credentials step for social auth
         }
+    }
+
+    var resolvedFirstName: String {
+        let trimmed = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        return socialUser?.firstName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    var resolvedLastName: String {
+        let trimmed = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        return socialUser?.lastName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
+    var resolvedEmail: String {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        return socialUser?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     // MARK: - Actions
@@ -126,10 +145,7 @@ class PatientSignupViewModel: ObservableObject {
     }
 
     func completeProfile() {
-        // Validation
-        guard !firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-            !lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else {
+        if socialUser == nil, resolvedFirstName.isEmpty || resolvedLastName.isEmpty {
             showError("Please enter your first and last name.")
             return
         }
@@ -146,7 +162,7 @@ class PatientSignupViewModel: ObservableObject {
             return
         }
 
-        guard !firstName.isEmpty, !lastName.isEmpty else {
+        if socialUser == nil, resolvedFirstName.isEmpty || resolvedLastName.isEmpty {
             showError("Please enter your name.")
             return
         }
@@ -166,9 +182,9 @@ class PatientSignupViewModel: ObservableObject {
 
         let request = PatientSignupRequest(
             uid: uid,
-            email: email,
-            firstName: firstName,
-            lastName: lastName,
+            email: resolvedEmail,
+            firstName: resolvedFirstName,
+            lastName: resolvedLastName,
             dateOfBirth: dobString,
             bloodGroup: bloodGroup,
             sex: sex,

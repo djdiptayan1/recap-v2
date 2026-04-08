@@ -14,8 +14,15 @@ import FirebaseCore
 
 struct GoogleUserData {
     let email: String
-    let name: String
+    let firstName: String
+    let lastName: String
     let profileImageURL: String?
+
+    var name: String {
+        [firstName, lastName]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+    }
 }
 
 @MainActor
@@ -82,9 +89,11 @@ class FamilyLoginViewModel: ObservableObject {
             } else {
                 // LINK NOT FOUND -> PROMPT SIGNUP
                 // Store data for the signup form
+                let parsedName = Self.splitDisplayName(user.displayName)
                 pendingGoogleUser = GoogleUserData(
                     email: email,
-                    name: user.displayName ?? "",
+                    firstName: parsedName.firstName,
+                    lastName: parsedName.lastName,
                     profileImageURL: user.photoURL?.absoluteString
                 )
                 showSignupSheet = true
@@ -94,9 +103,11 @@ class FamilyLoginViewModel: ObservableObject {
         } catch let error as NetworkError {
             // Handle 404 (Not Found) specifically to trigger signup
             if case .httpError(let statusCode) = error, statusCode == 404 {
+                let parsedName = Self.splitDisplayName(user.displayName)
                 pendingGoogleUser = GoogleUserData(
                     email: email,
-                    name: user.displayName ?? "",
+                    firstName: parsedName.firstName,
+                    lastName: parsedName.lastName,
                     profileImageURL: user.photoURL?.absoluteString
                 )
                 showSignupSheet = true
@@ -148,5 +159,19 @@ class FamilyLoginViewModel: ObservableObject {
 
     func finalizeAppleLogin(response: VerifyFamilyMemberResponse, email: String) async throws -> patientModel {
         return try await finalizeLogin(response: response, email: email)
+    }
+
+    private static func splitDisplayName(_ fullName: String?) -> (firstName: String, lastName: String) {
+        let trimmed = (fullName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            return ("", "")
+        }
+
+        let parts = trimmed.split(separator: " ").map(String.init)
+        guard let first = parts.first else {
+            return ("", "")
+        }
+
+        return (first, parts.dropFirst().joined(separator: " "))
     }
 }

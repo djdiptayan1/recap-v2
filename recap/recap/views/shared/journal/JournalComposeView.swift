@@ -23,6 +23,8 @@ struct JournalComposeView: View {
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var photoPreviews: [(image: UIImage, caption: String)] = []
 
+    private let maxPhotoSelection = 5
+
     private let moods: [(emoji: String, label: String, key: String)] = [
         ("😊", "Happy", "happy"),
         ("😢", "Sad", "sad"),
@@ -247,7 +249,7 @@ struct JournalComposeView: View {
                 // Spacer()
                 // PhotosPicker(
                 //     selection: $selectedPhotoItems,
-                //     maxSelectionCount: 10,
+                //     maxSelectionCount: maxPhotoSelection,
                 //     matching: .images
                 // ) {
                 //     HStack(spacing: 4) {
@@ -266,7 +268,7 @@ struct JournalComposeView: View {
             if photoPreviews.isEmpty {
                 PhotosPicker(
                     selection: $selectedPhotoItems,
-                    maxSelectionCount: 10,
+                    maxSelectionCount: maxPhotoSelection,
                     matching: .images
                 ) {
                     VStack(spacing: 10) {
@@ -278,7 +280,7 @@ struct JournalComposeView: View {
                                 .font(.system(size: 26))
                                 .foregroundColor(AppConfig.Colors.accent)
                         }
-                        Text("Add photos from your camera roll")
+                        Text("Add up to 5 photos from your camera roll")
                             .font(AppConfig.Fonts.small)
                             .foregroundColor(AppConfig.Colors.textSecondary)
                     }
@@ -575,7 +577,7 @@ struct JournalComposeView: View {
     private func loadSelectedPhotos(from items: [PhotosPickerItem]) {
         Task {
             var newPreviews: [(image: UIImage, caption: String)] = []
-            for item in items {
+            for item in items.prefix(maxPhotoSelection) {
                 if let data = try? await item.loadTransferable(type: Data.self),
                     let uiImage = UIImage(data: data)
                 {

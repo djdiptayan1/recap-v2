@@ -13,6 +13,19 @@ import FirebaseFirestore
 import Foundation
 import GoogleSignIn
 
+struct AppleAuthResult {
+    let user: User
+    let email: String
+    let firstName: String
+    let lastName: String
+
+    var fullName: String {
+        [firstName, lastName]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+    }
+}
+
 class AuthService {
     static let shared = AuthService()
     private let db = Firestore.firestore()
@@ -145,19 +158,19 @@ class AuthService {
 
     // MARK: - Apple Sign-In (Patient)
     @MainActor
-    func signInWithApple(idTokenString: String, nonce: String) async throws -> patientModel {
+    func signInWithApple(
+        idTokenString: String,
+        nonce: String,
+        appleEmail: String? = nil,
+        fullName: PersonNameComponents? = nil
+    ) async throws -> patientModel {
         let credential = OAuthProvider.appleCredential(
             withIDToken: idTokenString,
             rawNonce: nonce,
             fullName: nil
         )
         let authResult = try await Auth.auth().signIn(with: credential)
-
-        guard let email = authResult.user.email else {
-            throw NSError(
-                domain: "AuthService", code: 3,
-                userInfo: [NSLocalizedDescriptionKey: "No email found in Apple auth result"])
-        }
+        let email = try resolveAppleEmail(for: authResult.user, appleEmail: appleEmail)
 
         let userModel = try await fetchUser(email: email)
 
@@ -175,25 +188,73 @@ class AuthService {
 
     // MARK: - Apple Sign-In (Generic - returns user and email)
     @MainActor
-    func performAppleSignIn(idTokenString: String, nonce: String) async throws -> (user: User, email: String) {
+    func performAppleSignIn(
+        idTokenString: String,
+        nonce: String,
+        appleEmail: String? = nil,
+        fullName: PersonNameComponents? = nil
+    ) async throws -> AppleAuthResult {
         let credential = OAuthProvider.appleCredential(
             withIDToken: idTokenString,
             rawNonce: nonce,
             fullName: nil
         )
         let authResult = try await Auth.auth().signIn(with: credential)
+        let email = try resolveAppleEmail(for: authResult.user, appleEmail: appleEmail)
+        let resolvedName = resolveAppleName(from: fullName, fallback: authResult.user.displayName)
 
-        guard let email = authResult.user.email else {
-            throw NSError(
-                domain: "AuthService", code: 3,
-                userInfo: [NSLocalizedDescriptionKey: "No email found in Apple auth result"])
-        }
-
-        return (authResult.user, email)
+        return AppleAuthResult(
+            user: authResult.user,
+            email: email,
+            firstName: resolvedName.firstName,
+            lastName: resolvedName.lastName
+        )
     }
 
     func getCurrentNonce() -> String? {
         return currentNonce
+    }
+
+    private func resolveAppleEmail(for user: User, appleEmail: String?) throws -> String {
+        if let email = appleEmail?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty {
+            return email
+        }
+
+        if let email = user.email?.trimmingCharacters(in: .whitespacesAndNewlines), !email.isEmpty {
+            return email
+        }
+
+        throw NSError(
+            domain: "AuthService", code: 3,
+            userInfo: [
+                NSLocalizedDescriptionKey:
+                    "We couldn't read your Apple email address. Please try Sign in with Apple again."
+            ])
+    }
+
+    private func resolveAppleName(
+        from fullName: PersonNameComponents?,
+        fallback displayName: String?
+    ) -> (firstName: String, lastName: String) {
+        let givenName = fullName?.givenName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let familyName = fullName?.familyName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        if !givenName.isEmpty || !familyName.isEmpty {
+            return (givenName, familyName)
+        }
+
+        let fallbackName = displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !fallbackName.isEmpty else {
+            return ("", "")
+        }
+
+        let components = fallbackName.split(separator: " ").map(String.init)
+        guard let firstName = components.first else {
+            return ("", "")
+        }
+
+        let lastName = components.dropFirst().joined(separator: " ")
+        return (firstName, lastName)
     }
 
     private func randomNonceString(length: Int = 32) -> String {
