@@ -14,6 +14,9 @@ struct SmritiView: View {
     @State private var showCamera: Bool = false
     @State private var familyMembers: [FamilyMember]? = nil
     @State private var isMemoryLaneMode: Bool = false
+    @State private var showHowToEnableSheet: Bool = false
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.openURL) private var openURL
 
     // Endpoint for fetching family members
     private enum FamilyAPI: Endpoint {
@@ -60,9 +63,7 @@ struct SmritiView: View {
 
                                 // Follow-up prompt chip
                                 if let followup = viewModel.followupPrompt, !viewModel.isLoading {
-                                    FollowupChip(text: followup) {
-                                        textInput = followup
-                                    }
+                                    FollowupChip(text: followup)
                                     .transition(
                                         .asymmetric(
                                             insertion: .move(edge: .bottom).combined(
@@ -106,7 +107,21 @@ struct SmritiView: View {
                     Spacer()
 
                     // Rate limit banner
-                    if viewModel.isRateLimited {
+                    if let foundationPrompt = viewModel.foundationPrompt {
+                        FoundationEnableCard(
+                            prompt: foundationPrompt,
+                            onOpenSettings: openSettings,
+                            onHowToEnable: { showHowToEnableSheet = true },
+                            onRetry: {
+                                Task {
+                                    await viewModel.retryProviderAvailability()
+                                }
+                            }
+                        )
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else if viewModel.isRateLimited {
                         HStack(spacing: 10) {
                             Image(systemName: "clock.badge.exclamationmark")
                                 .font(.system(size: 18, weight: .semibold))
@@ -137,25 +152,6 @@ struct SmritiView: View {
             .navigationTitle(isMemoryLaneMode ? "Smriti" : "Care Assistant")
             .standardBackground()
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-//                    if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
-//                        Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
-//                            .font(AppConfig.Fonts.small)
-//                            .padding(.horizontal, 10)
-//                            .padding(.vertical, 4)
-//                            .fixedSize()
-//                    }
-                    Group {
-                            if let usage = viewModel.usageInfo, !viewModel.isRateLimited {
-                                Text("\(usage.dailyRemaining)/\(usage.dailyLimit)")
-                            } else {
-                                ProgressView()
-                                    .scaleEffect(0.7)
-                            }
-                        }
-                        .frame(width: 40)
-                }
-
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(
                         isMemoryLaneMode ? "Care Assistant" : "Smriti",
@@ -170,10 +166,27 @@ struct SmritiView: View {
             }
             .task {
                 await loadContext()
-                await viewModel.fetchUsage()
+                await viewModel.initializeProviderAndUsage()
+            }
+            .onChange(of: scenePhase) { phase in
+                guard phase == .active else { return }
+                Task {
+                    await viewModel.retryProviderAvailability()
+                }
+            }
+            .sheet(isPresented: $showHowToEnableSheet) {
+                HowToEnableAppleIntelligenceSheet()
             }
             .animation(.easeInOut(duration: 0.3), value: viewModel.isRateLimited)
         }
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: "app-settings:")
+        else {
+            return
+        }
+        openURL(url)
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
@@ -228,41 +241,102 @@ struct SmritiView: View {
     }
 }
 
+struct FoundationEnableCard: View {
+    let prompt: FoundationAvailabilityPrompt
+    let onOpenSettings: () -> Void
+    let onHowToEnable: () -> Void
+    let onRetry: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "apple.intelligence")
+                    .foregroundStyle(.blue)
+                Text(prompt.title)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+            }
+
+            Text(prompt.message)
+                .font(.system(size: 14, weight: .regular, design: .rounded))
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 8) {
+                Button("Open Settings", action: onOpenSettings)
+                    .buttonStyle(.borderedProminent)
+
+                Button("How to enable", action: onHowToEnable)
+                    .buttonStyle(.bordered)
+
+                Button("Retry", action: onRetry)
+                    .buttonStyle(.bordered)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+struct HowToEnableAppleIntelligenceSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("How to enable Apple Intelligence")
+                    .font(.system(size: 20, weight: .semibold, design: .rounded))
+
+                Text("1. Open Settings")
+                Text("2. Go to Apple Intelligence")
+                Text("3. Turn Apple Intelligence on")
+                Text("4. Return to Recap and tap Retry")
+
+                Spacer()
+            }
+            .font(.system(size: 16, weight: .regular, design: .rounded))
+            .padding(20)
+            .navigationTitle("Enable On-device AI")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - Follow-up Prompt Chip
 
 struct FollowupChip: View {
     let text: String
-    let onTap: () -> Void
 
     var body: some View {
         HStack {
-            Button(action: onTap) {
-                HStack(spacing: 8) {
-                    Image(systemName: "bubble.left.and.text.bubble.right.fill")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.blue)
-                    Text(text)
-                        .font(.system(size: 14, weight: .medium, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.leading)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(.ultraThinMaterial, in: Capsule())
-                .overlay(
-                    Capsule()
-                        .strokeBorder(
-                            LinearGradient(
-                                colors: [.blue.opacity(0.4), .blue.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
+            HStack(spacing: 8) {
+                Image(systemName: "bubble.left.and.text.bubble.right.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.blue)
+                Text(text)
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [.blue.opacity(0.4), .blue.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
             Spacer()
         }
     }

@@ -57,11 +57,11 @@ class ReminderViewModel: ObservableObject {
     // MARK: - Fetch Methods
 
     @MainActor
-    func fetchReminders(patientId: String) async {
-        guard reminders.isEmpty else { return }
+    func fetchReminders(patientId: String, forceRefresh: Bool = false) async {
+        guard forceRefresh || reminders.isEmpty else { return }
 
         // Use prefetched data if available
-        if let cached = DataPrefetchManager.shared.reminders {
+        if !forceRefresh, let cached = DataPrefetchManager.shared.reminders {
             self.reminders = cached
             return
         }

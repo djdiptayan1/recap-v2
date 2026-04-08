@@ -2,19 +2,19 @@
 
 # RECAP: Every Memory Matters
 
-### The Future of Compassionate Memory Care
+### Compassionate Memory Care, Now with On-Device Intelligence
 
 <p align="center">
-  <em>Empowering Alzheimer's patients and caregivers through cognitive engagement, reminiscence therapy, and AI-driven assistance.</em>
+  <em>Recap supports people living with dementia and their families through cognitive engagement, reminiscence, and safe AI assistance.</em>
 </p>
 
 <br/>
 
 ![Swift](https://img.shields.io/badge/Swift-5-orange)
-![Node](https://img.shields.io/badge/Node.js-18+-green)
+![Node](https://img.shields.io/badge/Node.js-22+-green)
 ![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 ![Firebase](https://img.shields.io/badge/Firebase-Cloud-yellow)
-![AI](https://img.shields.io/badge/AI-Google%20Gemini-purple)
+![AI](https://img.shields.io/badge/AI-Apple%20Foundation%20Models%20%2B%20Gemini-black)
 
 <br/>
 
@@ -24,48 +24,133 @@
 
 ## What is Recap?
 
-**Recap** is a holistic digital memory-care ecosystem designed for:
+**Recap** is a dementia-care platform for:
 
-• Alzheimer’s & dementia patients
-• Families & caregivers
-• Cognitive monitoring & emotional connection
+- People living with Alzheimer's and related memory conditions
+- Families and caregivers
+- Daily cognitive, emotional, and routine support
 
-Combining **AI companionship**, **daily cognitive exercises**, and **family collaboration** into one intuitive platform.
+It combines:
 
----
-
-## Core Features
-
-<div align="center">
-
-
-| Cognitive Engagement | Smriti AI Companion | Family Synergy |
-| ----------------------- | ---------------------- | ------------------------- |
-| Daily memory exercises  | Real-time AI support   | Shared dashboards         |
-| Cognitive assessments   | Reminiscence therapy   | Custom memories           |
-| Gamified streaks        | Context-aware recall   | Smart reminders           |
-
-</div>
+- Cognitive exercises and progress tracking
+- Family collaboration and reminders
+- Smriti AI companion with provider-aware routing
 
 ---
 
-### Cognitive Engagement
+## What Is New: Foundation Models Integration
 
-* Personalized daily memory questions
-* Periodic cognitive health quizzes
-* Streak-based motivation system
+Recap now runs a **dual-provider AI system**:
 
-### Smriti AI Care Companion
+- **Primary provider:** Apple Foundation Models (on-device), when available and ready
+- **Fallback provider:** Existing Gemini path, when Foundation Models is unavailable, disabled, or not ready
+- **No forced switching:** routing is automatic and state-aware
 
-* Powered by Google Gemini
-* Memory-lane reminiscence mode
-* Secure patient context awareness
+### Provider Behavior
 
-### Family Synergy
+- Supported + enabled + ready device: Foundation Models is used
+- Supported but disabled/not-ready: user sees enable/preparing UI and can continue with fallback
+- Unsupported device: Gemini is used automatically
 
-* Real-time health insights
-* Upload photos, voices, stories
-* Medication & routine coordination
+### Availability UX
+
+Smriti now explicitly communicates AI state:
+
+- Apple Intelligence active
+- Enable Apple Intelligence in Settings
+- Apple Intelligence is preparing
+- Apple Intelligence is not supported on this device
+
+When Foundation Models is unavailable at runtime, fallback reason is shown without breaking chat continuity.
+
+---
+
+## Smriti AI: Capability Upgrades
+
+### Structured Foundation Output
+
+Foundation path now uses strongly typed structured generation (Generable-first contract), including:
+
+- Core answer
+- Warm memory-oriented follow-up prompt
+- Optional care strategies when relevant
+- Optional medical disclaimer only for medical-care guidance
+- Optional supportive note in emotional contexts
+- Optional source references for factual claims
+
+### Streaming + Reliability
+
+- Snapshot streaming support for structured UI updates
+- Graceful retry/degrade path when stream generation fails
+- Single active request per session is enforced to align with Foundation Models constraints
+
+### Mode-Aware Prompting
+
+Smriti preserves two behaviorally distinct modes:
+
+- **Caregiver mode:** concise dementia-care guidance, emotional acknowledgement-first behavior
+- **Reminiscence mode (memoryLane):** warm past-memory conversation and supportive prompts
+
+Both modes preserve domain boundaries and always end successful turns with a warm follow-up.
+
+---
+
+## Tool Calling (Foundation Path)
+
+Foundation Models tool calling is now integrated with live app data (API-backed tools), not static memory.
+
+Current tool coverage includes:
+
+- Family context
+- Reminders read/create/edit/delete
+- Daily question performance
+- Streak statistics
+- Journal summaries
+
+Implementation principles:
+
+- Tools call backend endpoints as source of truth
+- Writes require explicit user confirmation/consent
+- Invalid identity or authorization state throws typed tool errors
+- Tool output is compact and model-facing
+
+### Reminder Workflow Enhancements
+
+- Full reminder CRUD tool support with backend-aligned contracts
+- Category-aware field validation
+- Follow-up questions when required details are missing
+- Pull-to-refresh and force refresh support in reminders UI
+
+---
+
+## Identity, Authorization, and Safety
+
+### Identity Resolution
+
+Tool execution follows role-aware identifier resolution using existing app keys (`documentID`, `patientDocumentID`, `familyDocumentID`, `userType`) to avoid mixed patient/family context.
+
+### Consent and Side Effects
+
+- Side-effecting actions are consent-gated
+- Destructive/high-impact actions require explicit confirmation
+- Cancel path performs no side effects
+
+### Safety Guardrails
+
+- Off-topic and disallowed requests are declined
+- Medical diagnosis/prescription is not provided
+- Guardrail violations/refusals are mapped to user-safe responses
+- Apple acceptable-use constraints are enforced in product behavior
+
+---
+
+## Architecture Summary
+
+- **iOS:** SwiftUI + MVVM + FoundationModels framework integration
+- **AI Router:** runtime provider selection and fallback handling
+- **Engine:** prompt contracts, streaming/non-stream generation, tool orchestration
+- **Tools:** modular Foundation tool set under `services/foundationModel/tools/`
+- **Backend:** Express APIs for grounded reads/writes and server-side authorization hardening
 
 ---
 
@@ -102,25 +187,25 @@ Combining **AI companionship**, **daily cognitive exercises**, and **family coll
 
 ## Backend Setup
 
-> Requires `.env` file with Firebase + Gemini credentials
+Requires `.env` values for Firebase and Gemini fallback integration.
 
-### 🔐 Firebase Service Account Key
+### Firebase Service Account Key
 
-A **service account key** is required for Firebase Admin operations (e.g., account deletion from Firebase Auth).
+A service account key is required for Firebase Admin operations (example: account deletion in Firebase Auth).
 
-1. Go to [Firebase Console](https://console.firebase.google.com) → **Project Settings** → **Service accounts**
-2. Click **"Generate new private key"** → Download the JSON file
-3. Save it as `serviceAccountKey.json` in the `backend/` directory
+1. Go to [Firebase Console](https://console.firebase.google.com) -> **Project Settings** -> **Service accounts**
+2. Click **Generate new private key** and download the JSON
+3. Save as `serviceAccountKey.json` inside `backend/`
 
-> ⚠️ **Never commit this file to git.** It is already in `.gitignore`.
+Never commit this file to git.
 
-### ▶ Quick Start (Docker)
+### Quick Start (Docker)
 
 ```bash
-# Generate the base64 string from your service account key
+# Generate base64 from your Firebase service account key
 base64 -i backend/serviceAccountKey.json
 
-# Run the container with the base64-encoded key
+# Run the container with encoded key and env file
 docker run -d \
   --name recappp \
   --env-file recapEnv.env \
@@ -129,16 +214,16 @@ docker run -d \
   djdiptayan/hackrecap-backend:latest
 ```
 
-### ▶ Quick Start (Local)
+### Quick Start (Local)
 
 ```bash
 cd backend
 npm install
-# Place your serviceAccountKey.json in the backend/ directory
+# Place serviceAccountKey.json in backend/
 npm run dev
 ```
 
-### 🔁 Dev Auto-Restart
+### Dev Auto-Restart
 
 ```bash
 cd backend
@@ -148,26 +233,40 @@ chmod +x restart-recap.sh
 
 ---
 
+## Apple Intelligence Enablement (User Flow)
+
+If device support exists but Foundation Models is not enabled/ready:
+
+1. Open Settings
+2. Go to Apple Intelligence
+3. Turn Apple Intelligence on
+4. Return to Recap and tap Retry
+
+Recap provides app settings navigation and an in-app enablement guide for this flow.
+
+---
+
 ## Tech Stack
 
-### 📱 Mobile (iOS)
+### Mobile (iOS)
 
-* Swift 5
-* SwiftUI
-* MVVM Architecture
+- Swift 5
+- SwiftUI
+- MVVM
+- FoundationModels framework (Apple on-device AI)
 
 ### Backend
 
-* Node.js 22+
-* Express 5
-* Docker
+- Node.js 22+
+- Express 5
+- Docker
 
-### Cloud & AI
+### Cloud and Services
 
-* Firebase Firestore
-* Firebase Auth
-* Cloudinary
-* Google Gemini 3 
+- Firebase Firestore
+- Firebase Auth
+- Cloudinary
+- Gemini (fallback provider)
 
 ---
 
@@ -175,6 +274,6 @@ chmod +x restart-recap.sh
 
 ### Built to preserve memories and strengthen families.
 
-*Open an issue, PR, or discussion — contributions welcome.*
+Open an issue, PR, or discussion to contribute.
 
 </div>

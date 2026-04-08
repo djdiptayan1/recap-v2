@@ -24,9 +24,11 @@ class SmritiViewModel: ObservableObject {
     @Published var usageInfo: SmritiUsageResponse?
     @Published var isRateLimited = false
     @Published var rateLimitMessage: String?
+    @Published var foundationPrompt: FoundationAvailabilityPrompt?
 
-    private var patientContext: SmritiContext?
+    private var promptContext: SmritiPromptContext?
     private var userIdentifier: String = ""
+    private var selectedProvider: AIProviderKind = .gemini
 
     // API Endpoints
     private enum SmritiAPI: Endpoint {
@@ -79,50 +81,49 @@ class SmritiViewModel: ObservableObject {
         self.userIdentifier = userIdentifier
 
         guard let patient = patient else {
-            patientContext = nil
+            promptContext = nil
             setupGreeting(name: nil, memoryLane: isMemoryLane)
             return
         }
 
         let familyContext = familyMembers?.map {
-            SmritiFamilyMember(name: $0.name, relation: $0.relation)
+            FamilyMemberContext(name: $0.name, relation: $0.relation)
         }
 
-        let activities = SmritiActivities(
-            streakDays: streakDays,
-            reminders: reminderTitles
-        )
-
-        patientContext = SmritiContext(
+        promptContext = SmritiPromptContext(
             patientName: patient.firstName,
             stage: patient.stage.isEmpty ? nil : patient.stage,
             dob: patient.dateOfBirth.isEmpty ? nil : patient.dateOfBirth,
             familyMembers: familyContext,
-            recentActivities: (streakDays != nil || reminderTitles != nil) ? activities : nil,
-            mode: isMemoryLane ? "memoryLane" : nil
+            streakDays: streakDays,
+            reminders: reminderTitles,
+            mode: isMemoryLane ? .memoryLane : .caregiver
         )
 
         setupGreeting(name: patient.firstName, memoryLane: isMemoryLane)
     }
 
+    func initializeProviderAndUsage() async {
+        await refreshProviderState()
+        await fetchUsage()
+    }
+
     func setMemoryLaneMode(_ enabled: Bool) {
-        guard let ctx = patientContext else {
-            patientContext = SmritiContext(
-                patientName: nil, stage: nil, dob: nil,
-                familyMembers: nil, recentActivities: nil,
-                mode: enabled ? "memoryLane" : nil
+        guard var ctx = promptContext else {
+            promptContext = SmritiPromptContext(
+                patientName: nil,
+                stage: nil,
+                dob: nil,
+                familyMembers: nil,
+                streakDays: nil,
+                reminders: nil,
+                mode: enabled ? .memoryLane : .caregiver
             )
             setupGreeting(name: nil, memoryLane: enabled)
             return
         }
-        patientContext = SmritiContext(
-            patientName: ctx.patientName,
-            stage: ctx.stage,
-            dob: ctx.dob,
-            familyMembers: ctx.familyMembers,
-            recentActivities: ctx.recentActivities,
-            mode: enabled ? "memoryLane" : nil
-        )
+        ctx.mode = enabled ? .memoryLane : .caregiver
+        promptContext = ctx
         setupGreeting(name: ctx.patientName, memoryLane: enabled)
     }
 
@@ -157,6 +158,13 @@ class SmritiViewModel: ObservableObject {
     // MARK: - Usage Fetching
 
     func fetchUsage() async {
+        guard selectedProvider == .gemini else {
+            usageInfo = nil
+            isRateLimited = false
+            rateLimitMessage = nil
+            return
+        }
+
         guard !userIdentifier.isEmpty else { return }
 
         do {
@@ -186,13 +194,17 @@ class SmritiViewModel: ObservableObject {
     // MARK: - Send Message
 
     func sendMessage(text: String) {
-        guard !isRateLimited else {
+        guard !(selectedProvider == .gemini && isRateLimited) else {
             let limitMsg = ChatMessage(
                 text: rateLimitMessage
                     ?? "You've reached your message limit. Please try again later. 💛",
                 isUser: false
             )
             messages.append(limitMsg)
+            return
+        }
+
+        guard !isLoading else {
             return
         }
 
@@ -204,15 +216,137 @@ class SmritiViewModel: ObservableObject {
         let history = buildHistory()
 
         Task {
-            let streamSuccess = await sendStreaming(query: text, history: history)
-            if !streamSuccess {
-                await sendStructured(query: text, history: history)
+            let provider = await resolveProviderForCurrentTurn()
+
+            switch provider {
+            case .foundation:
+                let onDeviceSuccess = await sendFoundationMessage(query: text, history: history)
+                if !onDeviceSuccess {
+                    messages.append(
+                        ChatMessage(
+                            text:
+                                "Apple Intelligence is temporarily unavailable right now. Please tap Retry and try again.",
+                            isUser: false
+                        )
+                    )
+                }
+            case .gemini:
+                _ = await sendGeminiFlow(query: text, history: history)
             }
+
             self.isLoading = false
 
-            // Refresh usage after sending a message
-            await fetchUsage()
+            if self.selectedProvider == .gemini {
+                await fetchUsage()
+            }
         }
+    }
+
+    private func sendGeminiFlow(query: String, history: [SmritiHistoryMessage]?) async -> Bool {
+        let streamSuccess = await sendStreaming(query: query, history: history)
+        if !streamSuccess {
+            await sendStructured(query: query, history: history)
+        }
+        return true
+    }
+
+    private func refreshProviderState() async {
+        _ = await resolveProviderForCurrentTurn()
+        SmritiFoundationPrewarmService.shared.prewarmIfPossible()
+    }
+
+    func retryProviderAvailability() async {
+        await refreshProviderState()
+        await fetchUsage()
+    }
+
+    private func sendFoundationMessage(query: String, history: [SmritiHistoryMessage]?) async -> Bool {
+        let placeholder = ChatMessage(text: "", isUser: false)
+        let placeholderID = placeholder.id
+        messages.append(placeholder)
+
+        let outcome = await SmritiFoundationEngine.shared.streamStructuredResponse(
+            query: query,
+            history: history,
+            context: promptContext,
+            fallbackPatientId: userIdentifier,
+            onPartial: { [weak self] answer, followup in
+                guard let self else { return }
+                if let answer, let idx = self.messages.firstIndex(where: { $0.id == placeholderID }) {
+                    self.messages[idx].text = self.sanitizeAssistantText(answer)
+                }
+                if let followup, !followup.isEmpty {
+                    self.followupPrompt = followup
+                }
+            }
+        )
+
+        switch outcome {
+        case .streamed(let answer, let followup):
+            if answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                removePlaceholder(id: placeholderID)
+                return await sendFoundationNonStreaming(query: query, history: history)
+            }
+
+            if let followup, !followup.isEmpty {
+                followupPrompt = followup
+            }
+            return true
+
+        case .guardrail(let message), .refusal(let message):
+            replacePlaceholder(
+                id: placeholderID,
+                with: message
+            )
+            return true
+
+        case .failed:
+            removePlaceholder(id: placeholderID)
+            return await sendFoundationNonStreaming(query: query, history: history)
+        }
+    }
+
+    private func sendFoundationNonStreaming(query: String, history: [SmritiHistoryMessage]?) async -> Bool {
+        let outcome = await SmritiFoundationEngine.shared.generateStructuredResponse(
+            query: query,
+            history: history,
+            context: promptContext,
+            fallbackPatientId: userIdentifier
+        )
+
+        switch outcome {
+        case .success(let adapted):
+            appendStructuredResponseToUI(adapted)
+            return true
+
+        case .guardrail(let message), .refusal(let message):
+            messages.append(
+                ChatMessage(
+                    text: message,
+                    isUser: false
+                )
+            )
+            return true
+
+        case .failed:
+            return false
+        }
+    }
+
+    private func resolveProviderForCurrentTurn() async -> AIProviderKind {
+        let decision = await FoundationAvailabilityService.shared.resolveProvider()
+        foundationPrompt = decision.prompt
+        selectedProvider = decision.provider
+        if decision.provider != .gemini {
+            clearUsageState()
+        }
+        return decision.provider
+    }
+
+    private func clearUsageState() {
+        usageInfo = nil
+        isRateLimited = false
+        rateLimitMessage = nil
     }
 
     // MARK: - Streaming (fast, plain text)
@@ -224,7 +358,7 @@ class SmritiViewModel: ObservableObject {
 
         let stream = NetworkManager.shared.streamRequest(
             endpoint: SmritiAPI.stream(
-                query: query, context: patientContext, history: history,
+                query: query, context: promptContext?.asBackendContext(), history: history,
                 userIdentifier: userIdentifier),
             timeoutSeconds: 15
         )
@@ -243,6 +377,10 @@ class SmritiViewModel: ObservableObject {
             if fullText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 removePlaceholder(id: placeholderID)
                 return false
+            }
+
+            if let idx = messages.firstIndex(where: { $0.id == placeholderID }) {
+                messages[idx].text = sanitizeAssistantText(fullText)
             }
 
             extractFollowup(from: fullText)
@@ -267,46 +405,23 @@ class SmritiViewModel: ObservableObject {
         }
     }
 
+    private func replacePlaceholder(id: UUID, with text: String) {
+        if let idx = messages.firstIndex(where: { $0.id == id }) {
+            messages[idx].text = text
+        } else {
+            messages.append(ChatMessage(text: text, isUser: false))
+        }
+    }
+
     // MARK: - Structured (fallback, full JSON)
     private func sendStructured(query: String, history: [SmritiHistoryMessage]?) async {
         do {
             let response: SmritiResponse = try await NetworkManager.shared.request(
                 endpoint: SmritiAPI.ask(
-                    query: query, context: patientContext, history: history,
+                    query: query, context: promptContext?.asBackendContext(), history: history,
                     userIdentifier: userIdentifier))
 
-            var responseText = response.answer
-
-            if let strategies = response.care_strategies, !strategies.isEmpty {
-                responseText +=
-                    "\n\n**Care Strategies:**\n"
-                    + strategies.map { "• \($0)" }.joined(separator: "\n")
-            }
-
-            if let sources = response.sources, !sources.isEmpty {
-                responseText +=
-                    "\n\n**Sources:**\n"
-                    + sources.map { "• [\($0.name)](\($0.url))" }.joined(separator: "\n")
-            }
-
-            if let note = response.supportive_note, !note.isEmpty {
-                responseText += "\n\n*\(note)*"
-            }
-
-            if let disclaimer = response.medical_disclaimer, !disclaimer.isEmpty {
-                responseText += "\n\n_\(disclaimer)_"
-            }
-
-            if let followup = response.followup_prompt, !followup.isEmpty {
-                responseText += "\n\n💭 **\(followup)**"
-            }
-
-            let aiMessage = ChatMessage(text: responseText, isUser: false)
-            self.messages.append(aiMessage)
-
-            if let followup = response.followup_prompt, !followup.isEmpty {
-                self.followupPrompt = followup
-            }
+            appendStructuredResponseToUI(response)
 
         } catch {
             // Check if this is a 429 rate limit error
@@ -321,6 +436,41 @@ class SmritiViewModel: ObservableObject {
                     "I apologize, but I'm having trouble connecting right now. Please try again in a moment. 🙏",
                 isUser: false)
             self.messages.append(errorMsg)
+        }
+    }
+
+    private func appendStructuredResponseToUI(_ response: SmritiResponse) {
+        var responseText = sanitizeAssistantText(response.answer)
+
+        if let strategies = response.care_strategies, !strategies.isEmpty {
+            responseText +=
+                "\n\n**Care Strategies:**\n"
+                + strategies.map { "• \($0)" }.joined(separator: "\n")
+        }
+
+        if let sources = response.sources, !sources.isEmpty {
+            responseText +=
+                "\n\n**Sources:**\n"
+                + sources.map { "• [\($0.name)](\($0.url))" }.joined(separator: "\n")
+        }
+
+        if let note = response.supportive_note, !note.isEmpty {
+            responseText += "\n\n*\(note)*"
+        }
+
+        if let disclaimer = response.medical_disclaimer, !disclaimer.isEmpty {
+            responseText += "\n\n_\(disclaimer)_"
+        }
+
+        if let followup = response.followup_prompt, !followup.isEmpty {
+            responseText += "\n\n💭 **\(followup)**"
+        }
+
+        let aiMessage = ChatMessage(text: responseText, isUser: false)
+        self.messages.append(aiMessage)
+
+        if let followup = response.followup_prompt, !followup.isEmpty {
+            self.followupPrompt = followup
         }
     }
 
@@ -359,5 +509,15 @@ class SmritiViewModel: ObservableObject {
                 self.followupPrompt = prompt
             }
         }
+    }
+
+    private func sanitizeAssistantText(_ text: String) -> String {
+        let pattern = "^(?:(?:hello|hi|namaste)\\s+[A-Za-z]+[!,.:\\-]?\\s*)+"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return text
+        }
+        let range = NSRange(location: 0, length: text.utf16.count)
+        let sanitized = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "")
+        return sanitized.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
