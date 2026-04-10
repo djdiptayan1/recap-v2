@@ -22,15 +22,14 @@ struct MemoryQuizHistoryListView: View {
                             .font(AppConfig.Fonts.small)
                             .foregroundColor(AppConfig.Colors.textSecondary)
                     }
-                    .padding(.vertical, 4) // Breathing room inside the row
                 }
-                // Make the row background clear so the list background shows
-                .listRowBackground(Color.white.opacity(0.6))
+                // .listRowBackground(Color.clear)
+                // .listRowSeparator(.hidden)
             }
         }
-        .listStyle(.insetGrouped) // Looks better than 'automatic' for this style
-        .scrollContentBackground(.hidden) // CRITICAL: This removes the default gray/white system background
-        .standardBackground()
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color.clear)
         .navigationTitle("Memory Quiz History")
         .navigationBarTitleDisplayMode(.inline)
     }

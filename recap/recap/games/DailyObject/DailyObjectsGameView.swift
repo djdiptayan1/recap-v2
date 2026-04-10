@@ -60,6 +60,9 @@ struct DailyObjectsGameView: View {
             }
 //            .standardBackground()
             .navigationTitle("Daily Objects")
+            .onDisappear {
+                viewModel.handleViewDisappeared()
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     VStack(alignment: .trailing, spacing: 2) {

@@ -152,7 +152,7 @@ class PatternMemoryGameViewModel: ObservableObject {
             ])
             withAnimation { currentPhase = .gameOver }
             Task { @MainActor in
-                await submitSessionIfNeeded()
+                await submitSessionIfNeeded(outcome: .livesExhausted, completed: true)
             }
         } else if lastAnswerCorrect {
             startNewRound()
@@ -170,9 +170,17 @@ class PatternMemoryGameViewModel: ObservableObject {
         startGame()
     }
 
+    func handleViewDisappeared() {
+        showSequenceTask?.cancel()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
     @MainActor
-    private func submitSessionIfNeeded() async {
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
         guard !hasSubmittedSession else { return }
+        guard currentPhase != .instruction else { return }
         guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
         hasSubmittedSession = true
 
@@ -185,13 +193,15 @@ class PatternMemoryGameViewModel: ObservableObject {
             durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
             startedAt: sessionStartedAt,
             completedAt: Date(),
-            outcome: .livesExhausted,
-            completed: true,
+            outcome: outcome,
+            completed: completed,
             levelReached: max(1, level),
             accuracy: Double(accuracy),
             mistakes: mistakeCount,
             difficulty: "progressive",
             metadata: [
+                "exitPhase": "\(currentPhase)",
+                "completed": "\(completed)",
                 "successfulRounds": "\(successfulRounds)",
                 "failedRounds": "\(failedRounds)",
                 "maxSequenceLength": "\(maxSequenceLength)",

@@ -174,15 +174,23 @@ class NumberBubblesGameViewModel: ObservableObject {
                     AnalyticsManager.Parameters.score: self.score
                 ])
                 Task { @MainActor in
-                    await self.submitSessionIfNeeded()
+                    await self.submitSessionIfNeeded(outcome: .timeout, completed: true)
                 }
             }
         }
     }
 
+    func handleViewDisappeared() {
+        timer?.invalidate()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
     @MainActor
-    private func submitSessionIfNeeded() async {
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
         guard !hasSubmittedSession else { return }
+        guard phase != .instruction else { return }
         guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
         hasSubmittedSession = true
 
@@ -195,13 +203,15 @@ class NumberBubblesGameViewModel: ObservableObject {
             durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
             startedAt: sessionStartedAt,
             completedAt: Date(),
-            outcome: .timeout,
-            completed: true,
+            outcome: outcome,
+            completed: completed,
             levelReached: bestLevelReached,
             accuracy: Double(accuracy),
             mistakes: wrongTapCount,
             difficulty: "progressive",
             metadata: [
+                "exitPhase": "\(phase)",
+                "completed": "\(completed)",
                 "correctTaps": "\(correctTapCount)",
                 "wrongTaps": "\(wrongTapCount)",
                 "finalLevel": "\(bestLevelReached)",

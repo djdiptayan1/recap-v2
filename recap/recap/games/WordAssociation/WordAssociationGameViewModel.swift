@@ -173,13 +173,20 @@ class WordAssociationGameViewModel: ObservableObject {
             AnalyticsManager.Parameters.score: score
         ])
         Task { @MainActor in
-            await submitSessionIfNeeded()
+            await submitSessionIfNeeded(outcome: .completed, completed: true)
+        }
+    }
+
+    func handleViewDisappeared() {
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
         }
     }
 
     @MainActor
-    private func submitSessionIfNeeded() async {
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
         guard !hasSubmittedSession else { return }
+        guard currentPhase != .instruction else { return }
         guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
         hasSubmittedSession = true
 
@@ -189,13 +196,15 @@ class WordAssociationGameViewModel: ObservableObject {
             durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
             startedAt: sessionStartedAt,
             completedAt: Date(),
-            outcome: .completed,
-            completed: true,
+            outcome: outcome,
+            completed: completed,
             levelReached: totalRounds,
             accuracy: Double(accuracy),
             mistakes: totalIncorrectSelections + totalMissedSelections,
             difficulty: "standard",
             metadata: [
+                "exitPhase": "\(currentPhase)",
+                "completed": "\(completed)",
                 "roundsCompleted": "\(totalRounds)",
                 "correctSelections": "\(totalCorrectSelections)",
                 "incorrectSelections": "\(totalIncorrectSelections)",

@@ -29,6 +29,7 @@ enum GameSessionOutcome: String, Codable {
     case completed
     case timeout
     case livesExhausted = "lives_exhausted"
+    case exited = "exited"
 }
 
 struct GameSessionRequest: Codable {

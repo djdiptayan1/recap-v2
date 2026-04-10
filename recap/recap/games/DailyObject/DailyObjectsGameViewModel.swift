@@ -152,7 +152,7 @@ class DailyObjectsGameViewModel: ObservableObject {
             ])
 
             Task { @MainActor in
-                await submitSessionIfNeeded()
+                await submitSessionIfNeeded(outcome: .completed, completed: true)
             }
         }
     }
@@ -189,9 +189,17 @@ class DailyObjectsGameViewModel: ObservableObject {
         return Int((Double(totalCorrectSelections) / Double(totalTargetsPresented)) * 100)
     }
 
+    func handleViewDisappeared() {
+        timer?.invalidate()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
     @MainActor
-    private func submitSessionIfNeeded() async {
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
         guard !hasSubmittedSession else { return }
+        guard currentPhase != .instruction else { return }
         guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
         hasSubmittedSession = true
 
@@ -201,13 +209,15 @@ class DailyObjectsGameViewModel: ObservableObject {
             durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
             startedAt: sessionStartedAt,
             completedAt: Date(),
-            outcome: .completed,
-            completed: true,
+            outcome: outcome,
+            completed: completed,
             levelReached: currentRound,
             accuracy: Double(accuracyPercentage),
             mistakes: totalIncorrectSelections,
             difficulty: "adaptive",
             metadata: [
+                "exitPhase": "\(currentPhase)",
+                "completed": "\(completed)",
                 "roundsCompleted": "\(currentRound)",
                 "maxRounds": "\(maxRounds)",
                 "correctSelections": "\(totalCorrectSelections)",

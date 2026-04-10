@@ -120,7 +120,6 @@ struct MemoryQuizDetailView: View {
             }
             .padding(.bottom, 40)
         }
-        .standardBackground()
         .navigationTitle("Report Details")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -154,8 +153,7 @@ struct StatCard: View {
             }
         }
         .padding(16)
-        .background(Color.white)
-        .cornerRadius(20)
+        .glassEffect(.regular, in:.rect(cornerRadius: AppConfig.UI.cornerRadius))
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
 }

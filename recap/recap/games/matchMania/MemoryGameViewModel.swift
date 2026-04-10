@@ -161,14 +161,22 @@ class MemoryGameViewModel: ObservableObject {
                 AnalyticsManager.Parameters.score: cards.count / 2
             ])
             Task { @MainActor in
-                await submitSessionIfNeeded()
+                await submitSessionIfNeeded(outcome: .completed, completed: true)
             }
         }
     }
 
+    func handleViewDisappeared() {
+        timer?.invalidate()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
     @MainActor
-    private func submitSessionIfNeeded() async {
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
         guard !hasSubmittedSession else { return }
+        guard gameState != .instruction else { return }
         guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
         hasSubmittedSession = true
 
@@ -179,13 +187,15 @@ class MemoryGameViewModel: ObservableObject {
             durationSeconds: timeElapsed,
             startedAt: sessionStartedAt,
             completedAt: Date(),
-            outcome: .completed,
-            completed: true,
+            outcome: outcome,
+            completed: completed,
             levelReached: matches,
             accuracy: Double(accuracy),
             mistakes: max(0, moves - matches),
             difficulty: "standard",
             metadata: [
+                "exitState": "\(gameState)",
+                "completed": "\(completed)",
                 "moves": "\(moves)",
                 "matches": "\(matches)",
                 "pairs": "8",
