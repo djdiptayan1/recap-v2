@@ -65,16 +65,9 @@ struct ReminderWriteTool: Tool {
 
         @Guide(description: "Hydration unit when category is Hydration")
         var unit: String?
-
-        @Guide(description: "Must be true only when user has explicitly confirmed reminder creation")
-        var userConfirmed: Bool
     }
 
     func call(arguments: Arguments) async throws -> String {
-        guard arguments.userConfirmed else {
-            return "Reminder not created: explicit confirmation is required. Ask the user to confirm first."
-        }
-
         guard let patientId = identity.patientDocumentId else {
             throw SmritiToolError.missingIdentity
         }

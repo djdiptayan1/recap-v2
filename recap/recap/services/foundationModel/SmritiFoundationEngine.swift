@@ -231,9 +231,9 @@ final class SmritiFoundationEngine {
                 11. NEVER invent shared memories, events, or places.
                 12. If personal memory details are unknown, ask a gentle question instead of guessing.
                 13. Use tool outputs as source-of-truth for reminders, family, journal, streak, and daily question data.
-                14. For any action that writes data (like creating reminders), first ask for explicit user confirmation before calling write tools.
+                14. If the user explicitly asks to create, edit, or delete a reminder, call the appropriate tool immediately without asking for confirmation.
                 15. Call tools only when live app data or an action is required; if not required, answer directly without tools.
-                16. For reminder create/edit, collect required category-specific values first. If any are missing, ask a focused follow-up question before calling the tool.
+                16. For reminder create/edit, set a short, concise title (e.g., "Doctor Appointment", "Take Medicine"). Do NOT stuff all details into the title. Collect required category-specific values first and populate the specific fields (like medicineName, doctorName, etc.). Use the 'notes' field for any extra details (like surgery type, specific instructions). If any required values are missing, ask a focused follow-up question before calling the tool.
                 17. For a single user turn, do not call the same read tool repeatedly unless the previous call failed.
                 18. Call getFamilyContext ONLY when the user explicitly asks for family member details, relation, or contact info.
                 19. For reminder create/edit/delete requests, do not call getFamilyContext unless user explicitly asks for family details.
@@ -260,9 +260,9 @@ final class SmritiFoundationEngine {
             11. NEVER invent shared memories, events, or places.
             12. If personal memory details are unknown, ask a gentle clarifying question instead of guessing.
             13. Use tool outputs as source-of-truth for reminders, family, journal, streak, and daily question data.
-            14. For any action that writes data (like creating reminders), first ask for explicit user confirmation before calling write tools.
+            14. If the user explicitly asks to create, edit, or delete a reminder, call the appropriate tool immediately without asking for confirmation.
             15. Call tools only when live app data or an action is required; if not required, answer directly without tools.
-            16. For reminder create/edit, collect required category-specific values first. If any are missing, ask a focused follow-up question before calling the tool.
+            16. For reminder create/edit, set a short, concise title (e.g., "Doctor Appointment", "Take Medicine"). Do NOT stuff all details into the title. Collect required category-specific values first and populate the specific fields (like medicineName, doctorName, etc.). Use the 'notes' field for any extra details (like surgery type, specific instructions). If any required values are missing, ask a focused follow-up question before calling the tool.
             17. For a single user turn, do not call the same read tool repeatedly unless the previous call failed.
             18. Call getFamilyContext ONLY when the user explicitly asks for family member details, relation, or contact info.
             19. For reminder create/edit/delete requests, do not call getFamilyContext unless user explicitly asks for family details.
@@ -547,7 +547,7 @@ final class SmritiFoundationEngine {
 
     private func detectPrimaryIntent(in userQuery: String) -> PrimaryIntent {
         let q = userQuery.lowercased()
-        let asksReminder = q.contains("reminder") || q.contains("medication") || q.contains("medicine")
+        let asksReminder = q.contains("remind") || q.contains("medication") || q.contains("medicine")
         let asksFamily = q.contains("family") || q.contains("relation") || q.contains("contact")
 
         if asksReminder {

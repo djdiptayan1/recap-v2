@@ -66,6 +66,92 @@ struct Reminder: Codable, Identifiable, Equatable {
         createdAt = try? decodeDate(forKey: .createdAt)
         updatedAt = try? decodeDate(forKey: .updatedAt)
     }
+    
+    func nextOccurrence(after date: Date = Date()) -> Date? {
+        let calendar = Calendar.current
+        switch frequency {
+        case .once:
+            return time >= date ? time : nil
+        case .hourly:
+            var next = time
+            while next < date {
+                guard let added = calendar.date(byAdding: .hour, value: 1, to: next) else { return nil }
+                next = added
+            }
+            return next
+        case .daily:
+            let components = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var next = calendar.date(bySettingHour: components.hour ?? 0,
+                                     minute: components.minute ?? 0,
+                                     second: components.second ?? 0,
+                                     of: date) ?? date
+            if next < date {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            return next
+        case .weekdays:
+            let components = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var next = calendar.date(bySettingHour: components.hour ?? 0,
+                                     minute: components.minute ?? 0,
+                                     second: components.second ?? 0,
+                                     of: date) ?? date
+            if next < date {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            while let w = calendar.component(.weekday, from: next) as Int?, w < 2 || w > 6 {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            return next
+        case .weekends:
+            let components = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var next = calendar.date(bySettingHour: components.hour ?? 0,
+                                     minute: components.minute ?? 0,
+                                     second: components.second ?? 0,
+                                     of: date) ?? date
+            if next < date {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            while let w = calendar.component(.weekday, from: next) as Int?, w != 1 && w != 7 {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            return next
+        case .weekly:
+            let components = calendar.dateComponents([.hour, .minute, .second], from: time)
+            var next = calendar.date(bySettingHour: components.hour ?? 0,
+                                     minute: components.minute ?? 0,
+                                     second: components.second ?? 0,
+                                     of: date) ?? date
+            if next < date {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            let targetWeekday = calendar.component(.weekday, from: time)
+            while calendar.component(.weekday, from: next) != targetWeekday {
+                next = calendar.date(byAdding: .day, value: 1, to: next) ?? next
+            }
+            return next
+        case .biweekly:
+            var next = time
+            while next < date {
+                guard let added = calendar.date(byAdding: .day, value: 14, to: next) else { return nil }
+                next = added
+            }
+            return next
+        case .monthly:
+            var next = time
+            while next < date {
+                guard let added = calendar.date(byAdding: .month, value: 1, to: next) else { return nil }
+                next = added
+            }
+            return next
+        case .yearly:
+            var next = time
+            while next < date {
+                guard let added = calendar.date(byAdding: .year, value: 1, to: next) else { return nil }
+                next = added
+            }
+            return next
+        }
+    }
 }
 
 enum ReminderCategory: String, Codable, CaseIterable, Identifiable {

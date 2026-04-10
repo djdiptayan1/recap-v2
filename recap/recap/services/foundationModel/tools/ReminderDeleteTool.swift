@@ -17,16 +17,9 @@ struct ReminderDeleteTool: Tool {
     struct Arguments {
         @Guide(description: "Reminder ID to delete")
         var reminderId: String
-
-        @Guide(description: "Must be true only when user has explicitly confirmed reminder deletion")
-        var userConfirmed: Bool
     }
 
     func call(arguments: Arguments) async throws -> String {
-        guard arguments.userConfirmed else {
-            return "Reminder not deleted: explicit confirmation is required. Ask the user to confirm first."
-        }
-
         guard let patientId = identity.patientDocumentId else {
             throw SmritiToolError.missingIdentity
         }

@@ -18,7 +18,14 @@ class AppState: ObservableObject {
     @Published var currentUser: patientModel? {
         didSet {
             isLoggedIn = currentUser != nil
-            refreshOnboardingState()
+            if let user = currentUser {
+                let store = OnboardingStateStore.shared
+                onboardingProfile = store.profile(for: user)
+                needsOnboarding = !store.hasCompletedOnboarding(for: user)
+            } else {
+                needsOnboarding = false
+                onboardingProfile = nil
+            }
         }
     }
 
@@ -27,6 +34,7 @@ class AppState: ObservableObject {
         guard let firebaseUser = Auth.auth().currentUser,
             let email = firebaseUser.email
         else {
+            self.isLoading = false
             return
         }
 
@@ -73,6 +81,8 @@ class AppState: ObservableObject {
         } catch {
             print("Error restoring session: \(error)")
         }
+        
+        self.isLoading = false
     }
 
     func completeOnboarding(profile: OnboardingProfile) {
@@ -80,17 +90,5 @@ class AppState: ObservableObject {
         OnboardingStateStore.shared.completeOnboarding(for: user, profile: profile)
         onboardingProfile = profile
         needsOnboarding = false
-    }
-
-    private func refreshOnboardingState() {
-        guard let user = currentUser else {
-            needsOnboarding = false
-            onboardingProfile = nil
-            return
-        }
-
-        let store = OnboardingStateStore.shared
-        onboardingProfile = store.profile(for: user)
-        needsOnboarding = !store.hasCompletedOnboarding(for: user)
     }
 }

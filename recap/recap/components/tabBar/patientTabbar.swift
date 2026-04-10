@@ -13,40 +13,39 @@ struct patientTabbar: View {
 
     var body: some View {
         TabView {
-            Tab("Home", systemImage: "house.fill") {
+            Tab("Today", systemImage: "house.fill") {
                 home()
                     .onAppear { AnalyticsManager.shared.logScreen(name: "PatientHome") }
             }
-            Tab("Family", systemImage: "person.2.fill") {
-                familyView()
-                    .onAppear { AnalyticsManager.shared.logScreen(name: "PatientFamilyList") }
+
+            Tab("Journal", systemImage: "book.fill") {
+                NavigationStack {
+                    JournalView()
+                }
+                .onAppear { AnalyticsManager.shared.logScreen(name: "PatientJournal") }
             }
+
             Tab("Games", systemImage: "gamecontroller.fill") {
                 games()
                     .onAppear { AnalyticsManager.shared.logScreen(name: "PatientGames") }
             }
-            Tab("Smriti", systemImage: "apple.intelligence") {
-                SmritiView()
+
+            Tab("Smriti", systemImage: "apple.intelligence", role: .search) {
+                SmritiSearchTab()
+                    .environmentObject(appState)
                     .onAppear { AnalyticsManager.shared.logScreen(name: "PatientSmriti") }
             }
-            //            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {
-            //                NavigationStack {
-            //                    remindersView(viewModel: reminderViewModel)
-            //                }
-            //            }
         }
         .tabViewStyle(.sidebarAdaptable)
         .tabBarMinimizeBehavior(.onScrollDown)
         .tint(AppConfig.Colors.accent)
         .transition(.opacity.animation(.easeInOut(duration: 0.5)))
         .onAppear {
-            // Request permissions on launch
             NotificationManager.shared.requestAuthorization()
 
-            // Fetch reminders to schedule them
             let patientId =
                 KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?
-                .id ?? ""
+                    .id ?? ""
             if !patientId.isEmpty {
                 Task {
                     await reminderViewModel.fetchReminders(patientId: patientId)
@@ -60,9 +59,7 @@ struct patientTabbar: View {
 
     private func scheduleNotifications(for reminders: [Reminder]) {
         let manager = NotificationManager.shared
-        // Clear existing to avoid duplicates/stale data
         manager.removeAllReminderNotifications {
-            // Schedule new ones only after removal is complete
             for reminder in reminders {
                 let frequency = reminder.frequency
                 let subtitle = Self.buildNotificationSubtitle(for: reminder)
@@ -79,8 +76,7 @@ struct patientTabbar: View {
                 }
 
                 if let (componentsList, repeats) = frequency.calendarDateComponents(
-                    for: reminder.time, calendar: NotificationManager.istCalendar)
-                {
+                    for: reminder.time, calendar: NotificationManager.istCalendar) {
                     for components in componentsList {
                         manager.schedule(
                             on: components,
@@ -98,20 +94,15 @@ struct patientTabbar: View {
         }
     }
 
-    /// Short one-liner for the notification banner (always visible).
-    /// e.g. "Medicine · 9:47 PM · Daily"
     private static func buildNotificationSubtitle(for reminder: Reminder) -> String {
         let timeString = reminder.time.formatted(date: .omitted, time: .shortened)
         return "\(reminder.category.rawValue) · \(timeString) · \(reminder.frequency.displayName)"
     }
 
-    /// Full details shown only when the notification is expanded (long-press).
-    /// Works generically for ALL categories using their `detailFields`.
     private static func buildNotificationBody(for reminder: Reminder) -> String {
         var lines: [String] = []
 
         if let details = reminder.categoryDetails, !details.isEmpty {
-            // Track which keys we've already handled (for unit merging)
             var handledKeys: Set<String> = []
             let fields = reminder.category.detailFields
 
@@ -119,16 +110,13 @@ struct patientTabbar: View {
                 guard !handledKeys.contains(field.key) else { continue }
                 guard let value = details[field.key], !value.isEmpty else { continue }
 
-                // Check if the next field is a unit field for this value
-                // e.g. "dosage" + "dosageUnit", "amount" + "unit"
                 let unitField = fields.first {
                     $0.key == "\(field.key)Unit" || ($0.key == "unit" && field.key == "amount")
                 }
                 if let unitField, let unitValue = details[unitField.key], !unitValue.isEmpty {
                     lines.append("\(field.label): \(value) \(unitValue)")
                     handledKeys.insert(unitField.key)
-                } else if field.key.hasSuffix("Unit") || (field.key == "unit") {
-                    // Skip standalone unit fields — they're merged above
+                } else if field.key.hasSuffix("Unit") || field.key == "unit" {
                     continue
                 } else {
                     lines.append("\(field.label): \(value)")
@@ -137,17 +125,42 @@ struct patientTabbar: View {
             }
         }
 
-        // Add notes if present
         if let notes = reminder.notes, !notes.isEmpty {
-            lines.append("\(notes)")
+            lines.append(notes)
         }
 
-        // Fallback if no details at all
         if lines.isEmpty {
             return "It's time for your \(reminder.category.rawValue) reminder!"
         }
 
         return lines.joined(separator: "\n")
+    }
+}
+
+struct SmritiSearchTab: View {
+    @EnvironmentObject var appState: AppState
+    @State private var searchText = ""
+    @State private var submittedQuery = ""
+
+    private let suggestions = [
+        "Help me remember",
+        "What should I do now?",
+        "Show my routine",
+        "Start a memory chat",
+    ]
+
+    var body: some View {
+        SmritiView(
+            externalSearchText: $searchText,
+            submittedSearchQuery: $submittedQuery
+        )
+        .environmentObject(appState)
+        .searchable(text: $searchText, prompt: "Ask Smriti")
+        .onSubmit(of: .search) {
+            let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return }
+            submittedQuery = trimmed
+        }
     }
 }
 

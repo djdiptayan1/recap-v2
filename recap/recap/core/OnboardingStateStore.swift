@@ -40,10 +40,10 @@ final class OnboardingStateStore {
     }
 
     private func completionKey(for user: patientModel) -> String {
-        "onboarding.completed.\(user.type ?? "unknown").\(user.id ?? "anonymous")"
+        "recap.onboarding.completed.\(user.type ?? "unknown")"
     }
 
     private func profileKey(for user: patientModel) -> String {
-        "onboarding.profile.\(user.type ?? "unknown").\(user.id ?? "anonymous")"
+        "recap.onboarding.profile.\(user.id ?? "anonymous")"
     }
 }

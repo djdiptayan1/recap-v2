@@ -10,13 +10,24 @@ import SwiftUI
 struct SmritiView: View {
     @StateObject private var viewModel = SmritiViewModel()
     @EnvironmentObject var appState: AppState
+    private let externalSearchText: Binding<String>
+    private let submittedSearchQuery: Binding<String>
     @State private var textInput: String = ""
+    @State private var lastMirroredSearchText: String = ""
     @State private var showCamera: Bool = false
     @State private var familyMembers: [FamilyMember]? = nil
     @State private var isMemoryLaneMode: Bool = false
     @State private var showHowToEnableSheet: Bool = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
+
+    init(
+        externalSearchText: Binding<String> = .constant(""),
+        submittedSearchQuery: Binding<String> = .constant("")
+    ) {
+        self.externalSearchText = externalSearchText
+        self.submittedSearchQuery = submittedSearchQuery
+    }
 
     // Endpoint for fetching family members
     private enum FamilyAPI: Endpoint {
@@ -142,10 +153,10 @@ struct SmritiView: View {
                         .padding(.bottom, 10)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                     } else {
-                        InputBar(text: $textInput, showCamera: $showCamera, onSend: sendMessage)
-                            .padding(.horizontal)
-                            .padding(.bottom, 10)
-                            .disabled(viewModel.isLoading)
+//                        InputBar(text: $textInput, showCamera: $showCamera, onSend: sendMessage)
+//                            .padding(.horizontal)
+//                            .padding(.bottom, 10)
+//                            .disabled(viewModel.isLoading)
                     }
                 }
             }
@@ -173,6 +184,23 @@ struct SmritiView: View {
                 Task {
                     await viewModel.retryProviderAvailability()
                 }
+            }
+            .onChange(of: externalSearchText.wrappedValue) { newValue in
+                guard !newValue.isEmpty else {
+                    if textInput == lastMirroredSearchText {
+                        textInput = ""
+                    }
+                    lastMirroredSearchText = ""
+                    return
+                }
+
+                if textInput.isEmpty || textInput == lastMirroredSearchText {
+                    textInput = newValue
+                    lastMirroredSearchText = newValue
+                }
+            }
+            .onChange(of: submittedSearchQuery.wrappedValue) { query in
+                submitSearchQuery(query)
             }
             .sheet(isPresented: $showHowToEnableSheet) {
                 HowToEnableAppleIntelligenceSheet()
@@ -231,13 +259,34 @@ struct SmritiView: View {
     }
 
     func sendMessage() {
-        guard !textInput.isEmpty else { return }
+        let textToSend = textInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !textToSend.isEmpty else { return }
         HapticManager.shared.trigger(.medium)
 
-        let textToSend = textInput
         textInput = ""
+        if externalSearchText.wrappedValue == lastMirroredSearchText {
+            externalSearchText.wrappedValue = ""
+        }
+        lastMirroredSearchText = ""
 
-        viewModel.sendMessage(text: textToSend)
+        sendMessage(textToSend)
+    }
+
+    private func sendMessage(_ text: String) {
+        guard !text.isEmpty else { return }
+        viewModel.sendMessage(text: text)
+    }
+
+    private func submitSearchQuery(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !viewModel.isLoading else { return }
+
+        HapticManager.shared.trigger(.selection)
+        textInput = ""
+        lastMirroredSearchText = ""
+        externalSearchText.wrappedValue = ""
+        submittedSearchQuery.wrappedValue = ""
+        sendMessage(trimmed)
     }
 }
 
