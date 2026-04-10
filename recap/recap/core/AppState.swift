@@ -13,9 +13,12 @@ import SwiftUI
 class AppState: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var isLoading: Bool = true
+    @Published var needsOnboarding: Bool = false
+    @Published var onboardingProfile: OnboardingProfile?
     @Published var currentUser: patientModel? {
         didSet {
             isLoggedIn = currentUser != nil
+            refreshOnboardingState()
         }
     }
 
@@ -70,5 +73,24 @@ class AppState: ObservableObject {
         } catch {
             print("Error restoring session: \(error)")
         }
+    }
+
+    func completeOnboarding(profile: OnboardingProfile) {
+        guard let user = currentUser else { return }
+        OnboardingStateStore.shared.completeOnboarding(for: user, profile: profile)
+        onboardingProfile = profile
+        needsOnboarding = false
+    }
+
+    private func refreshOnboardingState() {
+        guard let user = currentUser else {
+            needsOnboarding = false
+            onboardingProfile = nil
+            return
+        }
+
+        let store = OnboardingStateStore.shared
+        onboardingProfile = store.profile(for: user)
+        needsOnboarding = !store.hasCompletedOnboarding(for: user)
     }
 }

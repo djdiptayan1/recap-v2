@@ -39,6 +39,8 @@ class MemoryGameViewModel: ObservableObject {
     private var flippedCardIndex: Int?  // Tracks the first card flipped
     private var timer: Timer?
     private var isProcessing = false  // Prevents flipping more than 2 cards
+    private var sessionStartedAt = Date()
+    private var hasSubmittedSession = false
 
     // Game Config
     private let icons = [
@@ -51,14 +53,16 @@ class MemoryGameViewModel: ObservableObject {
     }
 
     func startGame() {
-        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
-            AnalyticsManager.Parameters.gameType: "MatchMania"
-        ])
-        gameState = .playing
         startNewGame()
     }
 
     func startNewGame() {
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
+            AnalyticsManager.Parameters.gameType: "MatchMania"
+        ])
+        gameState = .playing
+        sessionStartedAt = Date()
+        hasSubmittedSession = false
         // 1. Reset Stats
         moves = 0
         timeElapsed = 0
@@ -152,6 +156,46 @@ class MemoryGameViewModel: ObservableObject {
         if cards.allSatisfy({ $0.isMatched }) {
             timer?.invalidate()
             gameState = .completed
+            AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
+                AnalyticsManager.Parameters.gameType: "MatchMania",
+                AnalyticsManager.Parameters.score: cards.count / 2
+            ])
+            Task { @MainActor in
+                await submitSessionIfNeeded()
+            }
+        }
+    }
+
+    @MainActor
+    private func submitSessionIfNeeded() async {
+        guard !hasSubmittedSession else { return }
+        guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
+        hasSubmittedSession = true
+
+        let accuracy = moves == 0 ? 0 : min(100, Int((Double(matches) / Double(moves)) * 100))
+        let request = GameSessionSubmissionBuilder(
+            gameType: .matchMania,
+            score: matches * 10,
+            durationSeconds: timeElapsed,
+            startedAt: sessionStartedAt,
+            completedAt: Date(),
+            outcome: .completed,
+            completed: true,
+            levelReached: matches,
+            accuracy: Double(accuracy),
+            mistakes: max(0, moves - matches),
+            difficulty: "standard",
+            metadata: [
+                "moves": "\(moves)",
+                "matches": "\(matches)",
+                "pairs": "8",
+            ]
+        ).makeRequest(documentId: documentId)
+
+        do {
+            try await GameSessionService.shared.submitSession(request)
+        } catch {
+            print("Failed to submit Match Mania session: \(error)")
         }
     }
 }
