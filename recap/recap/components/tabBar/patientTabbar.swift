@@ -42,6 +42,7 @@ struct patientTabbar: View {
         .transition(.opacity.animation(.easeInOut(duration: 0.5)))
         .onAppear {
             NotificationManager.shared.requestAuthorization()
+            NotificationManager.shared.registerReminderCategories()
 
             let patientId =
                 KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?
@@ -55,12 +56,52 @@ struct patientTabbar: View {
         .onChange(of: reminderViewModel.reminders) { reminders in
             scheduleNotifications(for: reminders)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .reminderActionRequested)) { notification in
+            handleReminderAction(notification.userInfo)
+        }
+    }
+
+    private func handleReminderAction(_ userInfo: [AnyHashable: Any]?) {
+        guard let userInfo else { return }
+        guard let actionIdentifier = userInfo["actionIdentifier"] as? String else { return }
+        guard let reminderId = userInfo["reminderId"] as? String, !reminderId.isEmpty else { return }
+
+        let patientId =
+            KeychainManager.shared.getString(key: .patientDocumentID)
+            ?? appState.currentUser?.id
+            ?? ""
+        guard !patientId.isEmpty else { return }
+
+        Task { @MainActor in
+            switch actionIdentifier {
+            case NotificationManager.reminderCompleteActionIdentifier:
+                _ = await reminderViewModel.markReminderCompleted(
+                    patientId: patientId,
+                    reminderId: reminderId,
+                    completedVia: "notification_action"
+                )
+            case NotificationManager.reminderSnoozeActionIdentifier:
+                let minutes = (userInfo["snoozeMinutes"] as? Int) ?? 15
+                _ = await reminderViewModel.snoozeReminder(
+                    patientId: patientId,
+                    reminderId: reminderId,
+                    snoozeMinutes: minutes,
+                    snoozedVia: "notification_action"
+                )
+            default:
+                break
+            }
+        }
     }
 
     private func scheduleNotifications(for reminders: [Reminder]) {
         let manager = NotificationManager.shared
         manager.removeAllReminderNotifications {
             for reminder in reminders {
+                if reminder.frequency == .once, reminder.isCompleted == true {
+                    continue
+                }
+
                 let frequency = reminder.frequency
                 let subtitle = Self.buildNotificationSubtitle(for: reminder)
                 let body = Self.buildNotificationBody(for: reminder)
@@ -68,6 +109,7 @@ struct patientTabbar: View {
                     "reminderId": reminder.id,
                     "reminderTitle": reminder.title,
                     "reminderCategory": reminder.category.rawValue,
+                    "snoozeMinutes": 15,
                 ]
                 if let details = reminder.categoryDetails {
                     for (key, value) in details {
@@ -84,7 +126,7 @@ struct patientTabbar: View {
                             body: body,
                             subtitle: subtitle,
                             repeats: repeats,
-                            categoryIdentifier: "reminder",
+                            categoryIdentifier: NotificationManager.reminderCategoryIdentifier,
                             userInfo: userInfo,
                             sound: .default
                         )

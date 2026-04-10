@@ -21,9 +21,18 @@ class ReminderViewModel: ObservableObject {
         case add(body: Data)
         case edit(body: Data)
         case delete(request: DeleteReminderRequest)
+        case complete(body: Data)
+        case snooze(body: Data)
 
         var path: String {
-            return AppConfig.ApiEndpoints.reminders
+            switch self {
+            case .complete:
+                return "\(AppConfig.ApiEndpoints.reminders)/complete"
+            case .snooze:
+                return "\(AppConfig.ApiEndpoints.reminders)/snooze"
+            case .fetch, .add, .edit, .delete:
+                return AppConfig.ApiEndpoints.reminders
+            }
         }
 
         var method: HTTPMethod {
@@ -32,6 +41,7 @@ class ReminderViewModel: ObservableObject {
             case .add: return .post
             case .edit: return .put
             case .delete: return .delete
+            case .complete, .snooze: return .post
             }
         }
 
@@ -49,6 +59,8 @@ class ReminderViewModel: ObservableObject {
             case .add(let data): return data
             case .edit(let data): return data
             case .delete(let request): return request
+            case .complete(let data): return data
+            case .snooze(let data): return data
             default: return nil
             }
         }
@@ -194,6 +206,87 @@ class ReminderViewModel: ObservableObject {
             return false
         }
     }
+
+    @MainActor
+    func markReminderCompleted(
+        patientId: String,
+        reminderId: String,
+        completedVia: String = "in_app"
+    ) async -> Bool {
+        let request = ReminderCompleteRequest(
+            patientId: patientId,
+            reminderId: reminderId,
+            completedVia: completedVia,
+            completedAt: Date()
+        )
+
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let bodyData = try? encoder.encode(request) else {
+            self.errorMessage = "Failed to encode reminder completion request"
+            return false
+        }
+
+        do {
+            let response: SingleReminderResponse = try await NetworkManager.shared.request(
+                endpoint: ReminderAPI.complete(body: bodyData)
+            )
+
+            if response.success {
+                if let index = self.reminders.firstIndex(where: { $0.id == reminderId }) {
+                    self.reminders[index] = response.data
+                }
+                return true
+            }
+
+            self.errorMessage = "Failed to mark reminder complete"
+            return false
+        } catch {
+            self.errorMessage = error.localizedDescription
+            print("Error marking reminder complete: \(error)")
+            return false
+        }
+    }
+
+    @MainActor
+    func snoozeReminder(
+        patientId: String,
+        reminderId: String,
+        snoozeMinutes: Int = 15,
+        snoozedVia: String = "in_app"
+    ) async -> Bool {
+        let request = ReminderSnoozeRequest(
+            patientId: patientId,
+            reminderId: reminderId,
+            snoozeMinutes: snoozeMinutes,
+            snoozedVia: snoozedVia
+        )
+
+        guard let bodyData = try? JSONEncoder().encode(request) else {
+            self.errorMessage = "Failed to encode reminder snooze request"
+            return false
+        }
+
+        do {
+            let response: SingleReminderResponse = try await NetworkManager.shared.request(
+                endpoint: ReminderAPI.snooze(body: bodyData)
+            )
+
+            if response.success {
+                if let index = self.reminders.firstIndex(where: { $0.id == reminderId }) {
+                    self.reminders[index] = response.data
+                }
+                return true
+            }
+
+            self.errorMessage = "Failed to snooze reminder"
+            return false
+        } catch {
+            self.errorMessage = error.localizedDescription
+            print("Error snoozing reminder: \(error)")
+            return false
+        }
+    }
 }
 
 // MARK: - Request / Response Structs
@@ -212,6 +305,20 @@ struct EditReminderRequest: Codable {
 struct DeleteReminderRequest: Codable {
     let patientId: String
     let reminderId: String
+}
+
+struct ReminderCompleteRequest: Codable {
+    let patientId: String
+    let reminderId: String
+    let completedVia: String
+    let completedAt: Date
+}
+
+struct ReminderSnoozeRequest: Codable {
+    let patientId: String
+    let reminderId: String
+    let snoozeMinutes: Int
+    let snoozedVia: String
 }
 
 struct DeleteReminderResponse: Codable {

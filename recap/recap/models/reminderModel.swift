@@ -17,11 +17,16 @@ struct Reminder: Codable, Identifiable, Equatable {
     var notes: String?
     var categoryDetails: [String: String]?
     var isCompleted: Bool?
+    var lastCompletedAt: Date?
+    var lastSnoozedUntil: Date?
+    var lastAction: String?
+    var lastActionAt: Date?
+    var completionHistory: [ReminderCompletionEvent]?
     var createdAt: Date?
     var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, category, frequency, time, notes, categoryDetails, isCompleted, createdAt, updatedAt
+        case id, title, category, frequency, time, notes, categoryDetails, isCompleted, lastCompletedAt, lastSnoozedUntil, lastAction, lastActionAt, completionHistory, createdAt, updatedAt
     }
 
     init(from decoder: Decoder) throws {
@@ -33,6 +38,7 @@ struct Reminder: Codable, Identifiable, Equatable {
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         categoryDetails = try container.decodeIfPresent([String: String].self, forKey: .categoryDetails)
         isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted)
+        completionHistory = try container.decodeIfPresent([ReminderCompletionEvent].self, forKey: .completionHistory)
 
         // Custom Date Decoding Helper
         func decodeDate(forKey key: CodingKeys) throws -> Date? {
@@ -65,6 +71,10 @@ struct Reminder: Codable, Identifiable, Equatable {
 
         createdAt = try? decodeDate(forKey: .createdAt)
         updatedAt = try? decodeDate(forKey: .updatedAt)
+        lastCompletedAt = try? decodeDate(forKey: .lastCompletedAt)
+        lastSnoozedUntil = try? decodeDate(forKey: .lastSnoozedUntil)
+        lastActionAt = try? decodeDate(forKey: .lastActionAt)
+        lastAction = try container.decodeIfPresent(String.self, forKey: .lastAction)
     }
     
     func nextOccurrence(after date: Date = Date()) -> Date? {
@@ -151,6 +161,52 @@ struct Reminder: Codable, Identifiable, Equatable {
             }
             return next
         }
+    }
+}
+
+struct ReminderCompletionEvent: Codable, Equatable, Identifiable {
+    let action: String
+    let via: String
+    let actedAt: Date
+    let snoozedUntil: Date?
+    let snoozeMinutes: Int?
+
+    var id: String {
+        "\(action)-\(via)-\(actedAt.timeIntervalSince1970)"
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case action
+        case via
+        case actedAt
+        case snoozedUntil
+        case snoozeMinutes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        action = try container.decode(String.self, forKey: .action)
+        via = try container.decode(String.self, forKey: .via)
+        snoozeMinutes = try container.decodeIfPresent(Int.self, forKey: .snoozeMinutes)
+
+        func decodeDate(forKey key: CodingKeys) throws -> Date? {
+            if let timestamp = try? container.decode(FirestoreTimestamp.self, forKey: key) {
+                return Date(timeIntervalSince1970: TimeInterval(timestamp.seconds))
+            }
+            if let isoString = try? container.decode(String.self, forKey: key) {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                if let date = formatter.date(from: isoString) {
+                    return date
+                }
+                let simpleFormatter = ISO8601DateFormatter()
+                return simpleFormatter.date(from: isoString)
+            }
+            return nil
+        }
+
+        actedAt = (try decodeDate(forKey: .actedAt)) ?? Date()
+        snoozedUntil = try decodeDate(forKey: .snoozedUntil)
     }
 }
 

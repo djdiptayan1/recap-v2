@@ -19,6 +19,7 @@ struct AddReminderSheet: View {
     @State private var time = Date()
     @State private var notes = ""
     @State private var categoryDetailsValues: [String: String] = [:]
+    @State private var isHydratingFromReminder = false
 
     var body: some View {
         NavigationView {
@@ -118,15 +119,20 @@ struct AddReminderSheet: View {
             )
             .onAppear {
                 if let reminder = reminderToEdit {
+                    isHydratingFromReminder = true
                     title = reminder.title
                     selectedCategory = reminder.category
                     selectedFrequency = reminder.frequency
                     time = reminder.time
                     notes = reminder.notes ?? ""
                     categoryDetailsValues = reminder.categoryDetails ?? [:]
+                    DispatchQueue.main.async {
+                        isHydratingFromReminder = false
+                    }
                 }
             }
             .onChange(of: selectedCategory) { _ in
+                if isHydratingFromReminder { return }
                 categoryDetailsValues = [:]
             }
         }
