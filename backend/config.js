@@ -37,6 +37,9 @@ export default {
         //journal
         journalEntries_SubCollection: 'journal_entries',
 
+        //games
+        gameSessions_SubCollection: 'game_sessions',
+
         //analytics cache
         analyticsCache_SubCollection: 'analyticsCache',
     },

@@ -22,6 +22,7 @@ enum GamePhase {
     case memorizing
     case recalling
     case roundSummary
+    case completed
 }
 
 // MARK: - ViewModel
@@ -50,6 +51,8 @@ class DailyObjectsGameViewModel: ObservableObject {
     @Published var objectsToMemorize: [DailyObject] = []
     @Published var recallGridObjects: [DailyObject] = []  // Mix of correct + distractors
     @Published var selectedIDs: Set<UUID> = []
+    @Published var totalCorrectSelections: Int = 0
+    @Published var totalIncorrectSelections: Int = 0
 
     // Timer State
     @Published var timeRemaining: CGFloat = 1.0  // 0.0 to 1.0 progress
@@ -59,6 +62,10 @@ class DailyObjectsGameViewModel: ObservableObject {
 
     // Settings
     private var objectsPerRound: Int = 3
+    let maxRounds: Int = 5
+    private var sessionStartedAt = Date()
+    private var hasSubmittedSession = false
+    private var totalTargetsPresented = 0
 
     // MARK: - Game Control
 
@@ -69,6 +76,11 @@ class DailyObjectsGameViewModel: ObservableObject {
         score = 0
         currentRound = 1
         objectsPerRound = 3
+        totalCorrectSelections = 0
+        totalIncorrectSelections = 0
+        totalTargetsPresented = 0
+        sessionStartedAt = Date()
+        hasSubmittedSession = false
         startRound()
     }
 
@@ -119,6 +131,9 @@ class DailyObjectsGameViewModel: ObservableObject {
 
         let roundScore = max(0, (correctPicks * 10) - (incorrectPicks * 5))
         score += roundScore
+        totalTargetsPresented += objectsToMemorize.count
+        totalCorrectSelections += correctPicks
+        totalIncorrectSelections += incorrectPicks
 
         // Difficulty Progression
         if correctPicks == objectsPerRound && incorrectPicks == 0 {
@@ -127,13 +142,19 @@ class DailyObjectsGameViewModel: ObservableObject {
         }
 
         withAnimation {
-            currentPhase = .roundSummary
+            currentPhase = currentRound >= maxRounds ? .completed : .roundSummary
         }
-        
-        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
-            AnalyticsManager.Parameters.gameType: "DailyObjects",
-            AnalyticsManager.Parameters.score: score
-        ])
+
+        if currentRound >= maxRounds {
+            AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
+                AnalyticsManager.Parameters.gameType: "DailyObjects",
+                AnalyticsManager.Parameters.score: score
+            ])
+
+            Task { @MainActor in
+                await submitSessionIfNeeded(outcome: .completed, completed: true)
+            }
+        }
     }
 
     func nextRound() {
@@ -160,6 +181,54 @@ class DailyObjectsGameViewModel: ObservableObject {
             if duration <= 0 {
                 self.startRecallPhase()
             }
+        }
+    }
+
+    var accuracyPercentage: Int {
+        guard totalTargetsPresented > 0 else { return 0 }
+        return Int((Double(totalCorrectSelections) / Double(totalTargetsPresented)) * 100)
+    }
+
+    func handleViewDisappeared() {
+        timer?.invalidate()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
+    @MainActor
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
+        guard !hasSubmittedSession else { return }
+        guard currentPhase != .instruction else { return }
+        guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
+        hasSubmittedSession = true
+
+        let request = GameSessionSubmissionBuilder(
+            gameType: .dailyObjects,
+            score: score,
+            durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
+            startedAt: sessionStartedAt,
+            completedAt: Date(),
+            outcome: outcome,
+            completed: completed,
+            levelReached: currentRound,
+            accuracy: Double(accuracyPercentage),
+            mistakes: totalIncorrectSelections,
+            difficulty: "adaptive",
+            metadata: [
+                "exitPhase": "\(currentPhase)",
+                "completed": "\(completed)",
+                "roundsCompleted": "\(currentRound)",
+                "maxRounds": "\(maxRounds)",
+                "correctSelections": "\(totalCorrectSelections)",
+                "incorrectSelections": "\(totalIncorrectSelections)",
+            ]
+        ).makeRequest(documentId: documentId)
+
+        do {
+            try await GameSessionService.shared.submitSession(request)
+        } catch {
+            print("Failed to submit Daily Objects session: \(error)")
         }
     }
 }

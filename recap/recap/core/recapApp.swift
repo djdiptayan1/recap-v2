@@ -31,12 +31,17 @@ struct recapApp: App {
                     SplashScreenView()
                         .environmentObject(appState)
                 } else if appState.isLoggedIn {
-                    if appState.currentUser?.type == "patient" {
-                        patientTabbar()
+                    if appState.needsOnboarding {
+                        OnboardingFlowView()
                             .environmentObject(appState)
                     } else {
-                        familyTabbar()
-                            .environmentObject(appState)
+                        if appState.currentUser?.type == "patient" {
+                            patientTabbar()
+                                .environmentObject(appState)
+                        } else {
+                            familyTabbar()
+                                .environmentObject(appState)
+                        }
                     }
                 } else {
                     welcomeView()

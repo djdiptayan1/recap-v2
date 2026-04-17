@@ -11,7 +11,7 @@ struct home_family: View {
     @State private var showProfile = false
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     QuestionsCard()
                     StreaksCard()

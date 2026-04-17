@@ -61,6 +61,11 @@ class WordAssociationGameViewModel: ObservableObject {
 
     private var shuffledSets: [WordSet] = []
     private var totalRounds: Int = 0
+    private var sessionStartedAt = Date()
+    private var hasSubmittedSession = false
+    private var totalCorrectSelections = 0
+    private var totalIncorrectSelections = 0
+    private var totalMissedSelections = 0
 
     var currentSetIndex: Int { currentRound - 1 }
     var isLastRound: Bool { currentRound >= totalRounds }
@@ -68,10 +73,18 @@ class WordAssociationGameViewModel: ObservableObject {
     // MARK: - Game Control
 
     func startGame() {
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
+            AnalyticsManager.Parameters.gameType: "WordAssociation"
+        ])
         score = 0
         currentRound = 0
         shuffledSets = allWordSets.shuffled()
         totalRounds = shuffledSets.count
+        sessionStartedAt = Date()
+        hasSubmittedSession = false
+        totalCorrectSelections = 0
+        totalIncorrectSelections = 0
+        totalMissedSelections = 0
         withAnimation { currentPhase = .playing }
         nextRound()
     }
@@ -108,11 +121,14 @@ class WordAssociationGameViewModel: ObservableObject {
             if options[i].isSelected && isCorrect {
                 options[i].feedbackState = .correct
                 roundScore += 10
+                totalCorrectSelections += 1
             } else if options[i].isSelected && !isCorrect {
                 options[i].feedbackState = .incorrect
                 roundScore -= 5
+                totalIncorrectSelections += 1
             } else if !options[i].isSelected && isCorrect {
                 options[i].feedbackState = .missed
+                totalMissedSelections += 1
             } else {
                 options[i].feedbackState = .none
             }
@@ -130,7 +146,7 @@ class WordAssociationGameViewModel: ObservableObject {
 
     func continueAfterFeedback() {
         if isLastRound {
-            withAnimation { currentPhase = .completed }
+            finishSession()
         } else {
             nextRound()
         }
@@ -143,10 +159,63 @@ class WordAssociationGameViewModel: ObservableObject {
     // MARK: - Computed Stats
 
     var accuracy: Int {
-        guard totalRounds > 0 else { return 0 }
-        let maxScore = totalRounds * 30
-        return min(100, Int(Double(score) / Double(maxScore) * 100))
+        let totalOpportunities = totalRounds * 3
+        guard totalOpportunities > 0 else { return 0 }
+        return min(100, Int((Double(totalCorrectSelections) / Double(totalOpportunities)) * 100))
     }
 
     var roundProgress: String { "\(currentRound) / \(totalRounds)" }
+
+    private func finishSession() {
+        withAnimation { currentPhase = .completed }
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
+            AnalyticsManager.Parameters.gameType: "WordAssociation",
+            AnalyticsManager.Parameters.score: score
+        ])
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .completed, completed: true)
+        }
+    }
+
+    func handleViewDisappeared() {
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
+    @MainActor
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
+        guard !hasSubmittedSession else { return }
+        guard currentPhase != .instruction else { return }
+        guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
+        hasSubmittedSession = true
+
+        let request = GameSessionSubmissionBuilder(
+            gameType: .wordAssociation,
+            score: score,
+            durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
+            startedAt: sessionStartedAt,
+            completedAt: Date(),
+            outcome: outcome,
+            completed: completed,
+            levelReached: totalRounds,
+            accuracy: Double(accuracy),
+            mistakes: totalIncorrectSelections + totalMissedSelections,
+            difficulty: "standard",
+            metadata: [
+                "exitPhase": "\(currentPhase)",
+                "completed": "\(completed)",
+                "roundsCompleted": "\(totalRounds)",
+                "correctSelections": "\(totalCorrectSelections)",
+                "incorrectSelections": "\(totalIncorrectSelections)",
+                "missedSelections": "\(totalMissedSelections)",
+            ]
+        ).makeRequest(documentId: documentId)
+
+        do {
+            try await GameSessionService.shared.submitSession(request)
+        } catch {
+            print("Failed to submit Word Link session: \(error)")
+        }
+    }
 }
