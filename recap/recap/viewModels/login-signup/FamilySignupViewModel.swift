@@ -19,7 +19,7 @@ class FamilySignupViewModel: ObservableObject {
     }
 
     // Initial Data (Passed from Login)
-    var googleUser: GoogleUserData?
+    var socialUser: SocialUserData?
     @Published var patientDocumentId = ""
     @Published var patientUID = ""
 
@@ -48,16 +48,15 @@ class FamilySignupViewModel: ObservableObject {
     // Data Sources
     let relations = ["Spouse", "Child", "Parent", "Sibling", "Friend", "Caregiver", "Other"]
 
-    init(googleUser: GoogleUserData?, patientDocumentId: String, patientUID: String) {
-        self.googleUser = googleUser
+    init(socialUser: SocialUserData?, patientDocumentId: String, patientUID: String) {
+        self.socialUser = socialUser
         self.patientDocumentId = patientDocumentId
         self.patientUID = patientUID
 
-        if let user = googleUser {
+        if let user = socialUser {
             self.firstName = user.firstName
             self.lastName = user.lastName
             self.email = user.email
-            // We could try to load the image or just use the URL string when creating the profile
         }
     }
 
@@ -66,7 +65,7 @@ class FamilySignupViewModel: ObservableObject {
         if !trimmed.isEmpty {
             return trimmed
         }
-        return googleUser?.firstName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return socialUser?.firstName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     var resolvedLastName: String {
@@ -74,7 +73,7 @@ class FamilySignupViewModel: ObservableObject {
         if !trimmed.isEmpty {
             return trimmed
         }
-        return googleUser?.lastName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return socialUser?.lastName.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     var resolvedEmail: String {
@@ -82,7 +81,7 @@ class FamilySignupViewModel: ObservableObject {
         if !trimmed.isEmpty {
             return trimmed
         }
-        return googleUser?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return socialUser?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     // MARK: - Actions
@@ -117,14 +116,6 @@ class FamilySignupViewModel: ObservableObject {
     func finalizeSignup() {
         isLoading = true
 
-        // Prepare Image
-        // If user picked an image, convert to Base64.
-        // If not, we might check if Google User had a photo URL and pass that?
-        // The Service expects Base64 or we need to update service to accept URL.
-        // The service `createFamilyUser` (or `createFamilyProfile`) endpoint might handle URL logic?
-        // Let's stick to Base64 upload for custom image.
-        // If no custom image, validation in backend handles default or we send empty.
-
         var profileImageBase64: String = ""
         if let image = profileImage,
             let imageData = image.jpegData(compressionQuality: 0.8)
@@ -139,7 +130,7 @@ class FamilySignupViewModel: ObservableObject {
             email: resolvedEmail,
             name: fullName,
             profileImageBase64: profileImageBase64,
-            profileImageURL: profileImage == nil ? googleUser?.profileImageURL : nil,
+            profileImageURL: profileImage == nil ? socialUser?.profileImageURL : nil,
             phone: phone,
             relation: relation
         )
@@ -170,7 +161,8 @@ class FamilySignupViewModel: ObservableObject {
                         key: .patientDocumentID, value: patientDocumentId)
                 }
 
-                AnalyticsManager.shared.logSignUp(method: "google")
+                let method = socialUser?.provider.displayName.lowercased() ?? "social"
+                AnalyticsManager.shared.logSignUp(method: method)
 
                 // Construct patientModel
                 // Note: We might be missing `linkedPatient` data here compared to `verifyFamilyMember` response.
