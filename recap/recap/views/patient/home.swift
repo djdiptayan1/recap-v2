@@ -11,8 +11,9 @@ struct home: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var reminderViewModel = ReminderViewModel()
     @StateObject private var familyViewModel = FamilyViewModel(documentID: "")
+    @StateObject private var moodViewModel = DailyMoodViewModel()
     @State private var showProfile = false
-    @State private var selectedMood: PatientMood?
+    @State private var showMoodSheet = false
 
     private var patientId: String {
         KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id ?? ""
@@ -77,6 +78,13 @@ struct home: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
             }
+            .sheet(isPresented: $showMoodSheet) {
+                NavigationStack {
+                    DailyMoodSheet(patientId: patientId, viewModel: moodViewModel)
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
             .onAppear {
                 if let uid = appState.currentUser?.id {
                     familyViewModel.updateDocumentID(uid)
@@ -87,6 +95,7 @@ struct home: View {
                                 patientId: patientId,
                                 forceRefresh: true
                             )
+                            await moodViewModel.refresh(patientId: patientId)
                         }
                     }
                 }
@@ -193,53 +202,102 @@ struct home: View {
     }
 
     private var memoryMoodSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-//            sectionHeader(
-//                title: "Memory & Mood",
-//                subtitle: "Stay in touch with how the day feels and keep a small record of it."
-//            )
+        let moodPalette = moodViewModel.todayEntry?.moodKey.palette ?? DailyMoodKey.neutral.palette
 
-//            QuestionsCard(hasFamilyMembers: !familyViewModel.familyMembers.isEmpty)
-
+        return VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 16) {
-                Text("How does today feel?")
-                    .font(AppConfig.Fonts.bodyBold)
-                    .foregroundColor(AppConfig.Colors.textPrimary)
-
-                HStack(spacing: 10) {
-                    ForEach(PatientMood.allCases, id: \.self) { mood in
-                        Button {
-                            HapticManager.shared.trigger(.selection)
-                            selectedMood = mood
-                        } label: {
-                            Text(mood.rawValue)
-                                .font(AppConfig.Fonts.small)
-                                .foregroundColor(
-                                    selectedMood == mood ? .white : AppConfig.Colors.textPrimary
-                                )
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(
-                                    selectedMood == mood
-                                        ? AppConfig.Colors.accent : AppConfig.Colors.card
-                                )
-                                .cornerRadius(18)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18)
-                                        .stroke(
-                                            selectedMood == mood
-                                                ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
-                                            lineWidth: 1
-                                        )
-                                )
-                        }
-                    }
+                Button {
+                    HapticManager.shared.trigger(.selection)
+                    showMoodSheet = true
+                } label: {
+                    todayMoodCard
                 }
-
-                JournalHomeCard()
+                .buttonStyle(.plain)
             }
             .padding(18)
-            .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+//            .background(
+//                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+//                    .fill(
+//                        LinearGradient(
+//                            colors: [
+//                                moodPalette.backgroundTop.opacity(0.42),
+//                                moodPalette.backgroundBottom.opacity(0.30),
+//                            ],
+//                            startPoint: .topLeading,
+//                            endPoint: .bottomTrailing
+//                        )
+//                    )
+//                    .overlay(
+//                        RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
+//                            .stroke(.white.opacity(0.26), lineWidth: 1)
+//                    )
+//            )
+            .glassEffect(.clear.tint(moodPalette.primary.opacity(0.6)),
+                in: .rect(cornerRadius: AppConfig.UI.cornerRadius)
+            )
+        }
+    }
+
+    private var todayMoodCard: some View {
+        let entry = moodViewModel.todayEntry
+        let mood = entry?.moodKey
+        let palette = mood?.palette ?? DailyMoodKey.neutral.palette
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("How does today feel?")
+                        .font(AppConfig.Fonts.bodyBold)
+                        .foregroundColor(Color.black)
+  
+                    Text(entry == nil ? "Tap to log today's mood in one step." : entry?.shortLoggedTime ?? "Logged today")
+                        .font(AppConfig.Fonts.small)
+                        .foregroundColor(Color.black)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
+            }
+
+            HStack(spacing: 14) {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                palette.glow.opacity(0.95),
+                                palette.primary.opacity(0.72),
+                                palette.secondary.opacity(0.35),
+                            ],
+                            center: .center,
+                            startRadius: 2,
+                            endRadius: 30
+                        )
+                    )
+                    .frame(width: 54, height: 54)
+                    .overlay(
+                        Circle()
+                            .stroke(.white.opacity(0.9), lineWidth: 1)
+                    )
+                    .shadow(color: palette.primary.opacity(0.28), radius: 10, x: 0, y: 4)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry?.label ?? "No mood logged yet")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(Color.black)
+
+                    Text(
+                        mood?.summaryCopy
+                            ?? "Logging a quick mood helps your family understand how today is going."
+                    )
+                    .font(AppConfig.Fonts.small)
+                    .foregroundColor(Color.black)
+                    .lineLimit(2)
+                }
+            }
+            .padding(16)
         }
     }
 
@@ -357,13 +415,6 @@ struct home: View {
                 .environmentObject(appState)
         }
     }
-}
-
-private enum PatientMood: String, CaseIterable {
-    case calm = "Calm"
-    case okay = "Okay"
-    case tired = "Tired"
-    case worried = "Worried"
 }
 
 #Preview {

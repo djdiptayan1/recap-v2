@@ -56,7 +56,7 @@ struct AppConfig {
 
     struct ApiEndpoints {
 //       static let baseURL = "http://localhost:3000/api/"  //-> USE WHEN USING SIMULATOR
-        //  static let baseURL = "http://192.168.0.150:3000/api/"  //-> USE WHEN USING REAL PHONE
+//          static let baseURL = "http://192.168.0.150:3000/api/"  -> USE WHEN USING REAL PHONE
        static let baseURL = "https://recap-v2.vercel.app/api/"  //-> PRODUCTION
         static let articles = "articles"
         static let citations = "citations"
@@ -91,6 +91,8 @@ struct AppConfig {
         static let reminders = "reminders"
 
         static let journal = "journal"
+
+        static let mood = "mood"
 
         // analytics
         static let analyticsDashboard = "analytics/dashboard"

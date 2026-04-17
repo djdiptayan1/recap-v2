@@ -12,6 +12,7 @@ import remindersRouter from './reminders.route.js';
 import journalRouter from './journal.routes.js';
 import analyticsRouter from './analytics.routes.js';
 import gamesRouter from './games.routes.js';
+import dailyMoodRouter from './dailyMood.routes.js';
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ router.use('/reminders', remindersRouter);
 router.use('/journal', journalRouter);
 router.use('/analytics', analyticsRouter);
 router.use('/games', gamesRouter);
+router.use('/mood', dailyMoodRouter);
 
 export default router;
