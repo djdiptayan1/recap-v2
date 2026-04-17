@@ -26,7 +26,7 @@ struct StreaksCard: View {
         NavigationLink(destination: StreaksView(documentID: documentID)) {
             VStack(spacing: 0) {
                 HStack {
-                    Text("Daily Insight")
+                    Text("Streaks")
                         .font(AppConfig.Fonts.headline)
                         .foregroundColor(AppConfig.Colors.textPrimary)
 

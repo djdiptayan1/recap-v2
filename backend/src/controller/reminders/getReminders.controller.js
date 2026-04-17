@@ -1,14 +1,9 @@
 import {
-    collection,
     getDocs,
     query,
 } from 'firebase/firestore';
-import { firestore } from '../../utils/db.js';
-import config from '../../../config.js';
 import { validationResult } from 'express-validator';
-
-const USERS_COLLECTION = config.firestoreNames.usersCollection;
-const REMINDERS_SUBCOLLECTION = config.firestoreNames.reminders_SubCollection;
+import { getRemindersCollection } from './reminder.shared.js';
 
 export async function getReminders(req, res, next) {
     try {
@@ -17,9 +12,9 @@ export async function getReminders(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
 
-        const { patientId } = req.query; // Usually GET uses query params
+        const { patientId } = req.query;
 
-        const remindersRef = collection(firestore, USERS_COLLECTION, patientId, REMINDERS_SUBCOLLECTION);
+        const remindersRef = getRemindersCollection(patientId);
         const q = query(remindersRef);
         const snap = await getDocs(q);
 

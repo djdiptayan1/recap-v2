@@ -89,4 +89,5 @@ SupabaseConfig.swift
 **/*.xcuserstate
 **/GoogleService-Info.plist
 FOUNDATION_MODELS_EXECUTION_INSTRUCTIONS.md
+SECURITY_IMPLEMENTATION_PLAN.md
 cloudinary_docs.txt

@@ -25,7 +25,7 @@ struct ProfileFamilyView: View {
             KeychainManager.shared.getString(key: .patientDocumentID) ?? appState.currentUser?.id
             ?? ""
         NavigationStack {
-            ScrollView {
+            ScrollView() {
                 if let familyMember = appState.currentUser {
                     VStack(spacing: 24) {
                         VStack(spacing: 12) {

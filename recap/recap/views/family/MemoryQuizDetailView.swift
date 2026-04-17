@@ -126,7 +126,6 @@ struct MemoryQuizDetailView: View {
             }
             .padding(.bottom, 40)
         }
-        .standardBackground()
         .navigationTitle("Report Details")
         .navigationBarTitleDisplayMode(.inline)
     }

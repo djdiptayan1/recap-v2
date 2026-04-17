@@ -8,6 +8,10 @@
 import SwiftUI
 
 struct games: View {
+    @StateObject private var analyticsViewModel = GameAnalyticsViewModel(
+        patientId: GameSessionService.shared.currentPatientDocumentID() ?? ""
+    )
+
     let columns = [
         GridItem(.flexible(), spacing: 16),
         GridItem(.flexible(), spacing: 16),
@@ -15,22 +19,27 @@ struct games: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                GlassEffectContainer {
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(gamesDemo) { game in
-                            NavigationLink(destination: destinationView(for: game)) {
-                                GamesCard(game: game)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    GlassEffectContainer {
+                        LazyVGrid(columns: columns, spacing: 16) {
+                            ForEach(gamesDemo) { game in
+                                NavigationLink(destination: destinationView(for: game)) {
+                                    GamesCard(game: game)
+                                }
+                                .buttonStyle(ScaleButtonStyle())
                             }
-                            .buttonStyle(ScaleButtonStyle())
-                            .accessibilityHint("Opens \(game.name).")
                         }
                     }
+                    GameInsightsCard(viewModel: analyticsViewModel)
                 }
                 .padding(AppConfig.UI.screenPadding - 10)
             }
             .standardBackground()
             .navigationTitle("Games")
+            .task {
+                await analyticsViewModel.fetch()
+            }
         }
     }
 }
@@ -45,6 +54,8 @@ private func destinationView(for game: gamesModel) -> some View {
         WordAssociationGameView()
     } else if game.screenName == "NumberBubblesGameView" {
         NumberBubblesGameView()
+    } else if game.screenName == "PatternMemoryGameView" {
+        PatternMemoryGameView()
     } else {
         VStack {
             Text("Game: \(game.name)")

@@ -181,6 +181,34 @@ struct ProfileView: View {
 
                                 Divider().padding(.leading, 50)
 
+                                NavigationLink(destination: familyView().environmentObject(appState)) {
+                                    HStack(spacing: 16) {
+                                        Image(systemName: "person.2.fill")
+                                            .font(.system(size: 18))
+                                            .frame(width: 24)
+                                            .foregroundColor(AppConfig.Colors.textSecondary)
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("My Family")
+                                                .font(AppConfig.Fonts.body)
+                                                .foregroundColor(AppConfig.Colors.textPrimary)
+
+                                            Text("See connected family members")
+                                                .font(AppConfig.Fonts.small)
+                                                .foregroundColor(AppConfig.Colors.textSecondary)
+                                        }
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(AppConfig.Colors.stroke)
+                                    }
+                                    .padding(AppConfig.UI.screenPadding - 10)
+                                }
+
+                                Divider().padding(.leading, 50)
+
                                 // Citations Link
                                 NavigationLink(destination: CitationsView()) {
                                     HStack(spacing: 16) {

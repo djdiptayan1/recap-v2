@@ -38,6 +38,9 @@ struct PatternMemoryGameView: View {
         }
         .animation(.easeInOut, value: viewModel.currentPhase)
         .navigationTitle("Pattern Memory")
+        .onDisappear {
+            viewModel.handleViewDisappeared()
+        }
     }
 
     // MARK: - Main Game View

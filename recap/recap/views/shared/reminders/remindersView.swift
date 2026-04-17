@@ -137,6 +137,27 @@ struct remindersView: View {
                                         trailing: AppConfig.UI.screenPadding - 10)
                                 )
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button {
+                                        Task {
+                                            _ = await viewModel.markReminderCompleted(
+                                                patientId: patientId,
+                                                reminderId: reminder.id,
+                                                completedVia: "in_app"
+                                            )
+                                        }
+                                    } label: {
+                                        Label("Done", systemImage: "checkmark.circle")
+                                    }
+                                    .tint(.green)
+
+                                    Button {
+                                        reminderToEdit = reminder
+                                    } label: {
+                                        Label("Edit", systemImage: "pencil")
+                                    }
+                                    .tint(.orange)
+                                }
+                                .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                     Button(role: .destructive) {
                                         HapticManager.shared.trigger(.warning)
                                         reminderToDelete = reminder
@@ -145,14 +166,32 @@ struct remindersView: View {
                                         Label("Delete", systemImage: "trash")
                                     }
                                     .tint(AppConfig.Colors.alert)
+                                }
+                                .contextMenu {
+                                    Button {
+                                        Task {
+                                            _ = await viewModel.markReminderCompleted(
+                                                patientId: patientId,
+                                                reminderId: reminder.id,
+                                                completedVia: "in_app"
+                                            )
+                                        }
+                                    } label: {
+                                        Label("Mark as Done", systemImage: "checkmark.circle.fill")
+                                    }
 
                                     Button {
                                         reminderToEdit = reminder
-                                        showingAddSheet = true
                                     } label: {
                                         Label("Edit", systemImage: "pencil")
                                     }
-                                    .tint(.orange)
+
+                                    Button(role: .destructive) {
+                                        reminderToDelete = reminder
+                                        showDeleteConfirmation = true
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
                                 }
                         }
                     }
@@ -173,7 +212,17 @@ struct remindersView: View {
         }
         .sheet(isPresented: $showingAddSheet, onDismiss: { reminderToEdit = nil }) {
             AddReminderSheet(
-                viewModel: viewModel, patientId: patientId, reminderToEdit: reminderToEdit)
+                viewModel: viewModel,
+                patientId: patientId,
+                reminderToEdit: nil
+            )
+        }
+        .sheet(item: $reminderToEdit) { reminder in
+            AddReminderSheet(
+                viewModel: viewModel,
+                patientId: patientId,
+                reminderToEdit: reminder
+            )
         }
         .alert(
             "Delete Reminder?", isPresented: $showDeleteConfirmation,
@@ -244,6 +293,22 @@ struct CategoryFilterChip: View {
 struct ReminderCard: View {
     let reminder: Reminder
 
+    private var statusText: String? {
+        if let lastAction = reminder.lastAction,
+            let lastActionAt = reminder.lastActionAt
+        {
+            switch lastAction {
+            case "completed":
+                return "Last done: \(lastActionAt.formatted(date: .abbreviated, time: .shortened))"
+            case "snoozed":
+                return "Snoozed until: \((reminder.lastSnoozedUntil ?? lastActionAt).formatted(date: .omitted, time: .shortened))"
+            default:
+                return nil
+            }
+        }
+        return nil
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Icon Container
@@ -291,6 +356,13 @@ struct ReminderCard: View {
                         .font(AppConfig.Fonts.small)
                         .foregroundColor(AppConfig.Colors.textSecondary)
                         .lineLimit(2)
+                        .padding(.top, 4)
+                }
+
+                if let statusText {
+                    Text(statusText)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.green)
                         .padding(.top, 4)
                 }
             }

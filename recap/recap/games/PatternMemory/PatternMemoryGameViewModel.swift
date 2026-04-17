@@ -48,6 +48,12 @@ class PatternMemoryGameViewModel: ObservableObject {
     @Published var highlightedTileID: Int? = nil
 
     private var showSequenceTask: Task<Void, Never>? = nil
+    private var sessionStartedAt = Date()
+    private var hasSubmittedSession = false
+    private var successfulRounds = 0
+    private var failedRounds = 0
+    private var mistakeCount = 0
+    private var maxSequenceLength = 1
 
     // MARK: - Game Control
 
@@ -57,6 +63,12 @@ class PatternMemoryGameViewModel: ObservableObject {
         score = 0
         sequence = []
         playerInput = []
+        sessionStartedAt = Date()
+        hasSubmittedSession = false
+        successfulRounds = 0
+        failedRounds = 0
+        mistakeCount = 0
+        maxSequenceLength = 1
         
         AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
             AnalyticsManager.Parameters.gameType: "PatternMemory"
@@ -75,6 +87,7 @@ class PatternMemoryGameViewModel: ObservableObject {
     private func appendToSequence() {
         let nextTile = Int.random(in: 0..<tiles.count)
         sequence.append(nextTile)
+        maxSequenceLength = max(maxSequenceLength, sequence.count)
     }
 
     private func showSequence() {
@@ -113,6 +126,8 @@ class PatternMemoryGameViewModel: ObservableObject {
             HapticManager.shared.trigger(.error)
             lives -= 1
             lastAnswerCorrect = false
+            failedRounds += 1
+            mistakeCount += 1
             withAnimation { currentPhase = .feedback }
             return
         }
@@ -123,6 +138,7 @@ class PatternMemoryGameViewModel: ObservableObject {
             score += level * 10
             level += 1
             lastAnswerCorrect = true
+            successfulRounds += 1
             withAnimation { currentPhase = .feedback }
         }
     }
@@ -135,6 +151,9 @@ class PatternMemoryGameViewModel: ObservableObject {
                 "final_level": level
             ])
             withAnimation { currentPhase = .gameOver }
+            Task { @MainActor in
+                await submitSessionIfNeeded(outcome: .livesExhausted, completed: true)
+            }
         } else if lastAnswerCorrect {
             startNewRound()
         } else {
@@ -149,5 +168,50 @@ class PatternMemoryGameViewModel: ObservableObject {
         showSequenceTask?.cancel()
         litTileID = nil
         startGame()
+    }
+
+    func handleViewDisappeared() {
+        showSequenceTask?.cancel()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
+    @MainActor
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
+        guard !hasSubmittedSession else { return }
+        guard currentPhase != .instruction else { return }
+        guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
+        hasSubmittedSession = true
+
+        let totalRounds = successfulRounds + failedRounds
+        let accuracy = totalRounds == 0 ? 0 : Int((Double(successfulRounds) / Double(totalRounds)) * 100)
+
+        let request = GameSessionSubmissionBuilder(
+            gameType: .patternMemory,
+            score: score,
+            durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
+            startedAt: sessionStartedAt,
+            completedAt: Date(),
+            outcome: outcome,
+            completed: completed,
+            levelReached: max(1, level),
+            accuracy: Double(accuracy),
+            mistakes: mistakeCount,
+            difficulty: "progressive",
+            metadata: [
+                "exitPhase": "\(currentPhase)",
+                "completed": "\(completed)",
+                "successfulRounds": "\(successfulRounds)",
+                "failedRounds": "\(failedRounds)",
+                "maxSequenceLength": "\(maxSequenceLength)",
+            ]
+        ).makeRequest(documentId: documentId)
+
+        do {
+            try await GameSessionService.shared.submitSession(request)
+        } catch {
+            print("Failed to submit Pattern Memory session: \(error)")
+        }
     }
 }

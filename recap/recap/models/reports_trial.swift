@@ -112,6 +112,7 @@ struct EngagementDay: Codable, Identifiable {
 private enum AnalyticsAPI: Endpoint {
     case dashboard(patientId: String, forceRefresh: Bool)
     case memoryReports(patientId: String)
+    case gamesAnalytics(patientId: String)
 
     var path: String {
         switch self {
@@ -119,6 +120,8 @@ private enum AnalyticsAPI: Endpoint {
             return "\(AppConfig.ApiEndpoints.analyticsDashboard)/\(patientId)"
         case .memoryReports(let patientId):
             return "\(AppConfig.ApiEndpoints.memoryQuiz)/reports/\(patientId)"
+        case .gamesAnalytics(let patientId):
+            return "\(AppConfig.ApiEndpoints.games)/analytics/\(patientId)"
         }
     }
 
@@ -128,7 +131,7 @@ private enum AnalyticsAPI: Endpoint {
         switch self {
         case .dashboard(_, let forceRefresh):
             return forceRefresh ? [URLQueryItem(name: "forceRefresh", value: "true")] : nil
-        case .memoryReports:
+        case .memoryReports, .gamesAnalytics:
             return nil
         }
     }
@@ -149,6 +152,9 @@ class AnalyticsViewModel: ObservableObject {
     @Published var categoryBreakdown: [CategoryBreakdown] = []
     @Published var engagementHeatmap: [EngagementDay] = []
     @Published var memoryReports: [MemoryReport] = []
+    @Published var gamesOverview: GameOverallSummary?
+    @Published var gameBreakdown: [GameAggregate] = []
+    @Published var recentGameSessions: [RecentGameSession] = []
 
     private let patientId: String
 
@@ -157,6 +163,7 @@ class AnalyticsViewModel: ObservableObject {
         if !patientId.isEmpty {
             fetchAnalytics()
             fetchMemoryReports()
+            fetchGamesAnalytics()
         }
     }
 
@@ -217,6 +224,8 @@ class AnalyticsViewModel: ObservableObject {
 
             self.isLoading = false
         }
+
+        fetchGamesAnalytics()
     }
 
     func fetchMemoryReports() {
@@ -234,6 +243,26 @@ class AnalyticsViewModel: ObservableObject {
                 }
             } catch {
                 print("Error fetching memory reports: \(error)")
+            }
+        }
+    }
+
+    func fetchGamesAnalytics() {
+        guard !patientId.isEmpty else { return }
+
+        Task { @MainActor in
+            do {
+                let response: GameAnalyticsResponse = try await NetworkManager.shared.request(
+                    endpoint: AnalyticsAPI.gamesAnalytics(patientId: patientId)
+                )
+
+                if response.success {
+                    self.gamesOverview = response.data.overall
+                    self.gameBreakdown = response.data.byGame
+                    self.recentGameSessions = response.data.recentSessions
+                }
+            } catch {
+                print("Error fetching game analytics: \(error)")
             }
         }
     }

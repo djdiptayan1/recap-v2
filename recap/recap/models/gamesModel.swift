@@ -20,4 +20,5 @@ let gamesDemo = [
     gamesModel(imageName: "brain.fill", name: "Match Mania", description: "Increase memory agility", screenName: "MemoryGameView"),
     gamesModel(imageName: "number.circle.fill", name: "Number Bubbles", description: "Pop numbers in order!", screenName: "NumberBubblesGameView"),
     gamesModel(imageName: "house.fill", name: "Daily Objects", description: "Recall everyday items", screenName: "DailyObjectsGameView"),
+    gamesModel(imageName: "square.grid.2x2.fill", name: "Pattern Memory", description: "Repeat visual sequences", screenName: "PatternMemoryGameView"),
 ]

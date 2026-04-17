@@ -52,7 +52,7 @@ struct patientModel: Codable, Equatable {
         self.bloodGroup = bloodGroup
         self.stage = stage
         self.profileImageURL = profileImageURL
-        self.id = id ?? UUID().uuidString
+        self.id = id
         self.email = email
         self.type = type
         self.familyMembers = familyMembers

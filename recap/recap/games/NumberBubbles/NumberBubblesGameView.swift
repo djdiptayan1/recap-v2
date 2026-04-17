@@ -37,6 +37,9 @@ struct NumberBubblesGameView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.phase)
         .navigationTitle("Number Bubbles")
+        .onDisappear {
+            viewModel.handleViewDisappeared()
+        }
     }
 
     // MARK: - Game View
