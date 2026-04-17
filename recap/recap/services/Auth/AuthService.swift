@@ -167,7 +167,7 @@ class AuthService {
         let credential = OAuthProvider.appleCredential(
             withIDToken: idTokenString,
             rawNonce: nonce,
-            fullName: nil
+            fullName: fullName
         )
         let authResult = try await Auth.auth().signIn(with: credential)
         let email = try resolveAppleEmail(for: authResult.user, appleEmail: appleEmail)
@@ -197,7 +197,7 @@ class AuthService {
         let credential = OAuthProvider.appleCredential(
             withIDToken: idTokenString,
             rawNonce: nonce,
-            fullName: nil
+            fullName: fullName
         )
         let authResult = try await Auth.auth().signIn(with: credential)
         let email = try resolveAppleEmail(for: authResult.user, appleEmail: appleEmail)
