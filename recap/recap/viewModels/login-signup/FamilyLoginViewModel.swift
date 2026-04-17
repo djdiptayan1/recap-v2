@@ -9,21 +9,7 @@ import Foundation
 import SwiftUI
 import Combine
 import FirebaseAuth
-import GoogleSignIn
 import FirebaseCore
-
-struct GoogleUserData {
-    let email: String
-    let firstName: String
-    let lastName: String
-    let profileImageURL: String?
-
-    var name: String {
-        [firstName, lastName]
-            .filter { !$0.isEmpty }
-            .joined(separator: " ")
-    }
-}
 
 @MainActor
 class FamilyLoginViewModel: ObservableObject {
@@ -37,7 +23,7 @@ class FamilyLoginViewModel: ObservableObject {
     @Published var showSignupSheet = false
     
     // Data to pass to Signup
-    var pendingGoogleUser: GoogleUserData?
+    var pendingSocialUser: SocialUserData?
 
     private let authService = FamilyAuthService.shared
     
@@ -90,11 +76,13 @@ class FamilyLoginViewModel: ObservableObject {
                 // LINK NOT FOUND -> PROMPT SIGNUP
                 // Store data for the signup form
                 let parsedName = Self.splitDisplayName(user.displayName)
-                pendingGoogleUser = GoogleUserData(
+                pendingSocialUser = SocialUserData(
+                    uid: user.uid,
                     email: email,
                     firstName: parsedName.firstName,
                     lastName: parsedName.lastName,
-                    profileImageURL: user.photoURL?.absoluteString
+                    profileImageURL: user.photoURL?.absoluteString,
+                    provider: .google
                 )
                 showSignupSheet = true
                 return nil
@@ -104,11 +92,13 @@ class FamilyLoginViewModel: ObservableObject {
             // Handle 404 (Not Found) specifically to trigger signup
             if case .httpError(let statusCode) = error, statusCode == 404 {
                 let parsedName = Self.splitDisplayName(user.displayName)
-                pendingGoogleUser = GoogleUserData(
+                pendingSocialUser = SocialUserData(
+                    uid: user.uid,
                     email: email,
                     firstName: parsedName.firstName,
                     lastName: parsedName.lastName,
-                    profileImageURL: user.photoURL?.absoluteString
+                    profileImageURL: user.photoURL?.absoluteString,
+                    provider: .google
                 )
                 showSignupSheet = true
                 return nil

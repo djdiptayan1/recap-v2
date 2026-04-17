@@ -145,7 +145,7 @@ class PatientSignupViewModel: ObservableObject {
     }
 
     func completeProfile() {
-        if socialUser == nil, resolvedFirstName.isEmpty || resolvedLastName.isEmpty {
+        if resolvedFirstName.isEmpty || resolvedLastName.isEmpty {
             showError("Please enter your first and last name.")
             return
         }
@@ -162,7 +162,7 @@ class PatientSignupViewModel: ObservableObject {
             return
         }
 
-        if socialUser == nil, resolvedFirstName.isEmpty || resolvedLastName.isEmpty {
+        if resolvedFirstName.isEmpty || resolvedLastName.isEmpty {
             showError("Please enter your name.")
             return
         }
@@ -204,7 +204,8 @@ class PatientSignupViewModel: ObservableObject {
                     // Social login users are already authenticated via Firebase.
                     // Just fetch the profile from backend — no password sign-in needed.
                     user = try await AuthService.shared.fetchUser(email: email)
-                    AnalyticsManager.shared.logSignUp(method: "google")
+                    let method = socialUser?.provider.displayName.lowercased() ?? "social"
+                    AnalyticsManager.shared.logSignUp(method: method)
 
                     // Save to Keychain (signIn does this automatically, but we need to do it manually here)
                     if let id = user.id {

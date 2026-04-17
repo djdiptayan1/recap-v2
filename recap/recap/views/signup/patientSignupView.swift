@@ -217,22 +217,22 @@ struct patientSignupView: View {
         VStack(spacing: 20) {
             if viewModel.socialUser != nil {
                 importedIdentitySummary
-            } else {
-                HStack(spacing: 12) {
-                    AestheticInput(
-                        icon: "person.fill",
-                        placeholder: "First Name",
-                        text: $viewModel.firstName,
-                        isPasswordVisible: .constant(false)
-                    )
+            }
 
-                    AestheticInput(
-                        icon: "",
-                        placeholder: "Last Name",
-                        text: $viewModel.lastName,
-                        isPasswordVisible: .constant(false)
-                    )
-                }
+            HStack(spacing: 12) {
+                AestheticInput(
+                    icon: "person.fill",
+                    placeholder: "First Name",
+                    text: $viewModel.firstName,
+                    isPasswordVisible: .constant(false)
+                )
+
+                AestheticInput(
+                    icon: "",
+                    placeholder: "Last Name",
+                    text: $viewModel.lastName,
+                    isPasswordVisible: .constant(false)
+                )
             }
 
             // Date of Birth
@@ -350,6 +350,8 @@ struct patientSignupView: View {
     var importedIdentitySummary: some View {
         let providerName = viewModel.socialUser?.provider.displayName ?? "social login"
         let providerIcon = viewModel.socialUser?.provider == .apple ? "applelogo" : "person.crop.circle"
+        let importedName = "\(viewModel.socialUser?.firstName ?? "") \(viewModel.socialUser?.lastName ?? "")"
+            .trimmingCharacters(in: .whitespacesAndNewlines)
 
         return VStack(alignment: .leading, spacing: 12) {
             Label("Imported from \(providerName)", systemImage: providerIcon)
@@ -360,7 +362,7 @@ struct patientSignupView: View {
                 Text("Name")
                     .font(AppConfig.Fonts.small)
                     .foregroundColor(AppConfig.Colors.textSecondary)
-                Text(viewModel.resolvedFirstName.isEmpty && viewModel.resolvedLastName.isEmpty ? "Apple provided your account name" : "\(viewModel.resolvedFirstName) \(viewModel.resolvedLastName)".trimmingCharacters(in: .whitespaces))
+                Text(importedName.isEmpty ? "No name was shared with \(providerName)." : importedName)
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textPrimary)
 
@@ -381,7 +383,7 @@ struct patientSignupView: View {
                     .stroke(AppConfig.Colors.stroke, lineWidth: 1)
             )
 
-            Text("We use the name and email \(providerName) already shared to finish your account setup.")
+            Text("We'll keep the imported email from \(providerName), and you can edit your name before continuing.")
                 .font(AppConfig.Fonts.small)
                 .foregroundColor(AppConfig.Colors.textSecondary)
         }
