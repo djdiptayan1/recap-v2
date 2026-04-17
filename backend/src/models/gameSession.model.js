@@ -1,0 +1,33 @@
+export const GameSessionSchema = {
+    gameType: 'string',
+    score: 'number',
+    durationSeconds: 'number',
+    startedAt: 'timestamp',
+    completedAt: 'timestamp',
+    outcome: 'string',
+    completed: 'boolean',
+    levelReached: 'number|null',
+    accuracy: 'number|null',
+    mistakes: 'number',
+    difficulty: 'string|null',
+    metadata: 'object',
+    createdAt: 'timestamp',
+    updatedAt: 'timestamp',
+};
+
+export const GAME_SESSION_FIELDS = [
+    'gameType',
+    'score',
+    'durationSeconds',
+    'startedAt',
+    'completedAt',
+    'outcome',
+    'completed',
+    'levelReached',
+    'accuracy',
+    'mistakes',
+    'difficulty',
+    'metadata',
+    'createdAt',
+    'updatedAt',
+];

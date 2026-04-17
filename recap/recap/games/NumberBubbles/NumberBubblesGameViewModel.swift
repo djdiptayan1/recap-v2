@@ -40,6 +40,11 @@ class NumberBubblesGameViewModel: ObservableObject {
     @Published var wrongTapID: UUID? = nil
 
     private var timer: Timer?
+    private var sessionStartedAt = Date()
+    private var hasSubmittedSession = false
+    private var correctTapCount = 0
+    private var wrongTapCount = 0
+    private var bestLevelReached = 1
 
     // Colors drawn from the app's palette: accent teal, coral, lime, indigo, orange, sky-blue, mint, rose, sage
     private let bubbleColors: [Color] = [
@@ -67,13 +72,22 @@ class NumberBubblesGameViewModel: ObservableObject {
     // MARK: - Game Control
 
     func startGame() {
+        AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameStart, parameters: [
+            AnalyticsManager.Parameters.gameType: "NumberBubbles"
+        ])
         level = 1
         score = 0
+        correctTapCount = 0
+        wrongTapCount = 0
+        bestLevelReached = 1
+        sessionStartedAt = Date()
+        hasSubmittedSession = false
         startLevel()
     }
 
     func startLevel() {
         timeRemaining = totalTime
+        bestLevelReached = max(bestLevelReached, level)
         // Pick bubbleCount random distinct numbers from a range scaled to the level,
         // then sort them so the player taps smallest → largest.
         let rangeMax = bubbleCount * (3 + level)
@@ -102,6 +116,7 @@ class NumberBubblesGameViewModel: ObservableObject {
 
         if bubble.number == nextTarget {
             HapticManager.shared.trigger(.success)
+            correctTapCount += 1
             if let idx = bubbles.firstIndex(where: { $0.id == bubble.id }) {
                 withAnimation(.spring(response: 0.25, dampingFraction: 0.55)) {
                     bubbles[idx].isPopped = true
@@ -121,6 +136,7 @@ class NumberBubblesGameViewModel: ObservableObject {
             }
         } else {
             HapticManager.shared.trigger(.error)
+            wrongTapCount += 1
             let bubbleID = bubble.id
             wrongTapID = bubbleID
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
@@ -153,7 +169,59 @@ class NumberBubblesGameViewModel: ObservableObject {
                 self.timer?.invalidate()
                 HapticManager.shared.trigger(.warning)
                 withAnimation { self.phase = .gameOver }
+                AnalyticsManager.shared.logEvent(name: AnalyticsManager.Events.gameComplete, parameters: [
+                    AnalyticsManager.Parameters.gameType: "NumberBubbles",
+                    AnalyticsManager.Parameters.score: self.score
+                ])
+                Task { @MainActor in
+                    await self.submitSessionIfNeeded(outcome: .timeout, completed: true)
+                }
             }
+        }
+    }
+
+    func handleViewDisappeared() {
+        timer?.invalidate()
+        Task { @MainActor in
+            await submitSessionIfNeeded(outcome: .exited, completed: false)
+        }
+    }
+
+    @MainActor
+    private func submitSessionIfNeeded(outcome: GameSessionOutcome, completed: Bool) async {
+        guard !hasSubmittedSession else { return }
+        guard phase != .instruction else { return }
+        guard let documentId = GameSessionService.shared.currentPatientDocumentID() else { return }
+        hasSubmittedSession = true
+
+        let totalTaps = correctTapCount + wrongTapCount
+        let accuracy = totalTaps == 0 ? 0 : Int((Double(correctTapCount) / Double(totalTaps)) * 100)
+
+        let request = GameSessionSubmissionBuilder(
+            gameType: .numberBubbles,
+            score: score,
+            durationSeconds: Int(Date().timeIntervalSince(sessionStartedAt)),
+            startedAt: sessionStartedAt,
+            completedAt: Date(),
+            outcome: outcome,
+            completed: completed,
+            levelReached: bestLevelReached,
+            accuracy: Double(accuracy),
+            mistakes: wrongTapCount,
+            difficulty: "progressive",
+            metadata: [
+                "exitPhase": "\(phase)",
+                "completed": "\(completed)",
+                "correctTaps": "\(correctTapCount)",
+                "wrongTaps": "\(wrongTapCount)",
+                "finalLevel": "\(bestLevelReached)",
+            ]
+        ).makeRequest(documentId: documentId)
+
+        do {
+            try await GameSessionService.shared.submitSession(request)
+        } catch {
+            print("Failed to submit Number Bubbles session: \(error)")
         }
     }
 }

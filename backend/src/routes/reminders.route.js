@@ -1,6 +1,14 @@
 import express from 'express';
 import { body, query } from 'express-validator';
-import { addReminder, editReminder, deleteReminder } from '../controller/reminders/setReminders.controller.js';
+import {
+    addReminder,
+    editReminder,
+    deleteReminder,
+} from '../controller/reminders/reminderCrud.controller.js';
+import {
+    markReminderCompleted,
+    snoozeReminder,
+} from '../controller/reminders/reminderActions.controller.js';
 import { getReminders } from '../controller/reminders/getReminders.controller.js';
 
 const router = express.Router();
@@ -27,5 +35,19 @@ router.put('/', [
     body('patientId').notEmpty().withMessage('Patient ID is required'),
     body('reminderId').notEmpty().withMessage('Reminder ID is required'),
 ], editReminder);
+
+router.post('/complete', [
+    body('patientId').notEmpty().withMessage('Patient ID is required'),
+    body('reminderId').notEmpty().withMessage('Reminder ID is required'),
+    body('completedVia').optional().isString().withMessage('completedVia must be a string'),
+    body('completedAt').optional().isISO8601().withMessage('completedAt must be an ISO8601 date'),
+], markReminderCompleted);
+
+router.post('/snooze', [
+    body('patientId').notEmpty().withMessage('Patient ID is required'),
+    body('reminderId').notEmpty().withMessage('Reminder ID is required'),
+    body('snoozeMinutes').optional().isInt({ min: 1, max: 1440 }).withMessage('snoozeMinutes must be between 1 and 1440'),
+    body('snoozedVia').optional().isString().withMessage('snoozedVia must be a string'),
+], snoozeReminder);
 
 export default router;

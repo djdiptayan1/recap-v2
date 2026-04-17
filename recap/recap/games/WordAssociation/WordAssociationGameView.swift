@@ -44,6 +44,9 @@ struct WordAssociationGameView: View {
         }
         .animation(.easeInOut, value: viewModel.currentPhase)
         .navigationTitle("Word Link")
+        .onDisappear {
+            viewModel.handleViewDisappeared()
+        }
     }
 
     // MARK: - Playing / Feedback View

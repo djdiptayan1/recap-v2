@@ -47,6 +47,9 @@ struct OverallAnalyticsView: View {
                     // MARK: - Memory Quiz History
                     memoryQuizSection
 
+                    // MARK: - Game Insights
+                    gameInsightsSection
+
                     // MARK: - Export PDF
                     Button(action: exportPDF) {
                         HStack(spacing: 10) {
@@ -288,6 +291,50 @@ struct OverallAnalyticsView: View {
                                 .foregroundColor(AppConfig.Colors.textSecondary)
                         }
                         .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.horizontal, 8)
+            }
+        }
+    }
+
+    private var gameInsightsSection: some View {
+        sectionCard(title: "Game Insights", icon: "gamecontroller.fill") {
+            if viewModel.gameBreakdown.isEmpty {
+                emptyMiniState(message: "No game sessions yet")
+            } else {
+                if let overview = viewModel.gamesOverview {
+                    HStack(spacing: 12) {
+                        MiniStat(label: "7 Days", value: "\(overview.sessionsLast7Days)", color: AppConfig.Colors.accent)
+                        MiniStat(label: "Accuracy", value: "\(Int(overview.averageAccuracy))%", color: AppConfig.Colors.success)
+                        MiniStat(
+                            label: "Favorite",
+                            value: RecapGameType(rawValue: overview.favoriteGame ?? "")?.displayName ?? "None",
+                            color: .orange
+                        )
+                    }
+                    .padding(.horizontal, 8)
+                }
+
+                VStack(spacing: 10) {
+                    ForEach(viewModel.gameBreakdown.prefix(3)) { item in
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.displayName)
+                                    .font(AppConfig.Fonts.bodyBold)
+                                    .foregroundColor(AppConfig.Colors.textPrimary)
+                                Text("\(item.sessions) sessions • best \(item.bestScore)")
+                                    .font(AppConfig.Fonts.small)
+                                    .foregroundColor(AppConfig.Colors.textSecondary)
+                            }
+                            Spacer()
+                            Text("\(Int(item.averageAccuracy))%")
+                                .font(AppConfig.Fonts.headline)
+                                .foregroundColor(AppConfig.Colors.accent)
+                        }
+                        .padding(14)
+                        .background(AppConfig.Colors.card.opacity(0.9))
+                        .cornerRadius(14)
                     }
                 }
                 .padding(.horizontal, 8)

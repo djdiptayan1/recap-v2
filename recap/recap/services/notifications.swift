@@ -13,6 +13,9 @@ import UserNotificationsUI
 /// Use `NotificationManager.shared` to access.
 final class NotificationManager: NSObject {
     static let shared = NotificationManager()
+    static let reminderCategoryIdentifier = "reminder"
+    static let reminderCompleteActionIdentifier = "reminder_complete"
+    static let reminderSnoozeActionIdentifier = "reminder_snooze"
 
     /// Calendar explicitly set to Indian Standard Time (IST)
     static var istCalendar: Calendar {
@@ -76,9 +79,21 @@ final class NotificationManager: NSObject {
 
     /// Registers the "reminder" notification category.
     func registerReminderCategories() {
+        let completeAction = UNNotificationAction(
+            identifier: Self.reminderCompleteActionIdentifier,
+            title: "Mark Done",
+            options: []
+        )
+
+        let snoozeAction = UNNotificationAction(
+            identifier: Self.reminderSnoozeActionIdentifier,
+            title: "Snooze 15 min",
+            options: []
+        )
+
         let reminderCategory = UNNotificationCategory(
-            identifier: "reminder",
-            actions: [],
+            identifier: Self.reminderCategoryIdentifier,
+            actions: [completeAction, snoozeAction],
             intentIdentifiers: [],
             options: []
         )
@@ -229,7 +244,7 @@ final class NotificationManager: NSObject {
     /// Removes all pending notifications with the "reminder" category.
     func removeAllReminderNotifications(completion: (() -> Void)? = nil) {
         center.getPendingNotificationRequests { [weak self] requests in
-            let ids = requests.filter { $0.content.categoryIdentifier == "reminder" }.map {
+            let ids = requests.filter { $0.content.categoryIdentifier == Self.reminderCategoryIdentifier }.map {
                 $0.identifier
             }
             if !ids.isEmpty {
@@ -274,6 +289,33 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
                 object: nil,
                 userInfo: userInfo
             )
+        case Self.reminderCompleteActionIdentifier:
+            var payload = userInfo
+            payload["actionIdentifier"] = Self.reminderCompleteActionIdentifier
+            NotificationCenter.default.post(
+                name: .reminderActionRequested,
+                object: nil,
+                userInfo: payload
+            )
+        case Self.reminderSnoozeActionIdentifier:
+            var payload = userInfo
+            payload["actionIdentifier"] = Self.reminderSnoozeActionIdentifier
+            payload["snoozeMinutes"] = 15
+            NotificationCenter.default.post(
+                name: .reminderActionRequested,
+                object: nil,
+                userInfo: payload
+            )
+
+            _ = schedule(
+                after: 15 * 60,
+                title: response.notification.request.content.title,
+                body: response.notification.request.content.body,
+                repeats: false,
+                categoryIdentifier: Self.reminderCategoryIdentifier,
+                userInfo: payload,
+                sound: .default
+            )
         default:
             break
         }
@@ -285,4 +327,5 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 // MARK: - Notification Names for Reminder Actions
 extension Notification.Name {
     static let reminderTapped = Notification.Name("reminderTapped")
+    static let reminderActionRequested = Notification.Name("reminderActionRequested")
 }

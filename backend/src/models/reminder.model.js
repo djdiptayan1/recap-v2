@@ -5,6 +5,12 @@ export const ReminderSchema = {
     time: 'timestamp',         // Reminder time
     notes: 'string',           // Optional notes
     categoryDetails: 'map',    // Category-specific details (e.g. Medicine: medicineName, dosage, dosageUnit, mealRelation; Appointment: doctorName, location; Exercise: exerciseType, duration; Meal: mealType; Hydration: amount, unit)
+    isCompleted: 'boolean',
+    lastCompletedAt: 'timestamp|null',
+    lastSnoozedUntil: 'timestamp|null',
+    lastAction: 'string|null', // completed | snoozed
+    lastActionAt: 'timestamp|null',
+    completionHistory: 'array',
     createdAt: 'timestamp',
     updatedAt: 'timestamp',
 }

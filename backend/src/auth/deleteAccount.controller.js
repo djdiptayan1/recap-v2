@@ -45,6 +45,7 @@ export const deleteAccount = async (req, res) => {
             config.firestoreNames.personalQuestions_SubCollection,
             config.firestoreNames.reminders_SubCollection,
             config.firestoreNames.journalEntries_SubCollection,
+            config.firestoreNames.gameSessions_SubCollection,
             config.firestoreNames.analyticsCache_SubCollection,
         ];
 

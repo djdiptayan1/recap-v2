@@ -11,6 +11,7 @@ import smritiRouter from './smriti.routes.js';
 import remindersRouter from './reminders.route.js';
 import journalRouter from './journal.routes.js';
 import analyticsRouter from './analytics.routes.js';
+import gamesRouter from './games.routes.js';
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use('/smriti', smritiRouter);
 router.use('/reminders', remindersRouter);
 router.use('/journal', journalRouter);
 router.use('/analytics', analyticsRouter);
+router.use('/games', gamesRouter);
 
 export default router;

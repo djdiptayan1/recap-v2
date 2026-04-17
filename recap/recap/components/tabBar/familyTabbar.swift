@@ -9,7 +9,7 @@ import SwiftUI
 
 struct familyTabbar: View {
     @StateObject private var reminderViewModel = ReminderViewModel()
-
+@EnvironmentObject var appState: AppState
     var body: some View {
         TabView {
             Tab("Home", systemImage: "house.fill") {
@@ -28,8 +28,9 @@ struct familyTabbar: View {
                 }
                 .onAppear { AnalyticsManager.shared.logScreen(name: "FamilyJournal") }
             }
-            Tab("Smriti", systemImage: "apple.intelligence") {
-                SmritiView()
+            Tab("Smriti", systemImage: "apple.intelligence", role: .search) {
+                SmritiSearchTab()
+                .environmentObject(appState)
                     .onAppear { AnalyticsManager.shared.logScreen(name: "FamilySmriti") }
             }
 //            Tab("Reminders", systemImage: "bell.badge.waveform.fill") {

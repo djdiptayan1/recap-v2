@@ -71,6 +71,9 @@ struct MemoryGameView: View {
         }
         .navigationTitle("Match Mania")
         .animation(.easeInOut, value: viewModel.gameState)
+        .onDisappear {
+            viewModel.handleViewDisappeared()
+        }
     }
     
     private func formatTime(_ seconds: Int) -> String {
