@@ -1,10 +1,12 @@
 import { firestore } from '../../utils/db.js';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit as limitFn, orderBy, query, setDoc } from 'firebase/firestore';
 import config from '../../../config.js';
+import { DAILY_MOOD_LOOKUP } from '../../models/dailyMood.model.js';
 
 const USERS_COLLECTION = config.firestoreNames.usersCollection;
 const USER_QUESTIONS_COLLECTION = config.firestoreNames.personalQuestions_SubCollection;
 const ANALYTICS_CACHE_COLLECTION = config.firestoreNames.analyticsCache_SubCollection;
+const DAILY_MOOD_SUBCOLLECTION = config.firestoreNames.dailyMood_SubCollection;
 
 const SUBCOLLECTIONS = ['immediateQuestions', 'recentQuestions', 'remoteQuestions'];
 
@@ -129,6 +131,61 @@ function getDayLabel(date) {
  */
 function getMonthLabel(date) {
     return date.toLocaleDateString('en-US', { month: 'short', timeZone: TIMEZONE });
+}
+
+function serializeFirestoreValue(value) {
+    if (value && typeof value.toDate === 'function') {
+        return value.toDate().toISOString();
+    }
+    return value;
+}
+
+async function fetchMoodSummary(patientId) {
+    const moodRef = collection(firestore, USERS_COLLECTION, patientId, DAILY_MOOD_SUBCOLLECTION);
+    const moodQuery = query(moodRef, orderBy('dateKey', 'desc'), limitFn(7));
+    const snapshot = await getDocs(moodQuery);
+
+    const entries = snapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...Object.fromEntries(
+            Object.entries(docSnap.data()).map(([key, value]) => [key, serializeFirestoreValue(value)])
+        ),
+    }));
+
+    if (entries.length === 0) {
+        return {
+            latest: null,
+            weekly: [],
+            averageScoreLast7: null,
+            loggedDaysLast7: 0,
+        };
+    }
+
+    const ordered = [...entries].reverse().map(entry => {
+        const fallbackMood = DAILY_MOOD_LOOKUP[entry.moodKey] || null;
+        const date = new Date(`${entry.dateKey}T12:00:00`);
+        return {
+            dateKey: entry.dateKey,
+            label: getDayLabel(date),
+            moodKey: entry.moodKey,
+            moodLabel: entry.label || fallbackMood?.label || entry.moodKey,
+            score: typeof entry.score === 'number' ? entry.score : fallbackMood?.score ?? null,
+        };
+    });
+
+    const scoreEntries = ordered.filter(item => typeof item.score === 'number');
+    const averageScoreLast7 = scoreEntries.length > 0
+        ? Math.round(
+            (scoreEntries.reduce((sum, item) => sum + item.score, 0) / scoreEntries.length) * 10
+        ) / 10
+        : null;
+
+    return {
+        latest: entries[0],
+        weekly: ordered,
+        averageScoreLast7,
+        loggedDaysLast7: ordered.length,
+    };
 }
 
 /**
@@ -358,6 +415,8 @@ export const getDashboardAnalytics = async (req, res, next) => {
         // 6. Category breakdown (from last 30 days)
         const categoryBreakdown = calculateCategoryStats(allQuestionsLast30);
 
+        const moodSummary = await fetchMoodSummary(patientId);
+
         const responseData = {
             daily: {
                 correct: dailyStats.correct,
@@ -378,7 +437,8 @@ export const getDashboardAnalytics = async (req, res, next) => {
                 activeDaysLast30
             },
             categoryBreakdown,
-            engagementHeatmap
+            engagementHeatmap,
+            moodSummary,
         };
 
         // --- Store in cache ---

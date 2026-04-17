@@ -35,6 +35,9 @@ struct OverallAnalyticsView: View {
                     // MARK: - Weekly Trend
                     weeklySection
 
+                    // MARK: - Mood Trend
+                    moodSection
+
                     // MARK: - Monthly Overview
                     monthlySection
 
@@ -338,6 +341,117 @@ struct OverallAnalyticsView: View {
                     }
                 }
                 .padding(.horizontal, 8)
+            }
+        }
+    }
+
+    private var moodSection: some View {
+        sectionCard(title: "Mood Trend", icon: "face.smiling") {
+            if let moodSummary = viewModel.moodSummary, !moodSummary.weekly.isEmpty {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let latest = moodSummary.latest {
+                        let palette = latest.moodKey.palette
+
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [
+                                            palette.glow.opacity(0.95),
+                                            palette.primary.opacity(0.8),
+                                            palette.secondary.opacity(0.45),
+                                        ],
+                                        center: .center,
+                                        startRadius: 2,
+                                        endRadius: 22
+                                    )
+                                )
+                                .frame(width: 44, height: 44)
+                                .overlay(Circle().stroke(.white.opacity(0.82), lineWidth: 1))
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Latest: \(latest.label)")
+                                    .font(AppConfig.Fonts.bodyBold)
+                                    .foregroundColor(AppConfig.Colors.textPrimary)
+                                Text(latest.shortLoggedTime)
+                                    .font(AppConfig.Fonts.small)
+                                    .foregroundColor(AppConfig.Colors.textSecondary)
+                            }
+
+                            Spacer()
+
+                            if let average = moodSummary.averageScoreLast7 {
+                                Text(String(format: "%.1f / 4", average))
+                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    .foregroundColor(AppConfig.Colors.accent)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                    }
+
+                    Chart(moodSummary.weekly) { item in
+                        if let score = item.score {
+                            AreaMark(
+                                x: .value("Day", item.label),
+                                y: .value("Mood", score)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [
+                                        moodColor(for: score).opacity(0.32),
+                                        moodColor(for: score).opacity(0.02),
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+
+                            LineMark(
+                                x: .value("Day", item.label),
+                                y: .value("Mood", score)
+                            )
+                            .interpolationMethod(.catmullRom)
+                            .foregroundStyle(moodColor(for: score))
+                            .symbol {
+                                Circle()
+                                    .fill(moodColor(for: score))
+                                    .frame(width: 7, height: 7)
+                            }
+                        }
+                    }
+                    .chartYScale(domain: 0...4)
+                    .chartYAxis {
+                        AxisMarks(values: [0, 1, 2, 3, 4]) { value in
+                            AxisGridLine()
+                            AxisValueLabel {
+                                if let score = value.as(Double.self) {
+                                    Text(moodLabel(for: score))
+                                }
+                            }
+                        }
+                    }
+                    .frame(height: 170)
+                    .padding(.horizontal, 8)
+
+                    HStack(spacing: 8) {
+                        ForEach(moodSummary.weekly) { item in
+                            VStack(spacing: 4) {
+                                Text(item.moodLabel)
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundColor(AppConfig.Colors.textSecondary)
+                                    .lineLimit(1)
+                                Text(item.label)
+                                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                                    .foregroundColor(AppConfig.Colors.textPrimary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 8)
+                }
+            } else {
+                emptyMiniState(message: "No mood check-ins yet")
             }
         }
     }
@@ -705,6 +819,31 @@ struct OverallAnalyticsView: View {
         case "recentMemory": return AppConfig.Colors.accent
         case "remoteMemory": return AppConfig.Colors.success
         default: return AppConfig.Colors.accent
+        }
+    }
+
+    private func moodColor(for score: Double) -> Color {
+        switch score {
+        case ..<0.5:
+            return DailyMoodKey.veryUnpleasant.palette.primary
+        case ..<1.5:
+            return DailyMoodKey.unpleasant.palette.primary
+        case ..<2.5:
+            return DailyMoodKey.neutral.palette.primary
+        case ..<3.5:
+            return DailyMoodKey.pleasant.palette.primary
+        default:
+            return DailyMoodKey.veryPleasant.palette.primary
+        }
+    }
+
+    private func moodLabel(for score: Double) -> String {
+        switch score {
+        case ..<0.5: return "Very Low"
+        case ..<1.5: return "Low"
+        case ..<2.5: return "Neutral"
+        case ..<3.5: return "Good"
+        default: return "High"
         }
     }
 }
