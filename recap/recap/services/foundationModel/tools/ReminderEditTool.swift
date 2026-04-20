@@ -10,13 +10,13 @@ import FoundationModels
 
 struct ReminderEditTool: Tool {
     let name = "editReminder"
-    let description = "Edits an existing patient reminder only after explicit user confirmation"
+    let description = "Edits an existing patient reminder. Only call this when the user explicitly asks to update a reminder."
     let identity: ResolvedIdentity
 
     @Generable
     struct Arguments {
         @Guide(description: "Reminder ID to edit")
-        var reminderId: String
+        var reminderId: String?
 
         @Guide(description: "Optional new title")
         var title: String?
@@ -75,7 +75,10 @@ struct ReminderEditTool: Tool {
             throw SmritiToolError.missingIdentity
         }
 
-        let trimmedId = arguments.reminderId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let rId = arguments.reminderId else {
+            return "Reminder not edited: missing reminder ID. Ask the user."
+        }
+        let trimmedId = rId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedId.isEmpty else {
             return "Reminder not edited: reminder ID is required."
         }
@@ -232,3 +235,4 @@ struct ReminderEditTool: Tool {
     }
 }
 #endif
+

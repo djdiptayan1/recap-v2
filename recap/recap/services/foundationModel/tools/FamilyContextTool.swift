@@ -34,7 +34,7 @@ struct FamilyContextTool: Tool {
     @Generable
     struct Arguments {
         @Guide(description: "Include contact information in the summary")
-        var includeContact: Bool
+        var includeContact: Bool?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -42,7 +42,8 @@ struct FamilyContextTool: Tool {
             throw SmritiToolError.missingIdentity
         }
 
-        let cacheKey = "\(patientId)|\(arguments.includeContact)"
+        let includeContact = arguments.includeContact ?? false
+        let cacheKey = "\(patientId)|\(includeContact)"
         if let cached = await FamilyContextCache.shared.value(for: cacheKey, maxAge: 45) {
             return cached
         }
@@ -51,7 +52,7 @@ struct FamilyContextTool: Tool {
             endpoint: FoundationToolAPI.familyMembers(documentID: patientId)
         )
         let members = response.data.prefix(6).map { member in
-            if arguments.includeContact {
+            if includeContact {
                 return "\(member.name) (\(member.relation)) | \(member.phone) | \(member.email)"
             }
             return "\(member.name) (\(member.relation))"

@@ -101,6 +101,12 @@ async function updateCitation(req, res, next) {
         }
 
         const docRef = doc(firestore, COLLECTION_NAME, id);
+
+        const checkSnap = await getDoc(docRef);
+        if (!checkSnap.exists()) {
+            return res.status(404).json({ success: false, error: 'Citation not found' });
+        }
+
         await updateDoc(docRef, { ...updates, updatedAt: serverTimestamp() });
         const snap = await getDoc(docRef);
 
@@ -117,7 +123,14 @@ async function deleteCitation(req, res, next) {
             return res.status(400).json({ success: false, errors: errors.array() });
         }
         const { id } = req.params;
-        await deleteDoc(doc(firestore, COLLECTION_NAME, id));
+        const docRef = doc(firestore, COLLECTION_NAME, id);
+
+        const checkSnap = await getDoc(docRef);
+        if (!checkSnap.exists()) {
+            return res.status(404).json({ success: false, error: 'Citation not found' });
+        }
+
+        await deleteDoc(docRef);
         return res.status(204).send();
     } catch (err) {
         next(err);

@@ -16,7 +16,7 @@ struct StreakStatsTool: Tool {
     @Generable
     struct Arguments {
         @Guide(description: "Include active day statistics")
-        var includeActiveDays: Bool
+        var includeActiveDays: Bool?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -29,7 +29,8 @@ struct StreakStatsTool: Tool {
         )
 
         let base = "Current streak: \(response.data.currentStreak), max streak: \(response.data.maxStreak)."
-        if arguments.includeActiveDays {
+        let includeActiveDays = arguments.includeActiveDays ?? false
+        if includeActiveDays {
             return base + " Active days: \(response.data.activeDays)."
         }
         return base
