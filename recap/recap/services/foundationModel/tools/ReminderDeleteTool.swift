@@ -16,7 +16,7 @@ struct ReminderDeleteTool: Tool {
     @Generable
     struct Arguments {
         @Guide(description: "Reminder ID to delete")
-        var reminderId: String
+        var reminderId: String?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -24,7 +24,11 @@ struct ReminderDeleteTool: Tool {
             throw SmritiToolError.missingIdentity
         }
 
-        let trimmedId = arguments.reminderId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let reminderId = arguments.reminderId else {
+            return "Reminder not deleted: missing reminder ID. Ask the user which reminder they want to delete."
+        }
+        
+        let trimmedId = reminderId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedId.isEmpty else {
             return "Reminder not deleted: reminder ID is required."
         }
