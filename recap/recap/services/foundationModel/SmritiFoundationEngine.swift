@@ -9,55 +9,6 @@ import Foundation
 import FoundationModels
 #endif
 
-enum FoundationStreamOutcome {
-    case streamed(answer: String, followup: String?)
-    case guardrail(message: String)
-    case refusal(message: String)
-    case failed
-}
-
-enum FoundationStructuredOutcome {
-    case success(SmritiResponse)
-    case guardrail(message: String)
-    case refusal(message: String)
-    case failed
-}
-
-#if canImport(FoundationModels)
-@Generable(description: "Decision on whether app tools are needed and which tools are minimally required")
-private struct ToolSelectionDecision {
-    @Guide(description: "True only when current request requires live app data read or app-side action")
-    var requiresTools: Bool
-
-    @Guide(description: "Use getFamilyContext only when family details/contact are explicitly requested")
-    var useFamilyContext: Bool
-
-    @Guide(description: "Use getReminders for listing or checking reminders")
-    var useReminderRead: Bool
-
-    @Guide(description: "Use writeReminder for creating reminders after explicit user confirmation")
-    var useReminderWrite: Bool
-
-    @Guide(description: "Use editReminder for updating existing reminders after explicit user confirmation")
-    var useReminderEdit: Bool
-
-    @Guide(description: "Use deleteReminder for deleting reminders after explicit user confirmation")
-    var useReminderDelete: Bool
-
-    @Guide(description: "Use getQuestionPerformance when user asks about question performance")
-    var useQuestionPerformance: Bool
-
-    @Guide(description: "Use getStreakStats when user asks about streaks or progress metrics")
-    var useStreakStats: Bool
-
-    @Guide(description: "Use getJournalSummary when user asks about journal entries or summaries")
-    var useJournalSummary: Bool
-
-    @Guide(description: "Short reason for the decision")
-    var reason: String?
-}
-#endif
-
 @MainActor
 final class SmritiFoundationEngine {
     static let shared = SmritiFoundationEngine()
@@ -73,10 +24,29 @@ final class SmritiFoundationEngine {
 #if canImport(FoundationModels)
         let model = SystemLanguageModel.default
         SmritiFoundationPrewarmService.shared.prewarmIfPossible()
-        let instructions = selectedInstructions(for: context)
-        let prompt = makePrompt(query: query, history: history, context: context)
-        let toolPlan = await decideToolPlan(model: model, userQuery: query)
-        let tools = buildTools(fallbackPatientId: fallbackPatientId, plan: toolPlan)
+        let toolPlan = SmritiIntentResolver.resolveToolPlan(for: query, history: history)
+        let isReadOnly = toolPlan.requiresTools && !toolPlan.useReminderWrite && !toolPlan.useReminderEdit && !toolPlan.useReminderDelete
+        let isHelp = toolPlan.reason == "intent-help"
+
+        // Pre-fetch live data for read operations, AND for edits/deletes so the model knows the exact ID of what to delete/edit
+        var liveData: String? = nil
+        let needsPrefetch = isReadOnly || toolPlan.useReminderEdit || toolPlan.useReminderDelete
+        if needsPrefetch {
+            liveData = await prefetchReadData(plan: toolPlan, fallbackPatientId: fallbackPatientId)
+        }
+
+        let instructions = SmritiInstructionsProvider.selectedInstructions(for: context, isHelp: isHelp)
+        let prompt = SmritiPromptBuilder.makePrompt(query: query, history: history, context: context, liveData: liveData, isHelp: isHelp)
+
+        // Only attach tools for write/action operations — reads are pre-fetched
+        let tools: [any Tool]
+        if toolPlan.requiresTools && !isReadOnly {
+            tools = buildTools(fallbackPatientId: fallbackPatientId, plan: toolPlan)
+        } else {
+            tools = []
+        }
+        print("🔧 [Smriti] Tool plan: requiresTools=\(toolPlan.requiresTools) family=\(toolPlan.useFamilyContext) rRead=\(toolPlan.useReminderRead) rWrite=\(toolPlan.useReminderWrite) rEdit=\(toolPlan.useReminderEdit) rDelete=\(toolPlan.useReminderDelete) journal=\(toolPlan.useJournalSummary) streak=\(toolPlan.useStreakStats) questions=\(toolPlan.useQuestionPerformance) reason=\(toolPlan.reason ?? "nil")")
+        print("🔧 [Smriti] Tools attached: \(tools.count)")
 
         do {
             let session = LanguageModelSession(model: model, tools: tools, instructions: instructions)
@@ -112,6 +82,7 @@ final class SmritiFoundationEngine {
                 ?? "Sorry, I can’t help with that request."
             return .refusal(message: explanation)
         } catch is LanguageModelSession.ToolCallError {
+            // Write/action tool failed — fall back to tool-less response
             return await streamStructuredWithoutTools(
                 model: model,
                 prompt: prompt,
@@ -135,10 +106,29 @@ final class SmritiFoundationEngine {
 #if canImport(FoundationModels)
         let model = SystemLanguageModel.default
         SmritiFoundationPrewarmService.shared.prewarmIfPossible()
-        let instructions = selectedInstructions(for: context)
-        let prompt = makePrompt(query: query, history: history, context: context)
-        let toolPlan = await decideToolPlan(model: model, userQuery: query)
-        let tools = buildTools(fallbackPatientId: fallbackPatientId, plan: toolPlan)
+        let toolPlan = SmritiIntentResolver.resolveToolPlan(for: query, history: history)
+        let isReadOnly = toolPlan.requiresTools && !toolPlan.useReminderWrite && !toolPlan.useReminderEdit && !toolPlan.useReminderDelete
+        let isHelp = toolPlan.reason == "intent-help"
+
+        // Pre-fetch live data for read operations, AND for edits/deletes so the model knows the exact ID of what to delete/edit
+        var liveData: String? = nil
+        let needsPrefetch = isReadOnly || toolPlan.useReminderEdit || toolPlan.useReminderDelete
+        if needsPrefetch {
+            liveData = await prefetchReadData(plan: toolPlan, fallbackPatientId: fallbackPatientId)
+        }
+
+        let instructions = SmritiInstructionsProvider.selectedInstructions(for: context, isHelp: isHelp)
+        let prompt = SmritiPromptBuilder.makePrompt(query: query, history: history, context: context, liveData: liveData, isHelp: isHelp)
+
+        // Only attach tools for write/action operations — reads are pre-fetched
+        let tools: [any Tool]
+        if toolPlan.requiresTools && !isReadOnly {
+            tools = buildTools(fallbackPatientId: fallbackPatientId, plan: toolPlan)
+        } else {
+            tools = []
+        }
+        print("🔧 [Smriti] Tool plan: requiresTools=\(toolPlan.requiresTools) family=\(toolPlan.useFamilyContext) rRead=\(toolPlan.useReminderRead) rWrite=\(toolPlan.useReminderWrite) rEdit=\(toolPlan.useReminderEdit) rDelete=\(toolPlan.useReminderDelete) journal=\(toolPlan.useJournalSummary) streak=\(toolPlan.useStreakStats) questions=\(toolPlan.useQuestionPerformance) reason=\(toolPlan.reason ?? "nil")")
+        print("🔧 [Smriti] Tools attached: \(tools.count)")
 
         do {
             let session = LanguageModelSession(model: model, tools: tools, instructions: instructions)
@@ -158,6 +148,7 @@ final class SmritiFoundationEngine {
                 ?? "Sorry, I can’t help with that request."
             return .refusal(message: explanation)
         } catch is LanguageModelSession.ToolCallError {
+            // Write/action tool failed — fall back to tool-less response
             return await generateStructuredWithoutTools(
                 model: model,
                 prompt: prompt,
@@ -211,375 +202,110 @@ final class SmritiFoundationEngine {
         return tools
     }
 
-    private func selectedInstructions(for context: SmritiPromptContext?) -> Instructions {
-        if context?.mode == .memoryLane {
-            return Instructions {
-                """
-                You are Smriti in Reminiscence Mode, a warm memory companion for people living with dementia.
 
-                RULES:
-                1. Prioritize gentle reminiscence conversation over clinical coaching.
-                2. Explore past memories: wedding day, childhood, school days, favorite foods, hobbies, family traditions.
-                3. Use family names when available.
-                4. Celebrate every memory shared; be patient and encouraging.
-                5. Keep language simple, kind, and non-judgmental.
-                6. Politely decline unrelated topics.
-                7. Never diagnose or prescribe.
-                8. Always end with one warm reminiscence follow-up question.
-                9. Avoid clinical lists/disclaimers unless explicitly asked for medical-care guidance.
-                10. Do not start every response with a greeting or the user's name.
-                11. NEVER invent shared memories, events, or places.
-                12. If personal memory details are unknown, ask a gentle question instead of guessing.
-                13. Use tool outputs as source-of-truth for reminders, family, journal, streak, and daily question data.
-                14. If the user explicitly asks to create, edit, or delete a reminder, call the appropriate tool immediately without asking for confirmation.
-                15. Call tools only when live app data or an action is required; if not required, answer directly without tools.
-                16. For reminder create/edit, set a short, concise title (e.g., "Doctor Appointment", "Take Medicine"). Do NOT stuff all details into the title. Collect required category-specific values first and populate the specific fields (like medicineName, doctorName, etc.). Use the 'notes' field for any extra details (like surgery type, specific instructions). If any required values are missing, ask a focused follow-up question before calling the tool.
-                17. For a single user turn, do not call the same read tool repeatedly unless the previous call failed.
-                18. Call getFamilyContext ONLY when the user explicitly asks for family member details, relation, or contact info.
-                19. For reminder create/edit/delete requests, do not call getFamilyContext unless user explicitly asks for family details.
-                """
+    private func prefetchReadData(plan: ToolSelectionDecision, fallbackPatientId: String?) async -> String? {
+        guard let patientId = KeychainManager.shared.getString(key: .patientDocumentID) ??
+                              KeychainManager.shared.getString(key: .documentID) ??
+                              fallbackPatientId else {
+            return nil
+        }
+        
+        var sections: [String] = []
+        
+        if plan.useReminderRead || plan.useReminderEdit || plan.useReminderDelete {
+            sections.append("### Reminders ###")
+            do {
+                let response: ReminderResponse = try await NetworkManager.shared.request(
+                    endpoint: FoundationToolAPI.reminders(patientId: patientId)
+                )
+                if response.success, !response.data.isEmpty {
+                    for reminder in response.data {
+                        let timeStr = DateFormatter.localizedString(from: reminder.time, dateStyle: .none, timeStyle: .short)
+                        sections.append("- [\(reminder.id)] \(reminder.title) (\(reminder.category.rawValue)) at \(timeStr)")
+                    }
+                } else {
+                    sections.append("No reminders found.")
+                }
+            } catch {
+                sections.append("Failed to load reminders.")
+            }
+        }
+        
+        if plan.useFamilyContext {
+            sections.append("### Family Context ###")
+            do {
+                let response: FamilyMemberResponse = try await NetworkManager.shared.request(
+                    endpoint: FoundationToolAPI.familyMembers(documentID: patientId)
+                )
+                if response.success, !response.data.isEmpty {
+                    for member in response.data.prefix(6) {
+                        sections.append("- \(member.name) (\(member.relation))")
+                    }
+                } else {
+                    sections.append("No family members found.")
+                }
+            } catch {
+                sections.append("Failed to load family members.")
+            }
+        }
+        
+        if plan.useJournalSummary {
+            sections.append("### Journal Entries ###")
+            do {
+                let response: JournalResponse = try await NetworkManager.shared.request(
+                    endpoint: FoundationToolAPI.journal(patientId: patientId, limit: 5)
+                )
+                if response.success, !response.data.isEmpty {
+                    for entry in response.data {
+                        let mood = entry.mood ?? "Neutral"
+                        let title = entry.title ?? "Untitled"
+                        sections.append("- [\(mood)] \(title)")
+                    }
+                } else {
+                    sections.append("No recent journal entries found.")
+                }
+            } catch {
+                sections.append("Failed to load journal entries.")
             }
         }
 
-        return Instructions {
-            """
-            You are Smriti, a warm Alzheimer's and Dementia Care companion.
-            You support patients, caregivers, and families with empathy and evidence-based guidance.
-
-            RULES:
-            1. Only discuss Alzheimer's, dementia, memory, elderly care, caregiving, or reminiscence topics.
-            2. Politely decline unrelated topics.
-            3. Never diagnose or prescribe.
-            4. For medical concerns, advise consulting a qualified healthcare professional.
-            5. Keep responses concise, calm, and simple.
-            6. If user seems confused or frustrated, acknowledge feelings first, then simplify.
-            7. Personalize naturally with available patient/family/activity context.
-            8. Always include a warm memory-oriented follow-up question.
-            9. Include care strategies, sources, and medical disclaimer only when genuinely relevant.
-            10. Do not start every response with a greeting or the user's name.
-            11. NEVER invent shared memories, events, or places.
-            12. If personal memory details are unknown, ask a gentle clarifying question instead of guessing.
-            13. Use tool outputs as source-of-truth for reminders, family, journal, streak, and daily question data.
-            14. If the user explicitly asks to create, edit, or delete a reminder, call the appropriate tool immediately without asking for confirmation.
-            15. Call tools only when live app data or an action is required; if not required, answer directly without tools.
-            16. For reminder create/edit, set a short, concise title (e.g., "Doctor Appointment", "Take Medicine"). Do NOT stuff all details into the title. Collect required category-specific values first and populate the specific fields (like medicineName, doctorName, etc.). Use the 'notes' field for any extra details (like surgery type, specific instructions). If any required values are missing, ask a focused follow-up question before calling the tool.
-            17. For a single user turn, do not call the same read tool repeatedly unless the previous call failed.
-            18. Call getFamilyContext ONLY when the user explicitly asks for family member details, relation, or contact info.
-            19. For reminder create/edit/delete requests, do not call getFamilyContext unless user explicitly asks for family details.
-            """
-        }
-    }
-
-    private func decideToolPlan(model: SystemLanguageModel, userQuery: String) async -> ToolSelectionDecision {
-        let decisionInstructions = Instructions {
-            """
-            Decide whether this user message requires app tool calls and select the minimal tool set.
-
-            Output policy:
-            - requiresTools = true only when the message needs live in-app data retrieval or an app-side action.
-            - For normal advice or conversation, set requiresTools = false and all tool booleans = false.
-            - If the request is reminder creation, set useReminderWrite = true only.
-            - If the request is reminder update, set useReminderEdit = true only.
-            - If the request is reminder deletion, set useReminderDelete = true only.
-            - If the request is reminder listing/status, set useReminderRead = true only.
-            - Set useFamilyContext = true only when the user explicitly asks about family members, relations, or contacts.
-            - Never select family context for reminder create/edit/delete unless family details are explicitly requested.
-            - Prefer selecting exactly one tool for a single focused request.
-            """
-        }
-
-        do {
-            let decisionSession = LanguageModelSession(model: model, instructions: decisionInstructions)
-            let decision = try await decisionSession.respond(
-                to: userQuery,
-                generating: ToolSelectionDecision.self,
-                options: GenerationOptions(sampling: .greedy)
-            )
-            return normalizedToolPlan(decision.content, userQuery: userQuery)
-        } catch {
-            return normalizedToolPlan(fallbackToolPlan(for: userQuery), userQuery: userQuery)
-        }
-    }
-
-    private func fallbackToolPlan(for userQuery: String) -> ToolSelectionDecision {
-        let q = userQuery.lowercased()
-        let asksFamily = q.contains("family") || q.contains("relation") || q.contains("contact")
-        let asksReminder = q.contains("reminder") || q.contains("medication") || q.contains("medicine")
-
-        let isDeleteReminder = asksReminder && (q.contains("delete") || q.contains("remove") || q.contains("cancel"))
-        let isEditReminder = asksReminder && (q.contains("edit") || q.contains("update") || q.contains("change") || q.contains("reschedule"))
-        let isReadReminder = asksReminder && (q.contains("list") || q.contains("show") || q.contains("what") || q.contains("upcoming") || q.contains("check"))
-        let isWriteReminder = asksReminder && !isDeleteReminder && !isEditReminder && !isReadReminder
-
-        let useJournal = q.contains("journal")
-        let useStreak = q.contains("streak")
-        let useQuestion = q.contains("question") && (q.contains("daily") || q.contains("performance") || q.contains("score"))
-
-        let requiresTools = asksFamily || asksReminder || useJournal || useStreak || useQuestion
-
-        return ToolSelectionDecision(
-            requiresTools: requiresTools,
-            useFamilyContext: asksFamily && !asksReminder,
-            useReminderRead: isReadReminder,
-            useReminderWrite: isWriteReminder,
-            useReminderEdit: isEditReminder,
-            useReminderDelete: isDeleteReminder,
-            useQuestionPerformance: useQuestion,
-            useStreakStats: useStreak,
-            useJournalSummary: useJournal,
-            reason: "fallback-plan"
-        )
-    }
-
-    private func normalizedToolPlan(_ plan: ToolSelectionDecision, userQuery: String) -> ToolSelectionDecision {
-        var normalized = plan
-        let intent = detectPrimaryIntent(in: userQuery)
-
-        switch intent {
-        case .reminderCreate:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: true,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: "intent-reminder-create"
-            )
-        case .reminderEdit:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: true,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: "intent-reminder-edit"
-            )
-        case .reminderDelete:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: true,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: "intent-reminder-delete"
-            )
-        case .reminderRead:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: true,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: "intent-reminder-read"
-            )
-        case .familyExplicit:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: true,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: "intent-family"
-            )
-        case .questionPerformance:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: true,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: "intent-question-performance"
-            )
-        case .streakStats:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: true,
-                useJournalSummary: false,
-                reason: "intent-streak"
-            )
-        case .journalSummary:
-            normalized = ToolSelectionDecision(
-                requiresTools: true,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: true,
-                reason: "intent-journal"
-            )
-        case .none:
-            break
-        }
-
-        if !normalized.requiresTools {
-            return ToolSelectionDecision(
-                requiresTools: false,
-                useFamilyContext: false,
-                useReminderRead: false,
-                useReminderWrite: false,
-                useReminderEdit: false,
-                useReminderDelete: false,
-                useQuestionPerformance: false,
-                useStreakStats: false,
-                useJournalSummary: false,
-                reason: normalized.reason
-            )
-        }
-
-        let selectedCount = [
-            normalized.useFamilyContext,
-            normalized.useReminderRead,
-            normalized.useReminderWrite,
-            normalized.useReminderEdit,
-            normalized.useReminderDelete,
-            normalized.useQuestionPerformance,
-            normalized.useStreakStats,
-            normalized.useJournalSummary,
-        ].filter { $0 }.count
-
-        if selectedCount <= 1 {
-            return normalized
-        }
-
-        if normalized.useReminderWrite {
-            normalized.useFamilyContext = false
-            normalized.useReminderRead = false
-            normalized.useReminderEdit = false
-            normalized.useReminderDelete = false
-            normalized.useQuestionPerformance = false
-            normalized.useStreakStats = false
-            normalized.useJournalSummary = false
-            return normalized
-        }
-        if normalized.useReminderEdit {
-            normalized.useFamilyContext = false
-            normalized.useReminderRead = false
-            normalized.useReminderWrite = false
-            normalized.useReminderDelete = false
-            normalized.useQuestionPerformance = false
-            normalized.useStreakStats = false
-            normalized.useJournalSummary = false
-            return normalized
-        }
-        if normalized.useReminderDelete {
-            normalized.useFamilyContext = false
-            normalized.useReminderRead = false
-            normalized.useReminderWrite = false
-            normalized.useReminderEdit = false
-            normalized.useQuestionPerformance = false
-            normalized.useStreakStats = false
-            normalized.useJournalSummary = false
-            return normalized
-        }
-        if normalized.useReminderRead {
-            normalized.useFamilyContext = false
-            normalized.useReminderWrite = false
-            normalized.useReminderEdit = false
-            normalized.useReminderDelete = false
-            normalized.useQuestionPerformance = false
-            normalized.useStreakStats = false
-            normalized.useJournalSummary = false
-            return normalized
-        }
-        if normalized.useFamilyContext {
-            normalized.useQuestionPerformance = false
-            normalized.useStreakStats = false
-            normalized.useJournalSummary = false
-            return normalized
-        }
-        if normalized.useQuestionPerformance {
-            normalized.useStreakStats = false
-            normalized.useJournalSummary = false
-            return normalized
-        }
-        if normalized.useStreakStats {
-            normalized.useJournalSummary = false
-            return normalized
-        }
-
-        return normalized
-    }
-
-    private enum PrimaryIntent {
-        case reminderCreate
-        case reminderEdit
-        case reminderDelete
-        case reminderRead
-        case familyExplicit
-        case questionPerformance
-        case streakStats
-        case journalSummary
-        case none
-    }
-
-    private func detectPrimaryIntent(in userQuery: String) -> PrimaryIntent {
-        let q = userQuery.lowercased()
-        let asksReminder = q.contains("remind") || q.contains("medication") || q.contains("medicine")
-        let asksFamily = q.contains("family") || q.contains("relation") || q.contains("contact")
-
-        if asksReminder {
-            if q.contains("delete") || q.contains("remove") || q.contains("cancel") {
-                return .reminderDelete
+        if plan.useStreakStats {
+            sections.append("### Streak Stats ###")
+            do {
+                let response: StreakStatsResponse = try await NetworkManager.shared.request(
+                    endpoint: FoundationToolAPI.streakStats(documentID: patientId)
+                )
+                if response.success {
+                    sections.append("Current Streak: \(response.data.currentStreak) days")
+                    sections.append("Max Streak: \(response.data.maxStreak) days")
+                } else {
+                    sections.append("No streak stats found.")
+                }
+            } catch {
+                sections.append("Failed to load streak stats.")
             }
-            if q.contains("edit") || q.contains("update") || q.contains("change") || q.contains("reschedule") {
-                return .reminderEdit
+        }
+
+        if plan.useQuestionPerformance {
+            sections.append("### Daily Questions ###")
+            do {
+                let response: QuestionResponse = try await NetworkManager.shared.request(
+                    endpoint: FoundationToolAPI.dailyQuestions(patientId: patientId),
+                    keyDecodingStrategy: .useDefaultKeys
+                )
+                if response.success, !response.data.isEmpty {
+                    let total = response.data.count
+                    let unanswered = response.data.filter { !($0.isAnswered ?? false) }.count
+                    sections.append("Questions total: \(total), unanswered: \(unanswered).")
+                } else {
+                    sections.append("No daily questions found.")
+                }
+            } catch {
+                sections.append("Failed to load daily questions.")
             }
-            if q.contains("list") || q.contains("show") || q.contains("what") || q.contains("upcoming") || q.contains("check") {
-                return .reminderRead
-            }
-            return .reminderCreate
         }
-
-        if asksFamily {
-            return .familyExplicit
-        }
-
-        if q.contains("journal") {
-            return .journalSummary
-        }
-
-        if q.contains("streak") {
-            return .streakStats
-        }
-
-        if q.contains("question") && (q.contains("daily") || q.contains("performance") || q.contains("score")) {
-            return .questionPerformance
-        }
-
-        return .none
+        
+        return sections.isEmpty ? nil : sections.joined(separator: "\n")
     }
 
     private func streamStructuredWithoutTools(
@@ -653,24 +379,4 @@ final class SmritiFoundationEngine {
         }
     }
 #endif
-
-    private func makePrompt(
-        query: String,
-        history: [SmritiHistoryMessage]?,
-        context: SmritiPromptContext?
-    ) -> String {
-        var sections: [String] = []
-
-        if let contextText = context?.asInstructionContextText(), !contextText.isEmpty {
-            sections.append("Context:\n\(contextText)")
-        }
-
-        if let history, !history.isEmpty {
-            let renderedHistory = history.map { "\($0.role): \($0.text)" }.joined(separator: "\n")
-            sections.append("Recent chat history (latest 20 turns):\n\(renderedHistory)")
-        }
-
-        sections.append("User message:\n\(query)")
-        return sections.joined(separator: "\n\n")
-    }
 }

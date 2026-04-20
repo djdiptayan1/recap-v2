@@ -16,16 +16,16 @@ struct ReminderWriteTool: Tool {
     @Generable
     struct Arguments {
         @Guide(description: "Reminder title")
-        var title: String
+        var title: String?
 
         @Guide(description: "Reminder category. One of: Medicine, Daily Chore, Appointment, Exercise, Meal, Hydration, Other")
-        var category: String
+        var category: String?
 
         @Guide(description: "Reminder frequency. One of: once, hourly, daily, weekdays, weekends, weekly, biweekly, monthly, yearly")
-        var frequency: String
+        var frequency: String?
 
         @Guide(description: "24-hour time in HH:mm format")
-        var time24h: String
+        var time24h: String?
 
         @Guide(description: "Optional ISO date as yyyy-MM-dd for one-time reminders")
         var dateISO: String?
@@ -72,19 +72,26 @@ struct ReminderWriteTool: Tool {
             throw SmritiToolError.missingIdentity
         }
 
+        guard let title = arguments.title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let rawCategory = arguments.category,
+              let rawFrequency = arguments.frequency,
+              let time24h = arguments.time24h else {
+            return "Reminder not created: missing required fields (title, category, frequency, time24h). Ask the user."
+        }
+
         guard let category = ReminderCategory.allCases.first(where: {
-            $0.rawValue.caseInsensitiveCompare(arguments.category) == .orderedSame
+            $0.rawValue.caseInsensitiveCompare(rawCategory) == .orderedSame
         }) else {
             return "Reminder not created: invalid category."
         }
 
         guard let frequency = ReminderFrequency.allCases.first(where: {
-            $0.rawValue.caseInsensitiveCompare(arguments.frequency) == .orderedSame
+            $0.rawValue.caseInsensitiveCompare(rawFrequency) == .orderedSame
         }) else {
             return "Reminder not created: invalid frequency."
         }
 
-        guard let reminderDate = parseReminderDate(time24h: arguments.time24h, dateISO: arguments.dateISO) else {
+        guard let reminderDate = parseReminderDate(time24h: time24h, dateISO: arguments.dateISO) else {
             return "Reminder not created: invalid time format. Use HH:mm and optional yyyy-MM-dd."
         }
 
@@ -96,7 +103,7 @@ struct ReminderWriteTool: Tool {
 
         let request = ToolAddReminderRequest(
             patientId: patientId,
-            title: arguments.title,
+            title: title,
             category: category.rawValue,
             frequency: frequency.rawValue,
             time: reminderDate,

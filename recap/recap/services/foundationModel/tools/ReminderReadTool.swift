@@ -15,8 +15,8 @@ struct ReminderReadTool: Tool {
 
     @Generable
     struct Arguments {
-        @Guide(description: "Maximum number of reminders to summarize", .range(1...10))
-        var limit: Int
+        @Guide(description: "Maximum number of reminders to summarize")
+        var limit: Int?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -30,7 +30,8 @@ struct ReminderReadTool: Tool {
         let formatter = DateFormatter()
         formatter.dateFormat = "h:mm a"
 
-        let reminders = response.data.prefix(max(1, arguments.limit)).map { reminder in
+        let limit = max(1, arguments.limit ?? 10)
+        let reminders = response.data.prefix(limit).map { reminder in
             let time = formatter.string(from: reminder.time)
             return "id=\(reminder.id) | \(reminder.title) at \(time) [\(reminder.category.rawValue)]"
         }
