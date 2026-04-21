@@ -13,10 +13,10 @@ struct familySignupView: View {
     @EnvironmentObject var appState: AppState
 
     // Initializer to pass data into ViewModel
-    init(googleUser: GoogleUserData?, patientDocumentId: String, patientUID: String) {
+    init(socialUser: SocialUserData?, patientDocumentId: String, patientUID: String) {
         _viewModel = StateObject(
             wrappedValue: FamilySignupViewModel(
-                googleUser: googleUser,
+                socialUser: socialUser,
                 patientDocumentId: patientDocumentId,
                 patientUID: patientUID
             ))
@@ -37,7 +37,7 @@ struct familySignupView: View {
                                     .shadow(
                                         color: AppConfig.Colors.accent.opacity(0.3), radius: 10,
                                         x: 0, y: 5)
-                            } else if let urlString = viewModel.googleUser?.profileImageURL,
+                            } else if let urlString = viewModel.socialUser?.profileImageURL,
                                 let url = URL(string: urlString)
                             {
                                 AsyncImage(url: url) { image in
@@ -198,33 +198,33 @@ struct familySignupView: View {
 
     var detailsForm: some View {
         VStack(spacing: 20) {
-            if viewModel.googleUser != nil {
+            if viewModel.socialUser != nil {
                 importedIdentitySummary
-            } else {
+            }
+
+            AestheticInput(
+                icon: "envelope.fill",
+                placeholder: "Email",
+                text: $viewModel.email,
+                isPasswordVisible: .constant(false)
+            )
+            .disabled(true)
+            .opacity(0.8)
+
+            HStack(spacing: 12) {
                 AestheticInput(
-                    icon: "envelope.fill",
-                    placeholder: "Email",
-                    text: $viewModel.email,
+                    icon: "person.fill",
+                    placeholder: "First Name",
+                    text: $viewModel.firstName,
                     isPasswordVisible: .constant(false)
                 )
-                .disabled(true)
-                .opacity(0.8)
 
-                HStack(spacing: 12) {
-                    AestheticInput(
-                        icon: "person.fill",
-                        placeholder: "First Name",
-                        text: $viewModel.firstName,
-                        isPasswordVisible: .constant(false)
-                    )
-
-                    AestheticInput(
-                        icon: "",
-                        placeholder: "Last Name",
-                        text: $viewModel.lastName,
-                        isPasswordVisible: .constant(false)
-                    )
-                }
+                AestheticInput(
+                    icon: "",
+                    placeholder: "Last Name",
+                    text: $viewModel.lastName,
+                    isPasswordVisible: .constant(false)
+                )
             }
 
             // Phone
@@ -292,8 +292,13 @@ struct familySignupView: View {
     }
 
     var importedIdentitySummary: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Label("Imported from Google", systemImage: "person.crop.circle")
+        let providerName = viewModel.socialUser?.provider.displayName ?? "social login"
+        let providerIcon = viewModel.socialUser?.provider == .apple ? "applelogo" : "person.crop.circle"
+        let importedName = "\(viewModel.socialUser?.firstName ?? "") \(viewModel.socialUser?.lastName ?? "")"
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return VStack(alignment: .leading, spacing: 12) {
+            Label("Imported from \(providerName)", systemImage: providerIcon)
                 .font(AppConfig.Fonts.bodyBold)
                 .foregroundColor(AppConfig.Colors.textPrimary)
 
@@ -301,7 +306,7 @@ struct familySignupView: View {
                 Text("Name")
                     .font(AppConfig.Fonts.small)
                     .foregroundColor(AppConfig.Colors.textSecondary)
-                Text("\(viewModel.resolvedFirstName) \(viewModel.resolvedLastName)".trimmingCharacters(in: .whitespaces))
+                Text(importedName.isEmpty ? "No name was shared with \(providerName)." : importedName)
                     .font(AppConfig.Fonts.body)
                     .foregroundColor(AppConfig.Colors.textPrimary)
 
@@ -322,7 +327,7 @@ struct familySignupView: View {
                     .stroke(AppConfig.Colors.stroke, lineWidth: 1)
             )
 
-            Text("We use the account details Google already shared to finish your family profile.")
+            Text("We'll keep the imported email from \(providerName), and you can edit the name before continuing.")
                 .font(AppConfig.Fonts.small)
                 .foregroundColor(AppConfig.Colors.textSecondary)
         }
@@ -331,11 +336,13 @@ struct familySignupView: View {
 
 #Preview {
     familySignupView(
-        googleUser: GoogleUserData(
+        socialUser: SocialUserData(
+            uid: "social-uid",
             email: "test@gmail.com",
             firstName: "Test",
             lastName: "User",
-            profileImageURL: nil),
+            profileImageURL: nil,
+            provider: .google),
         patientDocumentId: "123", patientUID: "123456"
     )
     .environmentObject(AppState())

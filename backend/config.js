@@ -37,6 +37,9 @@ export default {
         //journal
         journalEntries_SubCollection: 'journal_entries',
 
+        // daily mood
+        dailyMood_SubCollection: 'daily_moods',
+
         //games
         gameSessions_SubCollection: 'game_sessions',
 

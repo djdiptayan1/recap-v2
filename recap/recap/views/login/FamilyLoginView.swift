@@ -215,7 +215,7 @@ struct FamilyLoginView: View {
         }
         .sheet(isPresented: $viewModel.showSignupSheet) {
             familySignupView(
-                googleUser: viewModel.pendingGoogleUser,
+                socialUser: viewModel.pendingSocialUser,
                 patientDocumentId: viewModel.patientDocumentId,
                 patientUID: viewModel.patientUID
             )
@@ -281,11 +281,13 @@ struct FamilyLoginView: View {
                         }
                     } else {
                         await MainActor.run {
-                            viewModel.pendingGoogleUser = GoogleUserData(
+                            viewModel.pendingSocialUser = SocialUserData(
+                                uid: result.user.uid,
                                 email: result.email,
                                 firstName: result.firstName,
                                 lastName: result.lastName,
-                                profileImageURL: result.user.photoURL?.absoluteString
+                                profileImageURL: result.user.photoURL?.absoluteString,
+                                provider: .apple
                             )
                             viewModel.showSignupSheet = true
                         }
@@ -294,11 +296,13 @@ struct FamilyLoginView: View {
                     if case .httpError(let statusCode) = error, statusCode == 404 {
                         await MainActor.run {
                             if let currentUser = Auth.auth().currentUser {
-                                viewModel.pendingGoogleUser = GoogleUserData(
+                                viewModel.pendingSocialUser = SocialUserData(
+                                    uid: currentUser.uid,
                                     email: appleAuthResult?.email ?? currentUser.email ?? "",
                                     firstName: appleAuthResult?.firstName ?? "",
                                     lastName: appleAuthResult?.lastName ?? "",
-                                    profileImageURL: currentUser.photoURL?.absoluteString
+                                    profileImageURL: currentUser.photoURL?.absoluteString,
+                                    provider: .apple
                                 )
                             }
                             viewModel.showSignupSheet = true

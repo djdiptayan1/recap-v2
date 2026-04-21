@@ -7,14 +7,30 @@
 import SwiftUI
 
 struct home_family: View {
+    @EnvironmentObject var appState: AppState
     @StateObject private var reminderViewModel = ReminderViewModel()
     @State private var showProfile = false
+
+    private var patientId: String {
+        KeychainManager.shared.getString(key: .patientDocumentID) ?? ""
+    }
+
+    private var patientName: String {
+        let linked = appState.currentUser?.linkedPatient
+        let full = "\(linked?.firstName ?? "") \(linked?.lastName ?? "")"
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return full.isEmpty ? "patient" : full
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 24) {
                     QuestionsCard()
                     StreaksCard()
+                    if !patientId.isEmpty {
+                        MoodInsightsCard(patientId: patientId, patientName: patientName)
+                    }
                     MemoryAnalyticsCard()
                 }
                 .padding(AppConfig.UI.screenPadding - 10)

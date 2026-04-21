@@ -39,6 +39,7 @@ struct AnalyticsDashboardData: Codable {
     let overallSummary: OverallSummary?
     let categoryBreakdown: [CategoryBreakdown]?
     let engagementHeatmap: [EngagementDay]?
+    let moodSummary: MoodAnalyticsSummary?
 }
 
 struct DailyAnalytics: Codable {
@@ -107,6 +108,22 @@ struct EngagementDay: Codable, Identifiable {
     let score: Double
 }
 
+struct MoodAnalyticsSummary: Codable {
+    let latest: DailyMoodEntry?
+    let weekly: [MoodTrendPoint]
+    let averageScoreLast7: Double?
+    let loggedDaysLast7: Int
+}
+
+struct MoodTrendPoint: Codable, Identifiable {
+    var id: String { dateKey }
+    let dateKey: String
+    let label: String
+    let moodKey: DailyMoodKey
+    let moodLabel: String
+    let score: Double?
+}
+
 // MARK: - API Endpoint
 
 private enum AnalyticsAPI: Endpoint {
@@ -151,6 +168,7 @@ class AnalyticsViewModel: ObservableObject {
     @Published var overallSummary: OverallSummary?
     @Published var categoryBreakdown: [CategoryBreakdown] = []
     @Published var engagementHeatmap: [EngagementDay] = []
+    @Published var moodSummary: MoodAnalyticsSummary?
     @Published var memoryReports: [MemoryReport] = []
     @Published var gamesOverview: GameOverallSummary?
     @Published var gameBreakdown: [GameAggregate] = []
@@ -214,6 +232,9 @@ class AnalyticsViewModel: ObservableObject {
 
                     // Engagement heatmap
                     self.engagementHeatmap = data.engagementHeatmap ?? []
+
+                    // Mood trend
+                    self.moodSummary = data.moodSummary
                 } else {
                     self.errorMessage = "Failed to fetch analytics"
                 }

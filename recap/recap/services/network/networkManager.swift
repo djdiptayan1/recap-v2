@@ -16,7 +16,8 @@ final class NetworkManager {
 
     func request<T: Decodable>(
         endpoint: Endpoint, responseType: T.Type = T.self,
-        keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy = .convertFromSnakeCase
+        keyDecodingStrategy: JSONDecoder.KeyDecodingStrategy = .convertFromSnakeCase,
+        timeoutSeconds: TimeInterval = 20
     ) async throws -> T {
 
         var urlComponents = URLComponents(string: endpoint.baseURL + endpoint.path)
@@ -29,6 +30,7 @@ final class NetworkManager {
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
         request.allHTTPHeaderFields = endpoint.headers
+        request.timeoutInterval = timeoutSeconds
 
         if let body = endpoint.body {
             if let dataBody = body as? Data {

@@ -16,7 +16,7 @@ struct QuestionPerformanceTool: Tool {
     @Generable
     struct Arguments {
         @Guide(description: "Include answered status details")
-        var includeAnsweredState: Bool
+        var includeAnsweredState: Bool?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -34,7 +34,8 @@ struct QuestionPerformanceTool: Tool {
         let categories = Dictionary(grouping: response.data, by: { $0.category }).mapValues { $0.count }
         let categorySummary = categories.map { "\($0.key): \($0.value)" }.sorted().joined(separator: ", ")
 
-        if arguments.includeAnsweredState {
+        let includeAnsweredState = arguments.includeAnsweredState ?? false
+        if includeAnsweredState {
             return "Questions total: \(total), unanswered: \(unanswered). Category distribution: \(categorySummary)."
         }
         return "Questions total: \(total). Category distribution: \(categorySummary)."

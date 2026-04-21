@@ -15,8 +15,8 @@ struct JournalSummaryTool: Tool {
 
     @Generable
     struct Arguments {
-        @Guide(description: "Maximum number of recent entries to summarize", .range(1...10))
-        var limit: Int
+        @Guide(description: "Maximum number of recent entries to summarize")
+        var limit: Int?
     }
 
     func call(arguments: Arguments) async throws -> String {
@@ -24,12 +24,13 @@ struct JournalSummaryTool: Tool {
             throw SmritiToolError.missingIdentity
         }
 
+        let limit = max(1, arguments.limit ?? 5)
         let response: JournalResponse = try await NetworkManager.shared.request(
-            endpoint: FoundationToolAPI.journal(patientId: patientId, limit: max(1, arguments.limit)),
+            endpoint: FoundationToolAPI.journal(patientId: patientId, limit: limit),
             keyDecodingStrategy: .useDefaultKeys
         )
 
-        let entries = response.data.prefix(max(1, arguments.limit)).map { entry in
+        let entries = response.data.prefix(limit).map { entry in
             let title = (entry.title?.isEmpty == false) ? entry.title! : "Untitled"
             let mood = entry.mood ?? "unknown mood"
             return "\(title) [\(mood)]"

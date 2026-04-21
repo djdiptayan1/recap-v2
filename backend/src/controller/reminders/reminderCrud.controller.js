@@ -74,6 +74,11 @@ export async function editReminder(req, res, next) {
 
         const reminderRef = getReminderRef(patientId, reminderId);
 
+        const checkSnap = await getDoc(reminderRef);
+        if (!checkSnap.exists()) {
+            return res.status(404).json({ success: false, error: 'Reminder not found' });
+        }
+
         await updateDoc(reminderRef, { ...updateData, updatedAt: serverTimestamp() });
         const snap = await getDoc(reminderRef);
 
@@ -93,6 +98,12 @@ export async function deleteReminder(req, res, next) {
         const { patientId, reminderId } = req.body;
 
         const reminderRef = getReminderRef(patientId, reminderId);
+        
+        const checkSnap = await getDoc(reminderRef);
+        if (!checkSnap.exists()) {
+            return res.status(404).json({ success: false, error: 'Reminder not found' });
+        }
+
         await deleteDoc(reminderRef);
 
         return res.status(200).json({ success: true, message: 'Reminder deleted successfully' });
