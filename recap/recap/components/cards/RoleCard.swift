@@ -58,6 +58,10 @@ struct RoleCard<Destination: View>: View {
 //             )
         }
         .buttonStyle(ScaleButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityHint(description)
+        .accessibilityInputLabels([title.lowercased(), "role", "continue"])
     }
 }
 

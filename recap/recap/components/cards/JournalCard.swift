@@ -96,5 +96,14 @@ struct JournalCard: View {
             x: 0,
             y: AppConfig.UI.cardShadowOffsetY
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityTitle)
+        .accessibilityHint("Opens the journal entry")
+        .accessibilityInputLabels([accessibilityTitle.lowercased(), "journal entry", "memory"])
+    }
+
+    private var accessibilityTitle: String {
+        if let title = entry.title, !title.isEmpty { return title }
+        return entry.isMemory ? "Memory entry" : "Journal entry"
     }
 }

@@ -205,6 +205,9 @@ struct LearnMoreArticleCard: View {
             .cornerRadius(20)
             .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 5)
         }
+        .accessibilityLabel(title)
+        .accessibilityHint("Opens the article details")
+        .accessibilityInputLabels([title.lowercased(), "article", "learn more"])
         .buttonStyle(PlainButtonStyle())
         .sheet(isPresented: $showDetail) {
             ArticleDetailSheet(
@@ -292,6 +295,7 @@ struct ArticleDetailSheet: View {
                     }
                     .tint(accentColor)
                     .symbolEffect(.drawOn.byLayer, options: .nonRepeating)
+                    .accessibilityInputLabels(["dismiss", "close", "done"])
                 }
             }
         }
@@ -334,6 +338,9 @@ struct ExpandableScienceCard: View {
                 .padding(16)
             }
             .buttonStyle(PlainButtonStyle())
+            .accessibilityLabel(title)
+            .accessibilityHint(isExpanded ? "Collapses the section" : "Expands the section")
+            .accessibilityInputLabels([title.lowercased(), "expand", "details"])
 
             if isExpanded {
                 Divider().padding(.horizontal, 16)

@@ -16,6 +16,7 @@ struct privaryPolicy: View {
         // NavigationStack {
             ZStack {
                 WebView(page)
+                    .accessibilityLabel("Privacy policy page")
                     .ignoresSafeArea(.all)
                 if page.isLoading {
                     ProgressView(value: page.estimatedProgress)
@@ -23,6 +24,7 @@ struct privaryPolicy: View {
                         .scaleEffect(1.5)
                         .background(Color.white.opacity(0.8))
                         .cornerRadius(10)
+                        .accessibilityLabel("Loading privacy policy page")
                 }
             }
             .navigationTitle("Privacy Policy")

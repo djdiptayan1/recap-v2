@@ -37,6 +37,7 @@ struct OTPInputView: View {
                     .animation(.easeInOut(duration: 0.1), value: text)
                 }
             }
+            .accessibilityHidden(true)
             
             TextField("", text: $text)
                 .focused($isFocused)
@@ -47,6 +48,10 @@ struct OTPInputView: View {
                 .accentColor(.clear)
                 .foregroundColor(.clear)
                 .frame(width: 340, height: 56)
+                .accessibilityLabel("One-time code")
+                .accessibilityValue(text.isEmpty ? "No digits entered" : "\(text.count) of \(length) digits entered")
+                .accessibilityHint("Enter the verification code sent to your device")
+                .accessibilityInputLabels(["one-time code", "verification code", "code", "otp"])
                 .onAppear {
                     DispatchQueue.main.async {
                         isFocused = true

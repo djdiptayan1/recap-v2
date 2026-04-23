@@ -74,6 +74,7 @@ struct DailyMoodSheet: View {
                 Button("Close", systemImage: "chevron.backward") {
                     dismiss()
                 }
+                .accessibilityInputLabels(["close", "dismiss", "back"])
             }
         }
         .alert("Unable to Save Mood", isPresented: $showAlert) {
@@ -88,6 +89,10 @@ struct DailyMoodSheet: View {
             VStack(spacing: 14) {
                 Slider(value: $sliderValue, in: 0...4, step: 0.05)
                     .tint(.white)
+                    .accessibilityLabel("Mood slider")
+                    .accessibilityValue(selectedMood.displayName)
+                    .accessibilityHint("Adjusts how you're feeling today")
+                    .accessibilityInputLabels(["mood", "feeling", "slider"])
                     .onChange(of: sliderValue) { _, newValue in
                         let nextMood = DailyMoodKey(score: newValue)
                         guard nextMood != selectedMood else { return }
@@ -133,6 +138,7 @@ struct DailyMoodSheet: View {
             .animation(.easeInOut, value: selectedMood)
         }
         .disabled(isSaving)
+        .accessibilityInputLabels(["log mood", "save mood", "submit"])
     }
 
     private func saveMood() async {

@@ -62,6 +62,7 @@ struct familyQuestionMain: View {
                                         color: AppConfig.Colors.accent
                                     )
                                 }
+                                .accessibilityInputLabels(["answer questions", "daily questions", "check in"])
                             } else {
                                 QuestionOptionCard(
                                     title: "Answer Questions",
@@ -82,6 +83,7 @@ struct familyQuestionMain: View {
                                         color: AppConfig.Colors.success
                                     )
                                 }
+                                .accessibilityInputLabels(["add question", "new question", "question bank"])
                             } else {
                                 // Fallback or disabled state if no linked patient
                                 QuestionOptionCard(
@@ -103,6 +105,7 @@ struct familyQuestionMain: View {
                                         color: Color.orange
                                     )
                                 }
+                                .accessibilityInputLabels(["edit questions", "question bank", "manage questions"])
                             } else {
                                 QuestionOptionCard(
                                     title: "Edit Question Bank",
@@ -171,6 +174,10 @@ struct QuestionOptionCard: View {
         //                .stroke(AppConfig.Colors.stroke, lineWidth: 1)
         //        )
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
+        .accessibilityInputLabels([title.lowercased(), "questions", "check in"])
     }
 }
 

@@ -22,6 +22,7 @@ struct WordAssociationCompletionOverlay: View {
                     .font(.system(size: 60))
                     .foregroundColor(.yellow)
                     .shadow(radius: 5)
+                    .accessibilityHidden(true)
 
                 Text("Well Done!")
                     .font(AppConfig.Fonts.titleMedium)
@@ -54,6 +55,7 @@ struct WordAssociationCompletionOverlay: View {
                     }
                 }
             }
+            .accessibilityElement(children: .combine)
             .padding(40)
             .background(Color.white)
             .cornerRadius(24)

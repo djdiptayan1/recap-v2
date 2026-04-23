@@ -23,6 +23,9 @@ struct MemoryQuizHistoryListView: View {
                             .foregroundColor(AppConfig.Colors.textSecondary)
                     }
                 }
+                .accessibilityLabel("Open memory quiz result")
+                .accessibilityHint("Opens quiz details for \(report.formattedDate)")
+                .accessibilityInputLabels(["open memory quiz", "open result", "quiz result"])
                 // .listRowBackground(Color.clear)
                 // .listRowSeparator(.hidden)
             }

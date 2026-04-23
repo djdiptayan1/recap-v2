@@ -25,6 +25,7 @@ struct ArticleDetailView: View {
                         .scaledToFill()
                         .frame(width: geometry.size.width, height: 300)
                         .clipped()
+                        .accessibilityHidden(true)
                 }
                 .frame(height: 300)
                 VStack(alignment: .leading, spacing: 20) {
@@ -80,6 +81,7 @@ struct ArticleDetailView: View {
                         .cornerRadius(AppConfig.UI.cornerRadius)
                         .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
                     }
+                    .accessibilityInputLabels(["open article", "read more", "website"])
                     .padding(.top, 10)
                 }
                 .padding(AppConfig.UI.screenPadding - 10)

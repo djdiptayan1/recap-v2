@@ -135,6 +135,9 @@ struct ProfileView: View {
                                 .background(AppConfig.Colors.accent)
                                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                             }
+                            .accessibilityLabel("Copy patient ID")
+                            .accessibilityHint("Copies your patient ID to clipboard")
+                            .accessibilityInputLabels(["copy id", "copy patient id", "patient id"])
                         }
                         .padding(20)
                         //                    .background(Color.white)
@@ -205,6 +208,7 @@ struct ProfileView: View {
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
+                                .accessibilityInputLabels(["my family", "family members", "open family"])
 
                                 Divider().padding(.leading, 50)
 
@@ -234,6 +238,7 @@ struct ProfileView: View {
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
+                                .accessibilityInputLabels(["medical citations", "citations", "view sources"])
 
                                 Divider().padding(.leading, 50)
 
@@ -257,6 +262,7 @@ struct ProfileView: View {
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
+                                .accessibilityInputLabels(["privacy policy", "privacy", "open privacy policy"])
 
                                 Divider().padding(.leading, 50)
 
@@ -280,6 +286,7 @@ struct ProfileView: View {
                                     }
                                     .padding(AppConfig.UI.screenPadding - 10)
                                 }
+                                .accessibilityInputLabels(["support", "help", "open support"])
 
                                 Divider().padding(.leading, 50)
 
@@ -300,6 +307,9 @@ struct ProfileView: View {
                                     }
                                     .padding(16)
                                 }
+                                .accessibilityLabel("Delete account")
+                                .accessibilityHint("Starts permanent account deletion")
+                                .accessibilityInputLabels(["delete account", "remove account"])
                             }
                             //                        .background(Color.white)
                             .glassEffect(.regular, in: .rect)
@@ -325,6 +335,7 @@ struct ProfileView: View {
                                         .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                                 )
                         }
+                            .accessibilityInputLabels(["log out", "sign out"])
                         .padding(AppConfig.UI.padding)
                         .padding(.bottom, 30)
                     }
@@ -364,6 +375,7 @@ struct ProfileView: View {
             }
             .alert("Confirm Deletion", isPresented: $showDeleteConfirmation) {
                 TextField("Type DELETE to confirm", text: $deleteConfirmationText)
+                    .accessibilityInputLabels(["delete confirmation", "type delete", "confirm deletion"])
                 Button("Cancel", role: .cancel) {
                     deleteConfirmationText = ""
                 }
@@ -459,6 +471,8 @@ struct InfoTile: View {
         .glassEffect(.regular, in: .rect)
         .cornerRadius(AppConfig.UI.cornerRadius)
         .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(title), \(value)")
     }
 }
 
@@ -496,6 +510,8 @@ struct SettingsRow: View {
             }
             .padding(AppConfig.UI.screenPadding - 10)
         }
+        .accessibilityLabel(subtitle == nil ? title : "\(title), \(subtitle!)")
+        .accessibilityInputLabels([title])
     }
 }
 

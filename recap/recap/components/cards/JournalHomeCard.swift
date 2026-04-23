@@ -61,6 +61,10 @@ struct JournalHomeCard: View {
                 x: 0,
                 y: AppConfig.UI.cardShadowOffsetY
             )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("My Journal")
+            .accessibilityHint("Opens your journal")
+            .accessibilityInputLabels(["journal", "my journal", "write journal"])
         }
         .buttonStyle(PlainButtonStyle())
     }

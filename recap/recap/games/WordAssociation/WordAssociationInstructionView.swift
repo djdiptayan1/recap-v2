@@ -25,6 +25,7 @@ struct WordAssociationInstructionView: View {
                 Text("💬")
                     .font(.system(size: 58))
             }
+            .accessibilityHidden(true)
 
             Text("Word Link")
                 .font(AppConfig.Fonts.titleLarge)
@@ -57,6 +58,9 @@ struct WordAssociationInstructionView: View {
                     .shadow(color: Color(hex: "7B4FD9").opacity(0.4), radius: 10, x: 0, y: 5)
             }
             .padding(.top, 20)
+            .accessibilityLabel("Start Word Link")
+            .accessibilityHint("Begins the category word selection game")
+            .accessibilityInputLabels(["start game", "word link", "let's play"])
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 //        .standardBackground()
@@ -72,6 +76,7 @@ private struct InstructionBullet: View {
             Image(systemName: icon)
                 .foregroundColor(Color(hex: "7B4FD9"))
                 .font(.system(size: 22, weight: .bold))
+                .accessibilityHidden(true)
             Text(text)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(AppConfig.Colors.textSecondary)

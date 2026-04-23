@@ -53,6 +53,7 @@ struct MoodInsightsCard: View {
                                 .stroke(.white.opacity(0.9), lineWidth: 1)
                         )
                         .shadow(color: palette.primary.opacity(0.28), radius: 10, x: 0, y: 5)
+                        .accessibilityHidden(true)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(todayEntry.label)
@@ -67,6 +68,9 @@ struct MoodInsightsCard: View {
                     Spacer()
                 }
                 .padding(16)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Today's mood")
+                .accessibilityValue(todayEntry.label)
             } else {
                 Text("No mood has been logged today yet.")
                     .font(AppConfig.Fonts.body)
@@ -101,6 +105,9 @@ struct MoodInsightsCard: View {
             .clear.tint(activePalette.primary.opacity(0.6)),
             in: .rect(cornerRadius: AppConfig.UI.cornerRadius)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Today's mood")
+        .accessibilityHint("Shows the latest mood check-in")
         .task(id: patientId) {
             await viewModel.refresh(patientId: patientId)
         }

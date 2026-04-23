@@ -65,6 +65,10 @@ struct LetsReadCard: View {
                 x: 0,
                 y: AppConfig.UI.cardShadowOffsetY
             )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Let's Read")
+            .accessibilityHint("Opens the articles list")
+            .accessibilityInputLabels(["lets read", "articles", "read"])
             //            .overlay(
             //                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
             //                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)

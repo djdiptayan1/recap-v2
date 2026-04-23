@@ -15,6 +15,7 @@ struct RoundSummaryView: View {
         VStack(spacing: 24) {
             Text("⭐️")
                 .font(.system(size: 80))
+                .accessibilityHidden(true)
 
             Text("Round Complete!")
                 .font(AppConfig.Fonts.titleLarge)
@@ -63,6 +64,9 @@ struct RoundSummaryView: View {
             }
             .padding(.horizontal, 40)
             .padding(.top, 10)
+            .accessibilityLabel("Next round")
+            .accessibilityHint("Moves to the next set of objects")
+            .accessibilityInputLabels(["next round", "continue", "keep going"])
         }
     }
 }

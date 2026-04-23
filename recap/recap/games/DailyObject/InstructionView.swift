@@ -25,6 +25,7 @@ struct InstructionView: View {
                 Text("🏠")
                     .font(.system(size: 58))
             }
+            .accessibilityHidden(true)
 
             Text("Daily Objects")
                 .font(AppConfig.Fonts.titleLarge)
@@ -59,6 +60,9 @@ struct InstructionView: View {
                     .shadow(color: Color(hex: "43C57A").opacity(0.4), radius: 10, x: 0, y: 5)
             }
             .padding(.top, 20)
+            .accessibilityLabel("Start Daily Objects")
+            .accessibilityHint("Begins the memory game")
+            .accessibilityInputLabels(["start game", "let's play", "daily objects"])
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 //        .standardBackground()
@@ -74,6 +78,7 @@ private struct DOBullet: View {
             Image(systemName: icon)
                 .foregroundColor(color)
                 .font(.system(size: 22, weight: .bold))
+                .accessibilityHidden(true)
             Text(text)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(AppConfig.Colors.textSecondary)

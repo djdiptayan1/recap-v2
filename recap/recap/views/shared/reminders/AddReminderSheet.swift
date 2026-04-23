@@ -21,11 +21,34 @@ struct AddReminderSheet: View {
     @State private var categoryDetailsValues: [String: String] = [:]
     @State private var isHydratingFromReminder = false
 
+    private func reminderFieldInputLabels(_ label: String, fallback: String? = nil) -> [LocalizedStringKey] {
+        var labels: [LocalizedStringKey] = [LocalizedStringKey(label)]
+        if let fallback, !fallback.isEmpty {
+            labels.append(LocalizedStringKey(fallback))
+        }
+
+        let lowercased = label.lowercased()
+        if lowercased.contains("title") {
+            labels.append(contentsOf: ["reminder title", "name"])
+        }
+        if lowercased.contains("time") {
+            labels.append(contentsOf: ["reminder time", "when"])
+        }
+        if lowercased.contains("notes") {
+            labels.append(contentsOf: ["reminder notes", "details"])
+        }
+
+        return labels
+    }
+
     var body: some View {
         NavigationView {
             Form {
                 Section(header: Text("Details")) {
                     TextField("Title", text: $title)
+                        .accessibilityLabel("Reminder title")
+                        .accessibilityHint("Enter the name of the reminder")
+                        .accessibilityInputLabels(reminderFieldInputLabels("Reminder title", fallback: "title"))
 
                     Picker("Category", selection: $selectedCategory) {
                         ForEach(ReminderCategory.allCases) { category in
@@ -57,6 +80,8 @@ struct AddReminderSheet: View {
                                 } label: {
                                     Label(field.label, systemImage: field.icon)
                                 }
+                                .accessibilityLabel(field.label)
+                                .accessibilityInputLabels(reminderFieldInputLabels(field.label, fallback: field.placeholder))
                             } else {
                                 HStack {
                                     Label(field.label, systemImage: field.icon)
@@ -66,6 +91,8 @@ struct AddReminderSheet: View {
                                         set: { categoryDetailsValues[field.key] = $0 }
                                     ))
                                     .multilineTextAlignment(.trailing)
+                                    .accessibilityLabel(field.label)
+                                    .accessibilityInputLabels(reminderFieldInputLabels(field.label, fallback: field.placeholder))
                                 }
                             }
                         }
@@ -74,11 +101,16 @@ struct AddReminderSheet: View {
 
                 Section(header: Text("When to Remind")) {
                     DatePicker("Reminder Time", selection: $time, displayedComponents: .hourAndMinute)
+                        .accessibilityLabel("Reminder time")
+                        .accessibilityInputLabels(reminderFieldInputLabels("Reminder time", fallback: "time"))
                 }
 
                 Section(header: Text("Notes (optional)")) {
                     TextEditor(text: $notes)
                         .frame(height: 100)
+                        .accessibilityLabel("Reminder notes")
+                        .accessibilityHint("Optional additional details for this reminder")
+                        .accessibilityInputLabels(reminderFieldInputLabels("Reminder notes", fallback: "notes"))
                 }
             }
             .navigationTitle(reminderToEdit != nil ? "Edit Reminder" : "New Reminder")

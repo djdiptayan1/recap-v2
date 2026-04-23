@@ -31,6 +31,7 @@ struct FamilyCard: View {
                     .scaledToFill()
                     .frame(width: geo.size.width, height: geo.size.height)
                     .clipped()
+                    .accessibilityHidden(true)
             }
             
             // 2. Gradient Overlay (Improved visibility)
@@ -82,6 +83,9 @@ struct FamilyCard: View {
                         )
                         .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
+                .accessibilityLabel("Call \(member.name)")
+                .accessibilityHint("Starts a phone call")
+                .accessibilityInputLabels(["call", member.name.lowercased(), member.relation.lowercased()])
             }
             .padding(16)
         }
@@ -90,6 +94,11 @@ struct FamilyCard: View {
         .cornerRadius(AppConfig.UI.cornerRadius)
         // Soft Shadow to lift card off background
         .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 5)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(member.name)
+        .accessibilityValue(member.relation)
+        .accessibilityHint("Family contact card")
+        .accessibilityInputLabels([member.name.lowercased(), member.relation.lowercased(), "family member"])
     }
 }
 

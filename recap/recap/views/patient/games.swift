@@ -28,6 +28,9 @@ struct games: View {
                                     GamesCard(game: game)
                                 }
                                 .buttonStyle(ScaleButtonStyle())
+                                .accessibilityLabel("Open \(game.name)")
+                                .accessibilityHint("Starts the \(game.name) game")
+                                .accessibilityInputLabels(["open \(game.name.lowercased())", game.name.lowercased(), "play \(game.name.lowercased())"])
                             }
                         }
                     }

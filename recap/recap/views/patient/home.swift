@@ -69,6 +69,9 @@ struct home: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(AppConfig.Colors.accent)
                     }
+                    .accessibilityLabel("Open profile")
+                    .accessibilityHint("Shows your profile and account settings")
+                    .accessibilityInputLabels(["profile", "account", "settings"])
                 }
             }
             .sheet(isPresented: $showProfile) {
@@ -157,6 +160,9 @@ struct home: View {
                         .background(AppConfig.Colors.accent)
                         .cornerRadius(AppConfig.UI.buttonCornerRadius)
                 }
+                    .accessibilityLabel("Open today's question")
+                    .accessibilityHint("Opens today's question flow")
+                    .accessibilityInputLabels(["open today's question", "open question", "today's question", "question"])
 
                 NavigationLink(destination: remindersView(viewModel: reminderViewModel)) {
                     Text("Reminders")
@@ -170,6 +176,9 @@ struct home: View {
                                 .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                         )
                 }
+                .accessibilityLabel("Open reminders")
+                .accessibilityHint("Opens your reminders list")
+                .accessibilityInputLabels(["open reminders", "open reminder", "reminders", "reminder"])
             }
         }
         .padding(20)
@@ -213,6 +222,9 @@ struct home: View {
                     todayMoodCard
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Log today's mood")
+                .accessibilityHint("Opens the mood check-in screen")
+                .accessibilityInputLabels(["mood", "log mood", "check in", "how am I feeling"])
             }
             .padding(18)
 //            .background(
@@ -354,6 +366,9 @@ struct home: View {
                 .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Open today's game")
+            .accessibilityHint("Opens the recommended game for today")
+            .accessibilityInputLabels(["open today's game", "open game", "today's game", "play game"])
         }
     }
 

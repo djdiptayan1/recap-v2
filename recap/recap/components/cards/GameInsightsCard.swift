@@ -53,6 +53,9 @@ struct GameInsightsCard: View {
         }
         .padding(18)
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Game insights")
+        .accessibilityHint("Shows recent game activity and trends")
     }
 
     private func statPill(title: String, value: String) -> some View {
@@ -70,5 +73,8 @@ struct GameInsightsCard: View {
         .padding(12)
         .background(AppConfig.Colors.card.opacity(0.9))
         .cornerRadius(14)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
     }
 }

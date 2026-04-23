@@ -23,6 +23,7 @@ struct ArticlesView: View {
                         NavigationLink(destination: ArticleDetailView(article: article)) {
                             ArticleCard(article: article)
                         }
+                        .accessibilityInputLabels([article.title.lowercased(), "read article", "open article"])
                         .buttonStyle(PlainButtonStyle())
                     }
                 }

@@ -18,6 +18,7 @@ struct PatternMemoryInstructionView: View {
                 .foregroundColor(AppConfig.Colors.accent)
                 .padding(30)
                 .background(Circle().fill(AppConfig.Colors.accent.opacity(0.1)))
+                .accessibilityHidden(true)
 
             Text("Pattern Memory")
                 .font(AppConfig.Fonts.titleLarge)
@@ -44,6 +45,9 @@ struct PatternMemoryInstructionView: View {
                     .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
             }
             .padding(.top, 20)
+            .accessibilityLabel("Start Pattern Memory")
+            .accessibilityHint("Begins the repeating tile sequence game")
+            .accessibilityInputLabels(["start game", "pattern memory", "start pattern memory"])
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 //        .standardBackground()
@@ -59,6 +63,7 @@ private struct PMInstructionBullet: View {
             Image(systemName: icon)
                 .foregroundColor(AppConfig.Colors.accent)
                 .font(.system(size: 20, weight: .bold))
+                .accessibilityHidden(true)
             Text(text)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(AppConfig.Colors.textSecondary)

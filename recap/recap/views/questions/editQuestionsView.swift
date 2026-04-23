@@ -11,6 +11,10 @@ struct editQuestionsView: View {
     let patientID: String
     @StateObject private var viewModel = EditQuestionsViewModel()
 
+    private func questionInputLabels(_ labels: String...) -> [LocalizedStringKey] {
+        labels.map { LocalizedStringKey($0) }
+    }
+
     // Deletion State
     @State private var questionToDelete: QuestionModel?
     @State private var showDeleteConfirmation = false
@@ -60,6 +64,7 @@ struct editQuestionsView: View {
                                 }
                                 .padding(.vertical, 4)
                             }
+                            .accessibilityInputLabels(questionInputLabels(question.text.lowercased(), "question", "edit question"))
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     HapticManager.shared.trigger(.warning)
@@ -148,15 +153,18 @@ struct QuestionDetailEditView: View {
             Section(header: Text("Question Details")) {
                 TextField("Question Text", text: $questionText, axis: .vertical)
                     .font(AppConfig.Fonts.body)
+                    .accessibilityInputLabels(questionInputLabels("question text", "question", "prompt"))
 
                 TextField("Hint (Optional)", text: $hint)
                     .font(AppConfig.Fonts.body)
+                    .accessibilityInputLabels(questionInputLabels("hint", "question hint", "help text"))
 
                 Toggle("Active Question", isOn: $isActive)
                     .tint(AppConfig.Colors.accent)
                     .onChange(of: isActive) { _ in
                         HapticManager.shared.trigger(.selection)
                     }
+                    .accessibilityInputLabels(questionInputLabels("active question", "enabled", "toggle question"))
             }
 
             Section(
@@ -183,6 +191,7 @@ struct QuestionDetailEditView: View {
                                     ? AppConfig.Colors.success : AppConfig.Colors.textSecondary)
                         }
                         .buttonStyle(PlainButtonStyle())
+                        .accessibilityInputLabels(questionInputLabels(answerOptions[index].lowercased(), "option", "answer option"))
 
                         TextField(
                             "Option \(index + 1)",
@@ -195,6 +204,7 @@ struct QuestionDetailEditView: View {
                                     answerOptions[index] = newValue
                                 }
                             ))
+                            .accessibilityInputLabels(questionInputLabels("option \(index + 1)", "answer option", "choice"))
                     }
                     .swipeActions(edge: .trailing) {
                         if answerOptions.count > 2 {
@@ -211,6 +221,7 @@ struct QuestionDetailEditView: View {
                 Button("Add Option") {
                     answerOptions.append("")
                 }
+                .accessibilityInputLabels(questionInputLabels("add option", "new option", "plus"))
             }
 
             Section {
@@ -225,6 +236,7 @@ struct QuestionDetailEditView: View {
                 }
                 .listRowBackground(AppConfig.Colors.alert.opacity(0.1))  // Subtle background hint
                 .foregroundColor(AppConfig.Colors.alert)
+                .accessibilityInputLabels(questionInputLabels("delete question", "remove question", "trash"))
             }
         }
         .navigationTitle("Edit Question")
@@ -245,6 +257,7 @@ struct QuestionDetailEditView: View {
                     }
                 }
                 .disabled(viewModel.isLoading)
+                .accessibilityInputLabels(questionInputLabels("save", "save question", "update question"))
             }
         }
         .onChange(of: viewModel.isSuccess) { success in

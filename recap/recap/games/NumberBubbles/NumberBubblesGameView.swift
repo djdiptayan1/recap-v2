@@ -61,6 +61,9 @@ struct NumberBubblesGameView: View {
                 .background(Color.white)
                 .cornerRadius(16)
                 .shadow(color: Color.black.opacity(0.07), radius: 4, x: 0, y: 2)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Time remaining")
+                .accessibilityValue("\(viewModel.timeRemaining) seconds")
 
                 Spacer()
 
@@ -71,6 +74,9 @@ struct NumberBubblesGameView: View {
                     .padding(.horizontal, 14)
                     .background(bubblesAccent)
                     .cornerRadius(16)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Level")
+                    .accessibilityValue("\(viewModel.level)")
 
                 Spacer()
 
@@ -86,6 +92,9 @@ struct NumberBubblesGameView: View {
                 .background(Color.white)
                 .cornerRadius(16)
                 .shadow(color: Color.black.opacity(0.07), radius: 4, x: 0, y: 2)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Score")
+                .accessibilityValue("\(viewModel.score)")
             }
             .padding(.horizontal, AppConfig.UI.screenPadding)
             .padding(.top, 16)
@@ -112,23 +121,30 @@ struct NumberBubblesGameView: View {
                 }
             }
             .padding(.top, 14)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Next target")
+            .accessibilityValue("\(viewModel.nextTarget)")
 
             // Bubble canvas
             GeometryReader { geo in
                 ZStack {
                     ForEach(viewModel.bubbles) { bubble in
                         if !bubble.isPopped {
-                            BubbleView(
-                                bubble: bubble,
-                                isWrong: viewModel.wrongTapID == bubble.id
-                            )
+                            Button(action: { viewModel.tapBubble(bubble) }) {
+                                BubbleView(
+                                    bubble: bubble,
+                                    isWrong: viewModel.wrongTapID == bubble.id
+                                )
+                            }
+                            .buttonStyle(.plain)
                             .position(
                                 x: bubble.posX * geo.size.width,
                                 y: bubble.posY * geo.size.height
                             )
-                            .onTapGesture {
-                                viewModel.tapBubble(bubble)
-                            }
+                            .accessibilityLabel("Bubble \(bubble.number)")
+                            .accessibilityValue(bubble.isPopped ? "Popped" : "Ready")
+                            .accessibilityHint("Tap the bubbles in number order")
+                            .accessibilityInputLabels(["bubble \(bubble.number)", "number \(bubble.number)", "tap bubble"])
                         }
                     }
                 }
@@ -161,6 +177,10 @@ struct NumberBubblesGameView: View {
                 }
                 .padding(.horizontal, AppConfig.UI.screenPadding)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Level complete")
+            .accessibilityHint("Continue to the next level")
+            .accessibilityInputLabels(["next level", "continue", "level complete"])
             .padding(36)
             .background(Color.white)
             .cornerRadius(24)
@@ -211,6 +231,9 @@ struct NumberBubblesGameView: View {
             .cornerRadius(24)
             .shadow(radius: 20)
             .padding(.horizontal, 40)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Game over")
+            .accessibilityHint("Choose exit or play again")
         }
     }
 }
@@ -267,6 +290,7 @@ private struct NumberBubblesInstructionView: View {
                 .font(.system(size: 80))
                 .padding(28)
                 .background(Circle().fill(AppConfig.Colors.accent.opacity(0.15)))
+                .accessibilityHidden(true)
 
             Text("Number Bubbles")
                 .font(AppConfig.Fonts.titleLarge)
@@ -293,6 +317,9 @@ private struct NumberBubblesInstructionView: View {
                     .shadow(color: bubblesAccent.opacity(0.4), radius: 10, x: 0, y: 5)
             }
             .padding(.top, 20)
+            .accessibilityLabel("Start Number Bubbles")
+            .accessibilityHint("Begins the counting game")
+            .accessibilityInputLabels(["start game", "number bubbles", "let's play"])
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 //        .standardBackground()
@@ -307,6 +334,7 @@ private struct NBBullet: View {
             Image(systemName: icon)
                 .foregroundColor(bubblesAccent)
                 .font(.system(size: 20, weight: .bold))
+                .accessibilityHidden(true)
             Text(text)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(AppConfig.Colors.textSecondary)

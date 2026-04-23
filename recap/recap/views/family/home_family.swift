@@ -47,6 +47,9 @@ struct home_family: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(AppConfig.Colors.accent)
                     }
+                    .accessibilityLabel("Open profile")
+                    .accessibilityHint("Shows profile and account settings")
+                    .accessibilityInputLabels(["profile", "account", "settings"])
                 }
                 
                 ToolbarSpacer(.fixed, placement: .topBarTrailing)
@@ -57,6 +60,9 @@ struct home_family: View {
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(AppConfig.Colors.alert)
                     }
+                    .accessibilityLabel("Open reminders")
+                    .accessibilityHint("Shows the patient reminders list")
+                    .accessibilityInputLabels(["reminders", "alarm", "notifications"])
                 }
 
             }

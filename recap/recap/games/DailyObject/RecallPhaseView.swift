@@ -26,17 +26,20 @@ struct RecallPhaseView: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(allObjects) { object in
-                        GameObjectCard(
-                            object: object,
-                            isSelected: selectedIDs.contains(object.id)
-                        )
-                        .onTapGesture {
+                        Button(action: {
                             HapticManager.shared.trigger(.selection)
                             onToggle(object)
+                        }) {
+                            GameObjectCard(
+                                object: object,
+                                isSelected: selectedIDs.contains(object.id)
+                            )
+                            // Scale animation on tap
+                            .scaleEffect(selectedIDs.contains(object.id) ? 0.95 : 1.0)
+                            .animation(.spring(), value: selectedIDs.contains(object.id))
                         }
-                        // Scale animation on tap
-                        .scaleEffect(selectedIDs.contains(object.id) ? 0.95 : 1.0)
-                        .animation(.spring(), value: selectedIDs.contains(object.id))
+                        .buttonStyle(.plain)
+                        .accessibilityInputLabels([object.name.lowercased(), "select object", "daily object"])
                     }
                 }
                 .padding()
@@ -62,6 +65,9 @@ struct RecallPhaseView: View {
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
             .disabled(selectedIDs.isEmpty)
+            .accessibilityLabel("Submit answers")
+            .accessibilityHint("Confirms the objects you selected")
+            .accessibilityInputLabels(["submit", "submit answers", "finish round"])
             .padding(.horizontal, 40)
             .padding(.bottom, 30)
         }

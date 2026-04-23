@@ -19,6 +19,9 @@ struct GameHeaderView: View {
                     .font(.system(size: 28))
                     .foregroundColor(AppConfig.Colors.textSecondary)
             }
+            .accessibilityLabel("Close game")
+            .accessibilityHint("Ends the Daily Objects game")
+            .accessibilityInputLabels(["close", "exit", "dismiss"])
             
             Spacer()
             
@@ -35,7 +38,7 @@ struct GameHeaderView: View {
             Spacer()
             
             // Invisible view to balance the center text
-            Image(systemName: "xmark.circle.fill").font(.system(size: 28)).opacity(0)
+            Image(systemName: "xmark.circle.fill").font(.system(size: 28)).opacity(0).accessibilityHidden(true)
         }
         .padding()
         .background(Color.white.opacity(0.8))

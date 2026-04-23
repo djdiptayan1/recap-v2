@@ -269,6 +269,9 @@ struct ImagePicker: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(selectedImage == nil ? "Add photo" : "Change photo")
         .accessibilityHint(selectedImage == nil ? "Opens options to take or choose a profile photo" : "Opens options to update or remove your profile photo")
+        .accessibilityInputLabels(selectedImage == nil
+            ? ["add photo", "profile photo", "select photo"]
+            : ["change photo", "profile photo", "update photo"])
     }
 
     // MARK: - Logic
@@ -349,6 +352,7 @@ struct SquareImageCropper: View {
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Image crop area")
                 .accessibilityHint("Use adjustable actions to zoom, and actions to move the image")
+                .accessibilityInputLabels(["crop area", "photo crop", "edit photo"])
                 .accessibilityAdjustableAction { direction in
                     switch direction {
                     case .increment:
@@ -438,6 +442,7 @@ struct SquareImageCropper: View {
                         .foregroundColor(.white)
                     }
                     .accessibilityHint("Dismiss without applying crop")
+                    .accessibilityInputLabels(["cancel", "close", "dismiss"])
 
                     Button {
                         HapticManager.shared.trigger(.medium)
@@ -462,6 +467,7 @@ struct SquareImageCropper: View {
                     }
                     .accessibilityLabel("Crop photo")
                     .accessibilityHint("Apply crop and close")
+                    .accessibilityInputLabels(["crop", "apply", "save photo"])
                     .shadow(radius: 10)
                     .offset(y: -10)
 
@@ -481,6 +487,7 @@ struct SquareImageCropper: View {
                         .foregroundColor(.white)
                     }
                     .accessibilityHint("Reset zoom and position")
+                    .accessibilityInputLabels(["reset", "undo", "reposition"])
                 }
                 .padding(.bottom, 50)
             }

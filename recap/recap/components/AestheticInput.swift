@@ -20,6 +20,35 @@ struct AestheticInput: View {
         return isSecure && !isPasswordVisible
     }
 
+    private var fieldInputLabels: [LocalizedStringKey] {
+        var labels: [LocalizedStringKey] = [LocalizedStringKey(placeholder)]
+        let lowercasedPlaceholder = placeholder.lowercased()
+
+        if lowercasedPlaceholder.contains("email") {
+            labels.append(contentsOf: ["email", "email address"])
+        }
+        if lowercasedPlaceholder.contains("password") {
+            labels.append(contentsOf: ["password", "passcode"])
+        }
+        if lowercasedPlaceholder.contains("first name") {
+            labels.append(contentsOf: ["first name", "given name"])
+        }
+        if lowercasedPlaceholder.contains("last name") {
+            labels.append(contentsOf: ["last name", "surname"])
+        }
+        if lowercasedPlaceholder.contains("confirm") {
+            labels.append(contentsOf: ["confirm password", "repeat password"])
+        }
+
+        return labels
+    }
+
+    private var toggleInputLabels: [LocalizedStringKey] {
+        isPasswordVisible
+            ? ["hide password", "password visibility"]
+            : ["show password", "password visibility"]
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 12) {
@@ -33,6 +62,7 @@ struct AestheticInput: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(AppConfig.Colors.accent)
                 }
+                .accessibilityHidden(true)
 
                 // Input Field
                 Group {
@@ -46,6 +76,9 @@ struct AestheticInput: View {
                 .foregroundColor(AppConfig.Colors.textPrimary)
                 .autocapitalization(.none)
                 .disableAutocorrection(true)
+                .accessibilityLabel(placeholder)
+                .accessibilityHint(isSecure ? "Secure text field" : "Text field")
+                .accessibilityInputLabels(fieldInputLabels)
 
                 // Password Toggle Eye
                 if showToggle {
@@ -53,6 +86,9 @@ struct AestheticInput: View {
                         Image(systemName: isPasswordVisible ? "eye" : "eye.slash")
                             .foregroundColor(AppConfig.Colors.textSecondary)
                     }
+                    .accessibilityLabel(isPasswordVisible ? "Hide password" : "Show password")
+                    .accessibilityHint("Toggles whether the password is visible")
+                    .accessibilityInputLabels(toggleInputLabels)
                 }
             }
             .padding(12)

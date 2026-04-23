@@ -122,6 +122,8 @@ struct remindersView: View {
                                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
                             }
                             .padding(.top, 8)
+                            .accessibilityLabel("Create first reminder")
+                            .accessibilityInputLabels(["add reminder", "new reminder", "create reminder"])
                         }
                         Spacer()
                     }
@@ -256,6 +258,9 @@ struct remindersView: View {
                 }) {
                     Image(systemName: "plus")
                 }
+                .accessibilityLabel("Add reminder")
+                .accessibilityHint("Opens the reminder editor")
+                .accessibilityInputLabels(["add reminder", "new reminder", "plus"])
             }
         }
         .standardBackground()
@@ -288,6 +293,9 @@ struct CategoryFilterChip: View {
                     color: isSelected ? color.opacity(0.3) : Color.black.opacity(0.05), radius: 4,
                     x: 0, y: 2)
         }
+        .accessibilityLabel(title)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityInputLabels([title.lowercased(), "filter", "reminders"])
     }
 }
 

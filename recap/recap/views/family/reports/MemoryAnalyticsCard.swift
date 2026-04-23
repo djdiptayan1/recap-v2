@@ -48,6 +48,9 @@ struct MemoryAnalyticsCard: View {
                                 value: refreshTrigger
                             )
                     }
+                    .accessibilityLabel("Refresh trends")
+                    .accessibilityHint("Reloads the analytics data")
+                    .accessibilityInputLabels(["refresh", "update", "reload"])
                     Button(action: {
                         HapticManager.shared.trigger(.selection)
                         navigateToOverall = true
@@ -56,12 +59,20 @@ struct MemoryAnalyticsCard: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(AppConfig.Colors.textSecondary.opacity(0.5))
                     }
+                            .accessibilityLabel("Open trends details")
+                            .accessibilityHint("Shows the full analytics view")
+                            .accessibilityInputLabels(["trends", "analytics", "details"])
                 }
                 .contentShape(Rectangle())
                 .onTapGesture {
                     HapticManager.shared.trigger(.selection)
                     navigateToOverall = true
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Trends")
+                .accessibilityHint("Opens full trends analytics")
+                .accessibilityInputLabels(["trends", "open trends", "analytics details"])
+                .accessibilityAddTraits(.isButton)
                 .padding(.top, 24)
                 .padding(.horizontal, 20)
                 
@@ -132,6 +143,11 @@ struct MemoryAnalyticsCard: View {
                     selectedDetailType = viewModel.selectedTimeFrame
                     navigateToDetail = true
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Analytics chart")
+                .accessibilityHint("Opens detailed chart breakdown for the selected timeframe")
+                .accessibilityInputLabels(["chart details", "open chart", "analytics chart"])
+                .accessibilityAddTraits(.isButton)
                 
                 // Footer / Interaction Label
                 HStack {

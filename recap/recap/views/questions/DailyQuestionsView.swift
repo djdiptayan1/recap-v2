@@ -37,6 +37,7 @@ struct DailyQuestionsView: View {
                         Button("Retry") {
                             viewModel.loadQuestions(role: appState.currentUser?.type ?? "patient")
                         }
+                        .accessibilityInputLabels(["retry", "try again", "reload"])
                     }
                 } else if viewModel.isCompleted {
                     // 2. Completion State
@@ -71,6 +72,7 @@ struct DailyQuestionsView: View {
                                             text: option,
                                             isSelected: selectedAnswers.contains(option))
                                     }
+                                    .accessibilityInputLabels([option.lowercased(), "answer", "choice"])
                                 }
                             }
                             .padding(.horizontal, AppConfig.UI.screenPadding)
@@ -98,6 +100,7 @@ struct DailyQuestionsView: View {
                         .disabled(selectedAnswers.isEmpty)
                         .padding(.horizontal, AppConfig.UI.screenPadding)
                         .padding(.bottom, 20)
+                        .accessibilityInputLabels(["submit answer", "submit", "send answer"])
                     }
                 } else {
                     VStack(spacing: 16) {
@@ -231,6 +234,9 @@ struct AnswerOptionButton: View {
                     isSelected ? AppConfig.Colors.accent : AppConfig.Colors.stroke,
                     lineWidth: isSelected ? 2 : 1)
         )
+        .accessibilityLabel(text)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityInputLabels([text.lowercased(), "option", "answer"])
     }
 }
 
@@ -266,6 +272,7 @@ struct CompletionView: View {
                     .background(AppConfig.Colors.textPrimary)
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
+                    .accessibilityInputLabels(["finish", "done", "close"])
             .padding(.top, 20)
         }
         .frame(maxWidth: 320)

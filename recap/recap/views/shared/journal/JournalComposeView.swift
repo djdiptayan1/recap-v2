@@ -44,6 +44,10 @@ struct JournalComposeView: View {
             && (!content.isEmpty || viewModel.audioData != nil || !photoPreviews.isEmpty)
     }
 
+    private func journalInputLabels(_ labels: String...) -> [LocalizedStringKey] {
+        labels.map { LocalizedStringKey($0) }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -158,6 +162,7 @@ struct JournalComposeView: View {
                             )
                             .cornerRadius(AppConfig.UI.cornerRadius)
                         }
+                        .accessibilityInputLabels(journalInputLabels(mood.label.lowercased(), mood.label, "mood"))
                     }
                 }
             }
@@ -197,6 +202,7 @@ struct JournalComposeView: View {
                                 ? AppConfig.Colors.alert.opacity(0.5) : AppConfig.Colors.stroke,
                             lineWidth: 1)
                 )
+                .accessibilityInputLabels(journalInputLabels("title", "journal title", "memory title"))
 
             if title.isEmpty {
                 // validation indicated by * star only; no extra text
@@ -228,6 +234,8 @@ struct JournalComposeView: View {
                     .frame(minHeight: 160)
                     .padding(8)
                     .scrollContentBackground(.hidden)
+                    .accessibilityLabel("Journal entry")
+                    .accessibilityInputLabels(journalInputLabels("journal entry", "entry", "thoughts", "body"))
             }
             .background(AppConfig.Colors.card)
             .cornerRadius(AppConfig.UI.buttonCornerRadius)
@@ -293,6 +301,7 @@ struct JournalComposeView: View {
                             .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                     )
                 }
+                .accessibilityInputLabels(journalInputLabels("add photos", "select photos", "camera roll"))
             } else {
                 photoGrid
             }
@@ -331,6 +340,8 @@ struct JournalComposeView: View {
                         .shadow(radius: 2)
                 }
                 .padding(4)
+                .accessibilityLabel("Remove photo")
+                .accessibilityInputLabels(journalInputLabels("remove photo", "delete photo", "trash photo"))
             }
 
             TextField(
@@ -343,6 +354,8 @@ struct JournalComposeView: View {
             .font(AppConfig.Fonts.small)
             .foregroundColor(AppConfig.Colors.textPrimary)
             .frame(width: 120)
+            .accessibilityLabel("Photo caption")
+            .accessibilityInputLabels(journalInputLabels("caption", "photo caption", "add caption"))
         }
     }
 
@@ -381,6 +394,7 @@ struct JournalComposeView: View {
             TextField(placeholder, text: text)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(AppConfig.Colors.textPrimary)
+                .accessibilityInputLabels(journalInputLabels(placeholder, placeholder.lowercased()))
         }
         .padding(AppConfig.UI.padding)
         .background(AppConfig.Colors.background)
@@ -434,6 +448,8 @@ struct JournalComposeView: View {
                         .foregroundColor(AppConfig.Colors.accent)
                 }
             }
+            .accessibilityLabel("Record voice note")
+            .accessibilityInputLabels(journalInputLabels("record voice note", "start recording", "mic"))
 
             Text("Tap to record a voice note")
                 .font(AppConfig.Fonts.small)
@@ -473,6 +489,7 @@ struct JournalComposeView: View {
                 .background(Color.red)
                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
+            .accessibilityInputLabels(journalInputLabels("stop recording", "end recording", "finish recording"))
         }
     }
 
@@ -510,6 +527,7 @@ struct JournalComposeView: View {
                     .background(AppConfig.Colors.accent.opacity(0.1))
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
                 }
+                .accessibilityInputLabels(journalInputLabels("play audio", "preview recording", "listen"))
 
                 Button {
                     HapticManager.shared.trigger(.warning)
@@ -526,6 +544,7 @@ struct JournalComposeView: View {
                     .background(AppConfig.Colors.alert.opacity(0.1))
                     .cornerRadius(AppConfig.UI.buttonCornerRadius)
                 }
+                .accessibilityInputLabels(journalInputLabels("delete recording", "remove audio", "discard"))
             }
         }
     }

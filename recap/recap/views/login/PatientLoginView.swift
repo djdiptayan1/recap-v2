@@ -60,6 +60,9 @@ struct PatientLoginView: View {
             Color.clear
                 .contentShape(Rectangle())
                 .onTapGesture { hideKeyboard() }
+                .accessibilityAddTraits(.isButton)
+                .accessibilityLabel("Close keyboard")
+                .accessibilityInputLabels(["close keyboard", "dismiss keyboard", "hide keyboard"])
         )
         .standardBackground()
     }
@@ -75,6 +78,7 @@ struct PatientLoginView: View {
                 .shadow(
                     color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0, y: 10
                 )
+                .accessibilityHidden(true)
 
             VStack(spacing: 6) {
                 Text("Welcome Back")
@@ -116,6 +120,7 @@ struct PatientLoginView: View {
                 }
                 .font(AppConfig.Fonts.small)
                 .foregroundColor(AppConfig.Colors.textSecondary)
+                .accessibilityInputLabels(["forgot password", "reset password", "password help"])
             }
 
             loginButton
@@ -149,6 +154,8 @@ struct PatientLoginView: View {
                 color: AppConfig.Colors.accent.opacity(0.4), radius: 10, x: 0, y: 5)
         }
         .disabled(viewModel.isLoading)
+        .accessibilityLabel("Log in")
+        .accessibilityInputLabels(["log in", "sign in", "continue"])
     }
 
     private var dividerSection: some View {
@@ -196,6 +203,8 @@ struct PatientLoginView: View {
         }
         .frame(height: 56)
         .cornerRadius(AppConfig.UI.cornerRadius)
+        .accessibilityLabel("Sign in with Google")
+        .accessibilityInputLabels(["google", "google sign in", "sign in with google"])
     }
 
     private var appleButton: some View {
@@ -209,6 +218,8 @@ struct PatientLoginView: View {
         .signInWithAppleButtonStyle(.black)
         .frame(height: 56)
         .cornerRadius(AppConfig.UI.cornerRadius)
+        .accessibilityLabel("Sign in with Apple")
+        .accessibilityInputLabels(["apple", "apple sign in", "sign in with apple"])
     }
 
     private var footerSection: some View {
@@ -223,6 +234,7 @@ struct PatientLoginView: View {
             }
             .font(AppConfig.Fonts.bodyBold)
             .foregroundColor(AppConfig.Colors.accent)
+            .accessibilityInputLabels(["sign up", "create account", "register"])
         }
         .padding(.bottom, 20)
     }

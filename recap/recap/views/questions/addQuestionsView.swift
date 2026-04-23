@@ -6,6 +6,10 @@
 //
 import SwiftUI
 
+func questionInputLabels(_ labels: String...) -> [LocalizedStringKey] {
+    labels.map { LocalizedStringKey($0) }
+}
+
 struct addQuestionsView: View {
     @StateObject private var viewModel = AddQuestionsViewModel()
     @Environment(\.dismiss) var dismiss
@@ -72,6 +76,7 @@ struct addQuestionsView: View {
                                 color: AppConfig.Colors.accent.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .disabled(viewModel.isLoading)
+                        .accessibilityInputLabels(questionInputLabels("save question", "submit question", "add question"))
                         .padding(.horizontal, AppConfig.UI.screenPadding)
                         .padding(.bottom, 40)
                     }
@@ -145,6 +150,8 @@ struct QuestionInputSection: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                 )
+                .accessibilityLabel("Question text")
+                .accessibilityInputLabels(questionInputLabels("question", "question text", "prompt"))
 
             Label("Hint (Optional)", systemImage: "lightbulb.fill")
                 .font(.caption)
@@ -164,6 +171,8 @@ struct QuestionInputSection: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                 )
+                .accessibilityLabel("Question hint")
+                .accessibilityInputLabels(questionInputLabels("hint", "question hint", "help text"))
         }
     }
 }
@@ -200,6 +209,7 @@ struct CategorySelectionSection: View {
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppConfig.Colors.stroke))
                 }
+                .accessibilityInputLabels(questionInputLabels("category", "question category", "classification"))
 
                 // SubCategory Picker
                 Menu {
@@ -218,6 +228,7 @@ struct CategorySelectionSection: View {
                     .cornerRadius(12)
                     .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppConfig.Colors.stroke))
                 }
+                .accessibilityInputLabels(questionInputLabels("subcategory", "question subcategory", "topic"))
             }
             .foregroundColor(AppConfig.Colors.textPrimary)
         }
@@ -249,6 +260,7 @@ struct OptionsInputSection: View {
                         .font(.caption.bold())
                         .foregroundColor(AppConfig.Colors.accent)
                 }
+                .accessibilityInputLabels(questionInputLabels("add option", "new option", "plus"))
             }
 
             ForEach(0..<options.count, id: \.self) { index in
@@ -273,6 +285,7 @@ struct OptionsInputSection: View {
                         .font(.system(size: 22))
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .accessibilityInputLabels(questionInputLabels(options[index].lowercased(), "option", "answer option"))
 
                     TextField(
                         "Option \(index + 1)",
@@ -294,6 +307,7 @@ struct OptionsInputSection: View {
                             Image(systemName: "trash")
                                 .foregroundColor(AppConfig.Colors.alert)
                         }
+                        .accessibilityInputLabels(questionInputLabels("delete option", "remove option", "trash"))
                     }
                 }
                 .padding()
@@ -326,12 +340,14 @@ struct TimingSettingsSection: View {
                 // From Time
                 DatePicker("Ask from", selection: $start, displayedComponents: .hourAndMinute)
                     .padding()
+                    .accessibilityInputLabels(questionInputLabels("ask from", "start time", "from time"))
 
                 Divider()
 
                 // To Time
                 DatePicker("Ask until", selection: $end, displayedComponents: .hourAndMinute)
                     .padding()
+                    .accessibilityInputLabels(questionInputLabels("ask until", "end time", "until time"))
 
                 Divider()
 
@@ -343,6 +359,7 @@ struct TimingSettingsSection: View {
                         .keyboardType(.numberPad)
                         .multilineTextAlignment(.trailing)
                         .frame(width: 50)
+                        .accessibilityInputLabels(questionInputLabels("frequency", "days", "repeat every"))
                 }
                 .padding()
             }

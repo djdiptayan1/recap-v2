@@ -143,6 +143,7 @@ struct PatternMemoryGameView: View {
                     .shadow(color: AppConfig.Colors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             .padding(.horizontal, AppConfig.UI.screenPadding)
+            .accessibilityInputLabels(["continue", "next", "see results"])
         }
     }
 }
@@ -159,6 +160,7 @@ private struct StatLabel: View {
             Image(systemName: icon)
                 .foregroundColor(AppConfig.Colors.accent)
                 .font(.system(size: 14))
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(AppConfig.Fonts.small)
@@ -173,6 +175,9 @@ private struct StatLabel: View {
         .background(Color.white)
         .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
     }
 }
 
@@ -193,6 +198,7 @@ private struct PatternMemoryGameOverOverlay: View {
                     .font(.system(size: 60))
                     .foregroundColor(.yellow)
                     .shadow(radius: 5)
+                    .accessibilityHidden(true)
 
                 Text("Game Over!")
                     .font(AppConfig.Fonts.titleMedium)
@@ -225,6 +231,7 @@ private struct PatternMemoryGameOverOverlay: View {
                     }
                 }
             }
+            .accessibilityElement(children: .combine)
             .padding(40)
             .background(Color.white)
             .cornerRadius(24)

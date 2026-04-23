@@ -76,6 +76,10 @@ struct StreaksCard: View {
                 x: 0,
                 y: AppConfig.UI.cardShadowOffsetY
             )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Streaks")
+            .accessibilityHint("Opens streak details")
+            .accessibilityInputLabels(["streaks", "streak", "activity"])
 //            .overlay(
 //                RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
 //                    .stroke(AppConfig.Colors.stroke, lineWidth: 1)
@@ -132,6 +136,9 @@ struct SingleStatColumn: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
     }
 }
 

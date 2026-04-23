@@ -48,6 +48,10 @@ struct CitationsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(citation.title), \(citation.authors), \(citation.year)")
+                    .accessibilityHint(citation.journal.isEmpty ? "Medical citation" : "Published in \(citation.journal)")
+                    .accessibilityInputLabels(["citation", citation.title])
                 }
 //                .listStyle(.plain)
             }

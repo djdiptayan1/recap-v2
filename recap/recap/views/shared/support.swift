@@ -16,6 +16,7 @@ struct support: View {
         // NavigationStack {
             ZStack {
                 WebView(page)
+                    .accessibilityLabel("Support page")
                     .ignoresSafeArea(.all)
                 if page.isLoading {
                     ProgressView(value: page.estimatedProgress)
@@ -23,6 +24,7 @@ struct support: View {
                         .scaleEffect(1.5)
                         .background(Color.white.opacity(0.8))
                         .cornerRadius(10)
+                        .accessibilityLabel("Loading support page")
                 }
             }
             .navigationTitle("Support")

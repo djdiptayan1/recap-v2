@@ -25,6 +25,7 @@ struct MatchManiaInstructionView: View {
                 Text("🧠")
                     .font(.system(size: 58))
             }
+            .accessibilityHidden(true)
 
             Text("Match Mania")
                 .font(AppConfig.Fonts.titleLarge)
@@ -56,6 +57,9 @@ struct MatchManiaInstructionView: View {
                     .shadow(color: Color(hex: "FF6B35").opacity(0.4), radius: 10, x: 0, y: 5)
             }
             .padding(.top, 20)
+            .accessibilityLabel("Start Match Mania")
+            .accessibilityHint("Begins the memory matching game")
+            .accessibilityInputLabels(["start game", "match mania", "let's play"])
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
 //        .standardBackground()
@@ -71,6 +75,7 @@ private struct MMBullet: View {
             Image(systemName: icon)
                 .foregroundColor(color)
                 .font(.system(size: 22, weight: .bold))
+                .accessibilityHidden(true)
             Text(text)
                 .font(AppConfig.Fonts.body)
                 .foregroundColor(AppConfig.Colors.textSecondary)

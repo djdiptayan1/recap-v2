@@ -87,6 +87,9 @@ struct WordAssociationGameView: View {
             .cornerRadius(AppConfig.UI.cornerRadius)
             .shadow(color: Color(hex: "7B4FD9").opacity(0.3), radius: 8, x: 0, y: 4)
             .padding(.horizontal, AppConfig.UI.screenPadding)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Prompt word")
+                .accessibilityValue(viewModel.promptWord)
             .padding(.top, 16)
 
             // Word grid
@@ -122,6 +125,7 @@ struct WordAssociationGameView: View {
                 }
                 .padding(.horizontal, AppConfig.UI.screenPadding)
                 .padding(.bottom, 24)
+                .accessibilityInputLabels(["submit", "submit answer", "check"])
             } else if viewModel.currentPhase == .feedback {
                 Button(action: viewModel.continueAfterFeedback) {
                     Text(viewModel.isLastRound ? "See Results 🏆" : "Next Round →")
@@ -139,6 +143,7 @@ struct WordAssociationGameView: View {
                 }
                 .padding(.horizontal, AppConfig.UI.screenPadding)
                 .padding(.bottom, 24)
+                .accessibilityInputLabels(["next round", "continue", "results"])
             }
         }
 //        .standardBackground()
@@ -191,6 +196,20 @@ private struct WordOptionButton: View {
         }
         .animation(.easeInOut(duration: 0.2), value: option.isSelected)
         .animation(.easeInOut(duration: 0.2), value: option.feedbackState)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(option.word)
+        .accessibilityValue(accessibilityState)
+        .accessibilityHint(isInteractive ? "Double tap to select or deselect" : "Review only")
+        .accessibilityInputLabels([option.word.lowercased(), "word", "option"])
+    }
+
+    private var accessibilityState: String {
+        switch option.feedbackState {
+        case .correct: return "Correct"
+        case .incorrect: return "Incorrect"
+        case .missed: return "Missed"
+        case .none: return option.isSelected ? "Selected" : "Not selected"
+        }
     }
 }
 

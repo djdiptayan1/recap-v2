@@ -170,6 +170,9 @@ struct UnifiedStatsCard: View {
 //        .cornerRadius(16)
         .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Streak summary")
+        .accessibilityValue("Max streak \(maxStreak), current streak \(currentStreak), active days \(activeDays)")
     }
 }
 
@@ -223,12 +226,16 @@ struct CalendarHeader: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(AppConfig.Colors.textSecondary)
                 }
+                .accessibilityLabel("Previous month")
+                .accessibilityInputLabels(["previous month", "back month"])
                 
                 Button(action: onNext) {
                     Image(systemName: "chevron.right")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(AppConfig.Colors.textSecondary)
                 }
+                .accessibilityLabel("Next month")
+                .accessibilityInputLabels(["next month", "forward month"])
             }
         }
         .padding(20)

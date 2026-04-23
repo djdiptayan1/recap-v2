@@ -35,5 +35,10 @@ struct PatternMemoryTileView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(!isInteractive)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Pattern tile")
+        .accessibilityValue(isLit ? (isInteractive ? "Active" : "Shown") : "Hidden")
+        .accessibilityHint(isInteractive ? "Tap to repeat this tile" : "Watch the sequence")
+        .accessibilityInputLabels(["tile", "pattern tile", isLit ? "lit tile" : "dark tile"])
     }
 }

@@ -89,6 +89,9 @@ struct JournalView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(AppConfig.Colors.accent)
                 }
+                .accessibilityLabel("New journal entry")
+                .accessibilityHint("Opens the journal composer")
+                .accessibilityInputLabels(["new entry", "compose", "add entry", "write"])
             }
         }
         .sheet(isPresented: $showingCompose, onDismiss: {
@@ -137,6 +140,7 @@ struct JournalView: View {
                 .cornerRadius(AppConfig.UI.buttonCornerRadius)
             }
             .padding(.top, 8)
+            .accessibilityInputLabels(["write first entry", "new entry", "compose journal", "start writing"])
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

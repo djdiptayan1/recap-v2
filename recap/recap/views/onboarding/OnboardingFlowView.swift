@@ -127,6 +127,7 @@ struct OnboardingFlowView: View {
                     .font(.system(size: 64, weight: .semibold))
                     .foregroundColor(AppConfig.Colors.accent)
             }
+            .accessibilityHidden(true)
 
             VStack(spacing: 14) {
                 Text(isPatient ? "Let Recap feel calm from day one." : "Set Recap up around your care.")
@@ -422,6 +423,7 @@ struct OnboardingFlowView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(AppConfig.Colors.accent)
                         .padding(.top, 2)
+                            .accessibilityHidden(true)
 
                     Text(bullet)
                         .font(AppConfig.Fonts.body)
@@ -484,6 +486,10 @@ private struct SelectableChoiceCard: View {
             .shadow(color: Color.black.opacity(0.04), radius: 10, x: 0, y: 4)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityHint(subtitle)
+        .accessibilityInputLabels([title.lowercased(), isMultiSelect ? "option" : "choice", "onboarding"])
     }
 }
 

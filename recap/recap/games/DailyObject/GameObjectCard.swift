@@ -40,5 +40,10 @@ struct GameObjectCard: View {
                 .stroke(isSelected ? object.color : AppConfig.Colors.stroke, lineWidth: isSelected ? 3 : 1)
         )
         .shadow(color: isSelected ? object.color.opacity(0.2) : Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(object.name)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityHint("Memory item")
+        .accessibilityInputLabels([object.name.lowercased(), "object", "daily object"])
     }
 }

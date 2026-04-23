@@ -445,6 +445,7 @@ struct InputBar: View {
                     .foregroundStyle(.primary)
                     .tint(.white)
                     .padding(.leading, 12)
+                    .accessibilityInputLabels(["ask smriti", "search", "question"])
                     .onSubmit(onSend)
 
                 Button(action: onSend) {
@@ -458,6 +459,7 @@ struct InputBar: View {
                 .padding(4)
                 .disabled(text.isEmpty)
                 .opacity(text.isEmpty ? 0.6 : 1.0)
+                .accessibilityInputLabels(["send", "submit", "message"])
             }
             .frame(height: 52)
             .glassEffect(.regular, in: .capsule)

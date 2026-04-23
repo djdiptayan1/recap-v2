@@ -148,6 +148,9 @@ struct patientSignupView: View {
                                 }
                                 .font(AppConfig.Fonts.bodyBold)
                                 .foregroundColor(AppConfig.Colors.accent)
+                                .accessibilityLabel("Open log in")
+                                .accessibilityHint("Returns to the login screen")
+                                .accessibilityInputLabels(["log in", "open login", "back to login"])
                             }
                             .padding(.bottom, 20)
                         }
@@ -254,6 +257,8 @@ struct patientSignupView: View {
                         RoundedRectangle(cornerRadius: AppConfig.UI.cornerRadius)
                             .stroke(AppConfig.Colors.stroke, lineWidth: 1)
                     )
+                    .accessibilityLabel("Date of birth")
+                    .accessibilityInputLabels(["date of birth", "birth date", "dob"])
             }
 
             // Pickers Row
@@ -326,6 +331,8 @@ struct patientSignupView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .accessibilityLabel("Stage")
+                .accessibilityInputLabels(["stage", "patient stage", "condition stage"])
             }
         }
     }
@@ -345,6 +352,10 @@ struct patientSignupView: View {
                 .foregroundColor(AppConfig.Colors.textSecondary)
         }
         .padding(.vertical, 20)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Add a profile photo")
+        .accessibilityHint("Opens the photo picker")
+        .accessibilityInputLabels(["profile photo", "add photo", "select photo"])
     }
 
     var importedIdentitySummary: some View {
@@ -387,6 +398,9 @@ struct patientSignupView: View {
                 .font(AppConfig.Fonts.small)
                 .foregroundColor(AppConfig.Colors.textSecondary)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Imported identity")
+        .accessibilityValue(importedName.isEmpty ? providerName : importedName)
     }
 }
 

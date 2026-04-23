@@ -44,73 +44,95 @@ struct DailyPerformanceChart: View {
     }
 
     var body: some View {
-        ZStack {
-            // 1. The Interactive Chart
-            Chart(segments) { segment in
-                SectorMark(
-                    angle: .value("Count", segment.value),
-                    innerRadius: .ratio(0.65), // Donut Style
-                    outerRadius: selectedSegmentID == segment.id ? .ratio(1.0) : .ratio(0.9), // Pop effect
-                    angularInset: 2.0 // Modern gap between slices
-                )
-                .cornerRadius(6) // Rounded corners on slices
-                .foregroundStyle(segment.color.gradient) // Subtle gradient for depth
-                .shadow(color: segment.color.opacity(0.3), radius: selectedSegmentID == segment.id ? 4 : 0)
+        VStack(spacing: 12) {
+            ZStack {
+                // 1. The Interactive Chart
+                Chart(segments) { segment in
+                    SectorMark(
+                        angle: .value("Count", segment.value),
+                        innerRadius: .ratio(0.65), // Donut Style
+                        outerRadius: selectedSegmentID == segment.id ? .ratio(1.0) : .ratio(0.9), // Pop effect
+                        angularInset: 2.0 // Modern gap between slices
+                    )
+                    .cornerRadius(6) // Rounded corners on slices
+                    .foregroundStyle(segment.color.gradient) // Subtle gradient for depth
+                    .shadow(color: segment.color.opacity(0.3), radius: selectedSegmentID == segment.id ? 4 : 0)
+                }
+                .chartLegend(.hidden) // Hiding legend as requested
+                .chartBackground { proxy in
+                    // Interaction Layer
+                    GeometryReader { geo in
+                        Rectangle().fill(.clear).contentShape(Rectangle())
+                            .gesture(
+                                SpatialTapGesture()
+                                    .onEnded { value in
+                                        handleTap(at: value.location, in: geo.frame(in: .local), proxy: proxy)
+                                    }
+                            )
+                    }
+                }
+                .accessibilityLabel("Daily performance chart")
+                .accessibilityValue(selectedSegmentID == nil ? "Correct and incorrect summary" : "Selected \(selectedSummary)")
+
+                // 2. Center Info Display
+                VStack(spacing: 2) {
+                    if let selectedID = selectedSegmentID,
+                       let selectedSegment = segments.first(where: { $0.id == selectedID }) {
+
+                        // Selected State
+                        Text("\(Int(selectedSegment.value))")
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundColor(AppConfig.Colors.textPrimary)
+                            .contentTransition(.numericText())
+
+                        Text(selectedSegment.type)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppConfig.Colors.textSecondary)
+
+                        // Percentage Badge
+                        Text("\(Int((selectedSegment.value / totalValue) * 100))%")
+                            .font(.caption2.bold())
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(selectedSegment.color)
+                            .clipShape(Capsule())
+                            .padding(.top, 4)
+                            .transition(.scale.combined(with: .opacity))
+
+                    } else {
+                        // Default State (Total)
+                        Text("\(Int(totalValue))")
+                            .font(.system(size: 36, weight: .bold, design: .rounded))
+                            .foregroundColor(AppConfig.Colors.textPrimary)
+
+                        Text("Total")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(AppConfig.Colors.textSecondary)
+                    }
+                }
+                .animation(.spring(response: 0.3), value: selectedSegmentID)
             }
-            .chartLegend(.hidden) // Hiding legend as requested
-            .chartBackground { proxy in
-                // Interaction Layer
-                GeometryReader { geo in
-                    Rectangle().fill(.clear).contentShape(Rectangle())
-                        .gesture(
-                            SpatialTapGesture()
-                                .onEnded { value in
-                                    handleTap(at: value.location, in: geo.frame(in: .local), proxy: proxy)
-                                }
-                        )
+
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(segments) { segment in
+                    Text("\(segment.type): \(Int(segment.value))")
+                        .font(.caption)
+                        .foregroundColor(AppConfig.Colors.textSecondary)
                 }
             }
-
-            // 2. Center Info Display
-            VStack(spacing: 2) {
-                if let selectedID = selectedSegmentID,
-                   let selectedSegment = segments.first(where: { $0.id == selectedID }) {
-
-                    // Selected State
-                    Text("\(Int(selectedSegment.value))")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(AppConfig.Colors.textPrimary)
-                        .contentTransition(.numericText())
-
-                    Text(selectedSegment.type)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(AppConfig.Colors.textSecondary)
-
-                    // Percentage Badge
-                    Text("\(Int((selectedSegment.value / totalValue) * 100))%")
-                        .font(.caption2.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(selectedSegment.color)
-                        .clipShape(Capsule())
-                        .padding(.top, 4)
-                        .transition(.scale.combined(with: .opacity))
-
-                } else {
-                    // Default State (Total)
-                    Text("\(Int(totalValue))")
-                        .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(AppConfig.Colors.textPrimary)
-
-                    Text("Total")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(AppConfig.Colors.textSecondary)
-                }
-            }
-            .animation(.spring(response: 0.3), value: selectedSegmentID)
+            .accessibilityHidden(true)
         }
         .padding()
+    }
+
+    private var selectedSummary: String {
+        guard let selectedID = selectedSegmentID,
+              let selectedSegment = segments.first(where: { $0.id == selectedID }) else {
+            return "Correct and incorrect summary"
+        }
+
+        return "\(selectedSegment.type), \(Int(selectedSegment.value))"
     }
 
     // MARK: - Tap Logic

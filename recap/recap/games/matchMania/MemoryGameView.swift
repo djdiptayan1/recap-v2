@@ -20,7 +20,7 @@ struct MemoryGameView: View {
     ]
     
     var body: some View {
-        ZStack {
+        ZStack(alignment: .top) {
             // Background
             AppConfig.Colors.background
                 .ignoresSafeArea()
@@ -46,15 +46,19 @@ struct MemoryGameView: View {
                     // --- Game Grid ---
                     LazyVGrid(columns: columns, spacing: 12) {
                         ForEach(viewModel.cards) { card in
-                            CardView(card: card)
-                                .onTapGesture {
-                                    viewModel.selectCard(card)
-                                }
+                            Button(action: {
+                                viewModel.selectCard(card)
+                            }) {
+                                CardView(card: card)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityInputLabels([card.contentIcon.replacingOccurrences(of: ".fill", with: ""), "card", "memory card"])
+                            .accessibilityLabel(cardLabel(for: card))
+                            .accessibilityValue(cardValue(for: card))
+                            .accessibilityHint("Flip this card to look for a match")
                         }
                     }
                     .padding(.horizontal, AppConfig.UI.screenPadding)
-                    
-                    Spacer()
                 }
                 .transition(.opacity)
             }
@@ -69,11 +73,32 @@ struct MemoryGameView: View {
                 )
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .navigationTitle("Match Mania")
         .animation(.easeInOut, value: viewModel.gameState)
         .onDisappear {
             viewModel.handleViewDisappeared()
         }
+    }
+
+    private func cardLabel(for card: MemoryCard) -> String {
+        if card.isMatched {
+            return "Matched card"
+        }
+        if card.isFlipped {
+            return "Face up card"
+        }
+        return "Face down card"
+    }
+
+    private func cardValue(for card: MemoryCard) -> String {
+        if card.isMatched {
+            return "Matched"
+        }
+        if card.isFlipped {
+            return "Revealed"
+        }
+        return "Hidden"
     }
     
     private func formatTime(_ seconds: Int) -> String {
@@ -103,6 +128,8 @@ struct StatBadge: View {
         .background(Color.white)
         .cornerRadius(20)
         .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(value)
     }
 }
 
@@ -151,6 +178,7 @@ struct CardView: View {
         // If matched, fade it out slightly to indicate "Done"
         .opacity(card.isMatched ? 0.6 : 1)
         .animation(.default, value: card.isMatched)
+        .accessibilityHidden(true)
     }
 }
 
@@ -169,6 +197,7 @@ struct GameCompletionOverlay: View {
                     .font(.system(size: 60))
                     .foregroundColor(.yellow)
                     .shadow(radius: 5)
+                    .accessibilityHidden(true)
                 
                 Text("Excellent Memory!")
                     .font(AppConfig.Fonts.titleMedium)
@@ -201,6 +230,7 @@ struct GameCompletionOverlay: View {
                     }
                 }
             }
+            .accessibilityElement(children: .combine)
             .padding(40)
             .background(Color.white)
             .cornerRadius(24)

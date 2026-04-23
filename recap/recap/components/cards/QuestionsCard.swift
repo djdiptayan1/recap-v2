@@ -32,6 +32,10 @@ struct QuestionsCard: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Daily Questions")
+        .accessibilityHint("Opens the daily questions flow")
+        .accessibilityInputLabels(["daily questions", "questions", "check in"])
     }
 
     private var cardContent: some View {

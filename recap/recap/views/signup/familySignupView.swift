@@ -128,6 +128,9 @@ struct familySignupView: View {
                             }
                             .disabled(viewModel.isLoading)
                             .padding(.top, 10)
+                            .accessibilityLabel(buttonTitle)
+                            .accessibilityHint("Continues the sign up flow")
+                            .accessibilityInputLabels([buttonTitle.lowercased(), "continue", "sign up"])
 
                             // Skip button for image upload
                             //                            if viewModel.currentStep == .imageUpload {

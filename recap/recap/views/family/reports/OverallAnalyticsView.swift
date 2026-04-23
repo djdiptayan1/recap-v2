@@ -67,6 +67,9 @@ struct OverallAnalyticsView: View {
                         .background(AppConfig.Colors.accent)
                         .cornerRadius(16)
                     }
+                    .accessibilityLabel("Export report as PDF")
+                    .accessibilityHint("Creates a shareable PDF copy of the analytics report")
+                    .accessibilityInputLabels(["export report", "share pdf", "export pdf"])
                     .padding(.horizontal)
                 }
                 .padding(.bottom, 40)
@@ -1103,6 +1106,9 @@ struct SummaryStatPill: View {
         .padding(14)
         .background(color.opacity(0.08))
         .cornerRadius(14)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
     }
 }
 
@@ -1124,5 +1130,8 @@ struct MiniStat: View {
         .padding(.vertical, 8)
         .background(color.opacity(0.08))
         .cornerRadius(10)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
     }
 }

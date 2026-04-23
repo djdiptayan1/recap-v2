@@ -23,6 +23,7 @@ struct ArticleCard: View {
                     .overlay(
                         LinearGradient(colors: [.black.opacity(0.3), .clear], startPoint: .bottom, endPoint: .center)
                     )
+                    .accessibilityHidden(true)
                 
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
@@ -57,6 +58,10 @@ struct ArticleCard: View {
             }
             .padding(16)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(article.title)
+        .accessibilityHint("Opens the article details")
+        .accessibilityInputLabels([article.title.lowercased(), "article", "read article"])
         .glassEffect(.regular, in: .rect(cornerRadius: AppConfig.UI.cornerRadius))
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
 //        .overlay(

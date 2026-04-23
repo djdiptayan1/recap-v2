@@ -76,5 +76,9 @@ struct GamesCard: View {
             .regular.tint(cardTintColor).interactive(),
             in: .rect(cornerRadius: AppConfig.UI.cornerRadius)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(game.name)
+        .accessibilityHint(game.description)
+        .accessibilityInputLabels([game.name.lowercased(), "game", "play"])
     }
 }

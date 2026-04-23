@@ -28,6 +28,7 @@ struct FamilyLoginView: View {
                                 .shadow(
                                     color: AppConfig.Colors.accent.opacity(0.3), radius: 15, x: 0,
                                     y: 10)
+                                .accessibilityHidden(true)
 
                             VStack(spacing: 6) {
                                 Text("Family Access")
@@ -84,6 +85,9 @@ struct FamilyLoginView: View {
                                     .animation(.easeInOut, value: viewModel.patientUID)
                                 }
                                 .disabled(viewModel.patientUID.count < 6 || viewModel.isLoading)
+                                .accessibilityLabel("Verify patient ID")
+                                .accessibilityHint("Checks whether the entered six digit ID is valid")
+                                .accessibilityInputLabels(["verify id", "verify patient id", "check id"])
 
                             } else {
                                 HStack(spacing: 16) {
@@ -115,6 +119,9 @@ struct FamilyLoginView: View {
                                             .foregroundColor(
                                                 AppConfig.Colors.textSecondary.opacity(0.5))
                                     }
+                                    .accessibilityLabel("Reset verified ID")
+                                    .accessibilityHint("Clears the current verified patient ID")
+                                    .accessibilityInputLabels(["reset id", "clear id", "change id"])
                                 }
                                 .padding(16)
                                 .background(Color.white)
@@ -162,6 +169,8 @@ struct FamilyLoginView: View {
                                     )
                                     .shadow(color: Color.black.opacity(0.03), radius: 5, x: 0, y: 2)
                                 }
+                                .accessibilityLabel("Sign in with Google")
+                                .accessibilityInputLabels(["google", "google sign in", "sign in with google"])
 
                                 // Apple Sign-In
                                 SignInWithAppleButton(.signIn) { request in
@@ -174,6 +183,8 @@ struct FamilyLoginView: View {
                                 .signInWithAppleButtonStyle(.black)
                                 .frame(height: 56)
                                 .cornerRadius(AppConfig.UI.cornerRadius)
+                                .accessibilityLabel("Sign in with Apple")
+                                .accessibilityInputLabels(["apple", "apple sign in", "sign in with apple"])
                             }
                         }
                         .padding(.horizontal, AppConfig.UI.screenPadding)
@@ -203,6 +214,9 @@ struct FamilyLoginView: View {
                     .onTapGesture {
                         hideKeyboard()
                     }
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel("Close keyboard")
+                    .accessibilityInputLabels(["close keyboard", "dismiss keyboard", "hide keyboard"])
             )
             .standardBackground()
         }
